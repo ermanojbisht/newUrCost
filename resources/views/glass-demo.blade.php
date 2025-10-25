@@ -14,6 +14,9 @@
             <p class="text-xl text-glass-secondary">
                 Beautiful glassmorphic UI components for both light and dark themes
             </p>
+            <div class="mt-4 text-sm text-glass-muted">
+                &copy; {{ date('Y') }} urCost &bull; Version 2.0 &trade; &bull; Made with &hearts; &amp; ☕
+            </div>
         </div>
     </div>
 
@@ -27,8 +30,12 @@
                 <div class="card-glass">
                     <h3 class="text-lg font-semibold text-glass-primary mb-2">Basic Glass Card</h3>
                     <p class="text-glass-secondary">This is a basic glass card with backdrop blur and semi-transparent background.</p>
-                    <div class="mt-4">
-                        <button class="btn-glass w-full">Learn More</button>
+                    <div class="mt-4 text-xs text-glass-muted">
+                        <span>&bull; Opacity: 60%</span>
+                        <span class="ml-2">&bull; Blur: 16px</span>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn-glass w-full">Learn More &rarr;</button>
                     </div>
                 </div>
 
@@ -118,16 +125,21 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="card-glass">
                     <h3 class="text-xl font-semibold text-glass-primary mb-4">Contact Form</h3>
+                    <p class="text-sm text-glass-muted mb-4">Fields marked with &ast; are required</p>
 
                     <form class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-glass-secondary mb-2">Name</label>
-                            <input type="text" class="input-glass" placeholder="Enter your name">
+                            <label class="block text-sm font-medium text-glass-secondary mb-2">
+                                Name <span class="text-red-500">&ast;</span>
+                            </label>
+                            <input type="text" class="input-glass" placeholder="Enter your name&hellip;" required>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-glass-secondary mb-2">Email</label>
-                            <input type="email" class="input-glass" placeholder="your@email.com">
+                            <label class="block text-sm font-medium text-glass-secondary mb-2">
+                                Email <span class="text-red-500">&ast;</span>
+                            </label>
+                            <input type="email" class="input-glass" placeholder="your@email.com" required>
                         </div>
 
                         <div>
@@ -208,8 +220,12 @@
                             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
                         </svg>
                         <div>
-                            <h4 class="font-semibold text-blue-700 dark:text-blue-300">Information Alert</h4>
-                            <p class="text-blue-600/80 dark:text-blue-400/80 text-sm mt-1">This is an informational glass alert with backdrop blur effect.</p>
+                            <h4 class="font-semibold text-blue-700 dark:text-blue-300">
+                                <span class="text-lg">&para;</span> Information Alert
+                            </h4>
+                            <p class="text-blue-600/80 dark:text-blue-400/80 text-sm mt-1">
+                                This is an informational glass alert with backdrop blur effect. Learn more &raquo;
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -256,22 +272,22 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-glass-primary">John Doe</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-glass-primary">John Doe &trade;</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="badge-glass-success">Active</span>
+                                <span class="badge-glass-success">&check; Active</span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-glass-secondary">Administrator</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-glass-secondary">Administrator &star;</td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <button class="text-blue-500 hover:text-blue-700 mr-3">Edit</button>
                                 <button class="text-red-500 hover:text-red-700">Delete</button>
                             </td>
                         </tr>
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-glass-primary">Jane Smith</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-glass-primary">Jane Smith &reg;</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="badge-glass-warning">Pending</span>
+                                <span class="badge-glass-warning">&hellip; Pending</span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-glass-secondary">Editor</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-glass-secondary">Editor &sect;</td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <button class="text-blue-500 hover:text-blue-700 mr-3">Edit</button>
                                 <button class="text-red-500 hover:text-red-700">Delete</button>
@@ -329,11 +345,12 @@
                 <div>
                     <div class="flex justify-between mb-2">
                         <span class="text-sm font-medium text-glass-primary">Project Progress</span>
-                        <span class="text-sm text-glass-secondary">65%</span>
+                        <span class="text-sm text-glass-secondary">65% &rarr; Target: 80%</span>
                     </div>
                     <div class="progress-glass">
                         <div class="progress-bar-glass" style="width: 65%"></div>
                     </div>
+                    <p class="text-xs text-glass-muted mt-1">&asymp; 2 weeks remaining</p>
                 </div>
 
                 <div>
@@ -349,7 +366,17 @@
                 <!-- Loading spinner -->
                 <div class="flex items-center space-x-4">
                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                    <span class="text-glass-secondary">Processing...</span>
+                    <span class="text-glass-secondary">Processing&hellip; Please wait</span>
+                </div>
+
+                <!-- Mathematical Expression -->
+                <div class="mt-4 p-3 glass-sm rounded-lg">
+                    <p class="text-sm text-glass-primary">
+                        Performance: &radic;(n&sup2; &plus; m&sup2;) &le; 100ms
+                    </p>
+                    <p class="text-xs text-glass-muted mt-1">
+                        Efficiency: &infin; scalability &times; optimization &asymp; success
+                    </p>
                 </div>
             </div>
         </section>
@@ -360,14 +387,17 @@
 
             <div class="card-glass">
                 <div class="pagination-glass">
-                    <button class="pagination-item-glass">Previous</button>
+                    <button class="pagination-item-glass">&laquo; Previous</button>
                     <button class="pagination-item-glass">1</button>
                     <button class="pagination-item-glass-active">2</button>
                     <button class="pagination-item-glass">3</button>
-                    <button class="pagination-item-glass">4</button>
-                    <button class="pagination-item-glass">5</button>
-                    <button class="pagination-item-glass">Next</button>
+                    <button class="pagination-item-glass">&hellip;</button>
+                    <button class="pagination-item-glass">10</button>
+                    <button class="pagination-item-glass">Next &raquo;</button>
                 </div>
+                <p class="text-sm text-glass-muted mt-3">
+                    Showing 11&ndash;20 of 100 results
+                </p>
             </div>
         </section>
 
@@ -407,6 +437,74 @@
                 </div>
             </div>
         </section>
+
+        <!-- Special Glass Effects Section -->
+        <section>
+            <h2 class="text-3xl font-bold text-glass-primary mb-6 gradient-text-primary">Special Glass Effects</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Pricing Card -->
+                <div class="card-glass text-center">
+                    <h3 class="text-xl font-bold gradient-text-primary mb-2">Premium Plan</h3>
+                    <div class="my-4">
+                        <span class="text-4xl font-bold text-glass-primary">&euro;99</span>
+                        <span class="text-glass-secondary">/month</span>
+                    </div>
+                    <ul class="text-left space-y-2 mb-6 text-sm text-glass-secondary">
+                        <li>&check; Unlimited access</li>
+                        <li>&check; Priority support</li>
+                        <li>&check; Advanced features</li>
+                        <li>&cross; Custom domain</li>
+                    </ul>
+                    <button class="btn-glass-primary w-full">
+                        Get Started &rarr;
+                    </button>
+                </div>
+
+                <!-- Stats Card -->
+                <div class="card-glass">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="font-semibold text-glass-primary">Revenue</h4>
+                        <span class="text-green-500 text-sm">&uarr; 12%</span>
+                    </div>
+                    <p class="text-3xl font-bold gradient-text-success">&pound;45,678</p>
+                    <p class="text-sm text-glass-muted mt-2">
+                        Target: &pound;50,000 &bull; &asymp; 91% achieved
+                    </p>
+                    <div class="mt-4 h-2 glass rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-green-500 to-emerald-500" style="width: 91%"></div>
+                    </div>
+                </div>
+
+                <!-- Code Block -->
+                <div class="card-glass font-mono text-sm">
+                    <div class="mb-2 text-glass-primary">Code Example:</div>
+                    <div class="p-3 glass-sm rounded text-xs">
+                        <span class="text-blue-400">const</span> <span class="text-green-400">calculate</span> = () =&gt; {<br>
+                        &nbsp;&nbsp;<span class="text-blue-400">return</span> x &lt; y ? <span class="text-yellow-400">true</span> : <span class="text-yellow-400">false</span>;<br>
+                        };
+                    </div>
+                    <p class="text-xs text-glass-muted mt-3">
+                        Complexity: O(n&sup2;) &bull; Memory: O(1)
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="mt-16 text-center text-glass-muted">
+            <p>&copy; {{ date('Y') }} urCost. All rights reserved.</p>
+            <p class="mt-2">
+                <a href="#" class="hover:text-glass-primary">&laquo; Previous</a>
+                <span class="mx-3">&bull;</span>
+                <a href="#" class="hover:text-glass-primary">Home</a>
+                <span class="mx-3">&bull;</span>
+                <a href="#" class="hover:text-glass-primary">Next &raquo;</a>
+            </p>
+            <p class="mt-4 text-xs">
+                Made with &hearts; by Development Team &bull; Version 2.0&trade; &bull; &infin; possibilities
+            </p>
+        </footer>
     </div>
 </div>
 

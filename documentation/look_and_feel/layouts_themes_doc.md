@@ -11,6 +11,11 @@
 8. [Mobile-First Approach](#mobile-first-approach)
 9. [Best Practices](#best-practices)
 10. [Code Examples](#code-examples)
+11. [HTML Entities & Special Characters](#html-entities--special-characters)
+12. [Glass Morphism Theme](#glass-morphism-theme)
+13. [Loading States & Skeletons](#loading-states--skeletons)
+14. [Tooltips & Popovers](#tooltips--popovers)
+15. [Charts & Data Visualization](#charts--data-visualization)
 
 ## Overview
 
@@ -806,6 +811,104 @@ Every page blade file MUST follow this structure:
 </div>
 ```
 
+### 4. Alert Component (`resources/views/components/alert.blade.php`)
+
+```blade
+@props([
+    'type' => 'info', // info, success, warning, error
+    'dismissible' => true,
+    'icon' => true,
+])
+
+@php
+    $typeClasses = [
+        'info' => 'bg-blue-100 border-blue-500 text-blue-700 dark:bg-blue-900 dark:text-blue-100',
+        'success' => 'bg-green-100 border-green-500 text-green-700 dark:bg-green-900 dark:text-green-100',
+        'warning' => 'bg-yellow-100 border-yellow-500 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-100',
+        'error' => 'bg-red-100 border-red-500 text-red-700 dark:bg-red-900 dark:text-red-100',
+    ];
+    
+    $icons = [
+        'info' => '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>',
+        'success' => '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>',
+        'warning' => '<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>',
+        'error' => '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>',
+    ];
+@endphp
+
+<div x-data="{ show: true }"
+     x-show="show"
+     x-transition
+     @if($dismissible) x-init="setTimeout(() => show = false, 5000)" @endif
+     {{ $attributes->merge(['class' => 'border-l-4 p-4 rounded ' . $typeClasses[$type]]) }}>
+    <div class="flex items-start">
+        @if($icon)
+            <svg class="flex-shrink-0 w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                {!! $icons[$type] !!}
+            </svg>
+        @endif
+        <div class="flex-1">
+            {{ $slot }}
+        </div>
+        @if($dismissible)
+            <button @click="show = false" class="flex-shrink-0 ml-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+            </button>
+        @endif
+    </div>
+</div>
+```
+
+### 5. Select Component (`resources/views/components/form/select.blade.php`)
+
+```blade
+@props([
+    'label' => '',
+    'name' => '',
+    'options' => [],
+    'selected' => null,
+    'placeholder' => '-- Select --',
+    'required' => false,
+    'disabled' => false,
+    'error' => null,
+])
+
+<div class="mb-4">
+    @if($label)
+        <label for="{{ $name }}" class="label">
+            {{ $label }}
+            @if($required)
+                <span class="text-red-500">*</span>
+            @endif
+        </label>
+    @endif
+    
+    <select
+        name="{{ $name }}"
+        id="{{ $name }}"
+        {{ $required ? 'required' : '' }}
+        {{ $disabled ? 'disabled' : '' }}
+        {{ $attributes->merge([
+            'class' => 'input-field' . 
+                      ($error || $errors->has($name) ? ' border-red-500 focus:ring-red-500' : '')
+        ]) }}
+    >
+        <option value="">{{ $placeholder }}</option>
+        @foreach($options as $value => $text)
+            <option value="{{ $value }}" {{ $selected == $value ? 'selected' : '' }}>
+                {{ $text }}
+            </option>
+        @endforeach
+    </select>
+    
+    @error($name)
+        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+    @enderror
+</div>
+```
+
 ## Mobile-First Approach
 
 ### Responsive Breakpoints
@@ -1277,3 +1380,305 @@ For questions or issues:
 ---
 
 **Remember**: Consistency is key. When in doubt, refer to existing patterns and this documentation.
+
+## HTML Entities & Special Characters
+
+### Common HTML Entities
+Use these entities in your Blade templates for proper character encoding:
+
+```blade
+<!-- Common Symbols -->
+&copy;     <!-- © Copyright -->
+&reg;      <!-- ® Registered -->
+&trade;    <!-- ™ Trademark -->
+&euro;     <!-- € Euro -->
+&pound;    <!-- £ Pound -->
+&yen;      <!-- ¥ Yen -->
+&cent;     <!-- ¢ Cent -->
+&sect;     <!-- § Section -->
+&para;     <!-- ¶ Paragraph -->
+&dagger;   <!-- † Dagger -->
+&Dagger;   <!-- ‡ Double dagger -->
+
+<!-- Mathematical Symbols -->
+&plus;     <!-- + Plus -->
+&minus;    <!-- − Minus -->
+&times;    <!-- × Times -->
+&divide;   <!-- ÷ Divide -->
+&ne;       <!-- ≠ Not equal -->
+&le;       <!-- ≤ Less than or equal -->
+&ge;       <!-- ≥ Greater than or equal -->
+&asymp;    <!-- ≈ Approximately equal -->
+&infin;    <!-- ∞ Infinity -->
+&radic;    <!-- √ Square root -->
+&sum;      <!-- ∑ Sum -->
+
+<!-- Arrows -->
+&larr;     <!-- ← Left arrow -->
+&rarr;     <!-- → Right arrow -->
+&uarr;     <!-- ↑ Up arrow -->
+&darr;     <!-- ↓ Down arrow -->
+&harr;     <!-- ↔ Left-right arrow -->
+&crarr;    <!-- ↵ Carriage return -->
+&lArr;     <!-- ⇐ Left double arrow -->
+&rArr;     <!-- ⇒ Right double arrow -->
+&uArr;     <!-- ⇑ Up double arrow -->
+&dArr;     <!-- ⇓ Down double arrow -->
+&hArr;     <!-- ⇔ Left-right double arrow -->
+
+<!-- Quotation -->
+&ldquo;    <!-- " Left double quote -->
+&rdquo;    <!-- " Right double quote -->
+&lsquo;    <!-- ' Left single quote -->
+&rsquo;    <!-- ' Right single quote -->
+&laquo;    <!-- « Left angle quote -->
+&raquo;    <!-- » Right angle quote -->
+
+<!-- Spaces & Dashes -->
+&nbsp;     <!-- Non-breaking space -->
+&ensp;     <!-- En space -->
+&emsp;     <!-- Em space -->
+&thinsp;   <!-- Thin space -->
+&ndash;    <!-- – En dash -->
+&mdash;    <!-- — Em dash -->
+&hellip;   <!-- … Ellipsis -->
+
+<!-- Other Symbols -->
+&bull;     <!-- • Bullet -->
+&middot;   <!-- · Middle dot -->
+&sdot;     <!-- ⋅ Dot operator -->
+&clubs;    <!-- ♣ Clubs -->
+&hearts;   <!-- ♥ Hearts -->
+&diams;    <!-- ♦ Diamonds -->
+&spades;   <!-- ♠ Spades -->
+&male;     <!-- ♂ Male -->
+&female;   <!-- ♀ Female -->
+&phone;    <!-- ☎ Phone -->
+&check;    <!-- ✓ Check mark -->
+&cross;    <!-- ✗ Cross mark -->
+```
+
+### Usage Examples in Blade
+
+```blade
+<!-- Footer with copyright -->
+<footer class="text-center text-glass-secondary">
+    <p>&copy; {{ date('Y') }} urCost. All rights reserved.</p>
+    <p>Made with &hearts; by Development Team</p>
+</footer>
+
+<!-- Pricing display -->
+<div class="price-tag">
+    <span class="currency">&euro;</span>
+    <span class="amount">99.99</span>
+</div>
+
+<!-- Mathematical expressions -->
+<p class="formula">
+    E = mc&sup2; | &pi; &asymp; 3.14159 | &infin; possibilities
+</p>
+
+<!-- Navigation breadcrumbs -->
+<nav aria-label="Breadcrumb">
+    <ol class="inline-flex items-center">
+        <li>Home</li>
+        <li>&raquo;</li>
+        <li>Products</li>
+        <li>&raquo;</li>
+        <li>Details</li>
+    </ol>
+</nav>
+
+<!-- Status indicators -->
+<span class="status">
+    <span class="text-green-500">&check;</span> Active
+</span>
+<span class="status">
+    <span class="text-red-500">&cross;</span> Inactive
+</span>
+```
+
+## Glass Morphism Theme
+
+### Implementation Overview
+Glass morphism creates modern, elegant UI with semi-transparent elements and backdrop blur effects. See `/glass-demo` for live examples.
+
+### Core Glass Classes
+
+```css
+/* Basic glass effect */
+.glass {
+    background-color: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(229, 231, 235, 0.5);
+}
+
+.dark .glass {
+    background-color: rgba(17, 24, 39, 0.3);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+```
+
+### Glass Component Reference
+
+| Component | Class | Light Theme | Dark Theme |
+|-----------|-------|-------------|------------|
+| Card | `.card-glass` | White 60% opacity | Dark 30% opacity |
+| Button | `.btn-glass` | White 60% opacity | Dark 30% opacity |
+| Input | `.input-glass` | White 50% opacity | Dark 30% opacity |
+| Alert | `.alert-glass` | Color 10% opacity | Color 20% opacity |
+| Badge | `.badge-glass` | Color 20% opacity | Color 30% opacity |
+| Table | `.table-glass` | White 60% opacity | Dark 30% opacity |
+| Modal | `.modal-content-glass` | White 70% opacity | Dark 40% opacity |
+
+### Glass Usage Examples
+
+```blade
+<!-- Glass card with gradient text -->
+<div class="card-glass">
+    <h3 class="text-xl font-bold gradient-text-primary">
+        Glass Card Title
+    </h3>
+    <p class="text-glass-secondary">
+        Content with beautiful backdrop blur effect.
+    </p>
+</div>
+
+<!-- Glass form -->
+<form class="card-glass">
+    <input type="text" class="input-glass" placeholder="Name">
+    <select class="select-glass">
+        <option>Option 1</option>
+        <option>Option 2</option>
+    </select>
+    <textarea class="textarea-glass" rows="4"></textarea>
+    <button type="submit" class="btn-glass-primary">Submit</button>
+</form>
+
+<!-- Glass alert with icon -->
+<div class="alert-glass-success">
+    <svg class="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
+        <!-- SVG path -->
+    </svg>
+    Success! Operation completed.
+</div>
+```
+
+## Loading States & Skeletons
+
+### Loading
+ Spinner
+```blade
+<div class="flex items-center justify-center p-8">
+    <svg class="animate-spin h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+    </svg>
+    <span class="ml-3 text-glass-secondary">Loading...</span>
+</div>
+```
+
+### Skeleton Loader
+```blade
+<div class="animate-pulse">
+    <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
+    <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
+    <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+</div>
+```
+
+### Loading Button
+```blade
+<button class="btn-primary" x-data="{ loading: false }" @click="loading = true">
+    <svg x-show="loading" class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+    </svg>
+    <span x-show="!loading">Submit</span>
+    <span x-show="loading">Processing...</span>
+</button>
+```
+
+## Tooltips & Popovers
+
+### Simple Tooltip
+```blade
+<div x-data="{ tooltip: false }" class="relative inline-block">
+    <button @mouseenter="tooltip = true" @mouseleave="tooltip = false" class="btn-primary">
+        Hover me
+    </button>
+    <div x-show="tooltip" 
+         x-transition
+         class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-sm text-white bg-gray-900 rounded-lg">
+        This is a tooltip
+        <svg class="absolute text-gray-900 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 127.5">
+            <polygon class="fill-current" points="0,0 127.5,127.5 255,0"></polygon>
+        </svg>
+    </div>
+</div>
+```
+
+### Popover
+```blade
+<div x-data="{ popover: false }" class="relative inline-block">
+    <button @click="popover = !popover" class="btn-secondary">
+        Click for info
+    </button>
+    <div x-show="popover" 
+         @click.away="popover = false"
+         x-transition
+         class="absolute z-50 w-64 p-4 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+        <h4 class="font-bold mb-2">Popover Title</h4>
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+            This is a popover with more detailed information.
+        </p>
+    </div>
+</div>
+```
+
+## Charts & Data Visualization
+
+### Progress Circle
+```blade
+<div class="relative w-32 h-32">
+    <svg class="transform -rotate-90 w-32 h-32">
+        <circle cx="64" cy="64" r="56" stroke="currentColor" stroke-width="8" fill="none" 
+                class="text-gray-200 dark:text-gray-700"></circle>
+        <circle cx="64" cy="64" r="56" stroke="currentColor" stroke-width="8" fill="none"
+                stroke-dasharray="351.86" stroke-dashoffset="105.56"
+                class="text-blue-500"></circle>
+    </svg>
+    <div class="absolute inset-0 flex items-center justify-center">
+        <span class="text-2xl font-bold">70%</span>
+    </div>
+</div>
+```
+
+### Simple Bar Chart
+```blade
+<div class="flex items-end space-x-2 h-40">
+    <div class="flex-1 bg-blue-500 rounded-t" style="height: 60%"></div>
+    <div class="flex-1 bg-green-500 rounded-t" style="height: 80%"></div>
+    <div class="flex-1 bg-yellow-500 rounded-t" style="height: 45%"></div>
+    <div class="flex-1 bg-red-500 rounded-t" style="height: 90%"></div>
+</div>
+```
+
+### Stats Card
+```blade
+<div class="card-glass">
+    <div class="flex items-center justify-between">
+        <div>
+            <p class="text-sm text-glass-secondary">Total Revenue</p>
+            <p class="text-2xl font-bold gradient-text-primary">&euro;12,345</p>
+            <p class="text-sm text-green-500">&uarr; 12% from last month</p>
+        </div>
+        <div class="p-3 bg-blue-500/20 rounded-full">
+            <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+        </div>
+    </div>
+</div>
+```
