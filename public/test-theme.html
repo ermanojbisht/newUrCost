@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200"
+      x-data="{
+          theme: localStorage.getItem('theme') || 'dark',
+          toggleTheme() {
+              this.theme = this.theme === 'light' ? 'dark' : 'light';
+              localStorage.setItem('theme', this.theme);
+              if (this.theme === 'dark') {
+                  document.documentElement.classList.add('dark');
+              } else {
+                  document.documentElement.classList.remove('dark');
+              }
+          }
+      }"
+      x-init="
+          if (theme === 'dark') {
+              document.documentElement.classList.add('dark');
+          } else {
+              document.documentElement.classList.remove('dark');
+          }
+      ">
+
+    <div class="min-h-screen p-8">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-4xl font-bold mb-4">Theme Switcher Test</h1>
+            <p class="mb-4">Current theme: <span x-text="theme" class="font-bold"></span></p>
+
+            <button @click="toggleTheme()"
+                    class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded mb-8">
+                Toggle Theme
+            </button>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                    <h2 class="text-2xl font-bold mb-2">Card 1</h2>
+                    <p>This is a test card to verify theme switching.</p>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                    <h2 class="text-2xl font-bold mb-2">Card 2</h2>
+                    <p>Another test card with dark mode support.</p>
+                </div>
+            </div>
+
+            <div class="mt-8 p-4 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 rounded">
+                <p>This is an alert box that changes color based on theme.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

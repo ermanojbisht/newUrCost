@@ -87,16 +87,17 @@ complexities and potential pitfalls of the replace tool's old_string and new_str
 
 4. Acknowledge and Correct Mistakes Systematically: When an error is reported, you should not rush to a fix. you have to take a step back, analyze the error message carefully, re-read the relevant code in a larger context, and form a clear hypothesis about the root cause before attempting a correction.
 
+1- confirm page working through MCP google
+2- npm run dev and php artisan serve is running in another terminals
+
+# MODULE1: Layout and Theme Creation ,Theme Switcher Implementation (Completed)
+### Tailwind CSS v4 Configuration
+- **Package Version**: Using Tailwind CSS v4.1.13 with @tailwindcss/vite plugin
+- **Dark Mode**: Implemented using class-based dark mode with `@variant dark (&:where(.dark, .dark *))`
+- **Forms Plugin**: Integrated @tailwindcss/forms for better form styling
+
+MODULE2: User system 
+user should have email, phone_no
+registration should be on-off with config
 
 
-# MODULE1: Layout and Theme Creation
-
-MODULE1 Documentation is at @documentation/look_and_feel/layouts_themes_doc.md
-it cotains how to adopt and make a boilerplate for future views.
-1-proper config for tailwind , vite . throughly check best practices not use any shortcut. 
-2-make a layout page @resources/views/layouts/app.blade.php which uses tailwind , having switcher for dark and light theme . dark will be default
-2-create a demo page at @resources/views/demo.blade.php 
-3- confirm page working through MCP google
-4-npm run dev and php artisan serve is running in another terminals
-
-one example implemetation for dark theme is at @documentation/look_and_feel/UI_IMPLEMENTATION_GUIDE.md 
