@@ -96,8 +96,17 @@ complexities and potential pitfalls of the replace tool's old_string and new_str
 - **Dark Mode**: Implemented using class-based dark mode with `@variant dark (&:where(.dark, .dark *))`
 - **Forms Plugin**: Integrated @tailwindcss/forms for better form styling
 
-MODULE2: User system 
-user should have email, phone_no
-registration should be on-off with config
+MODULE2: User Role and Permission system
+1-spatie/laravel-permission 6.21 system already added through composer . Read documentation
+2-Add User having superadmin power (again read doc for superadmin)
+3-Add A Role 'user manager' having permission 'add user', 'edit-user', 'add-role', edit-role all such permission to manage user , role , permission for this role
+4-make seperate route , controller , views folder for manage user , thier roles permission . make crud for all these 3 Models
+5- when list a Model always use yazara datatable
+6-use proper gate , policies for crud
+7-for look and feel use rules at /var/www/newUrCost/documentation/look_and_feel/layouts_themes_doc.md 
+8-may use layout file /var/www/newUrCost/resources/views/layouts/layout001/app.blade.php 
+9-use partial for this user management menu only show to user who has power to manage user
+10-if u have any question then ask before making guess.
+
 
 
