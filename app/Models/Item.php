@@ -1,0 +1,72 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Item extends Model
+{
+    use HasFactory;
+
+    protected $table = 'items';
+
+    protected $fillable = [
+        'sor_id',
+        'parent_id',
+        'item_code',
+        'name',
+        'order_in_parent',
+        'specification_code',
+        'specification_page_number',
+        'item_type',
+        'sort_order',
+        'item_number',
+        'description',
+        'short_description',
+        'turnout_quantity',
+        'assumptions',
+        'footnotes',
+        'unit_id',
+        'is_canceled',
+        'nested_list_order',
+        'sub_item_level',
+        'sub_item_count',
+        'old_item_code',
+        'dsr_16_id',
+        'is_locked',
+        'created_by',
+        'updated_by',
+        'reference_from',
+    ];
+
+    public function sor()
+    {
+        return $this->belongsTo(Sor::class);
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(Item::class, 'ch_parent_id'); // Updated to match migration
+    }
+
+    public function children()
+    {
+        return $this->hasMany(Item::class, 'ch_parent_id'); // Updated to match migration
+    }
+
+    public function skeletons()
+    {
+        return $this->hasMany(Skeleton::class);
+    }
+
+    public function subitems()
+    {
+        return $this->hasMany(Subitem::class);
+    }
+
+    public function oheads()
+    {
+        return $this->hasMany(Ohead::class);
+    }
+}

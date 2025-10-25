@@ -1,0 +1,70 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.sh
+import_addition
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+/.fleet
+.phpactor.json
+/.nova
+/.phpunit.cache
+/.zed
+
+# Laravel specific
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/vendor
+.env
+.env.backup
+.env.production
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+auth.json
+npm-debug.log
+yarn-error.log
+composer.lock
+
+# Logs
+*.log
+/storage/logs/*.log
+
+# Cache and temp files
+/bootstrap/cache/*.php
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/app/public/*
+temp/
+*.tmp
+
+# Database
+*.sqlite
+*.db
+
+# Backup files
+*.bak
+*.backup
+
+# Compiled assets
+/public/css/app.css
+/public/js/app.js
+/public/mix-manifest.json
+
+# Laravel Sail
+docker-compose.override.yml

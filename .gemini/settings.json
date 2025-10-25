@@ -1,0 +1,22 @@
+{
+  "general": {
+    "preferredEditor": "code",
+    "checkpointing": {"enabled": true}
+  },
+  "ui": {
+    "theme": "GitHub",
+    "hideBanner": true,
+    "hideTips": false
+  },
+  "privacy": {
+    "usageStatisticsEnabled": false
+  },
+  "context": {
+    "fileName": ["CONTEXT.md", "GEMINI.md"],
+    "includeDirectories": ["/var/www/html/urCost", "/var/www/newUrCost"],
+    "loadFromIncludeDirectories": true,
+    "fileFiltering": {
+      "respectGitIgnore": false
+    }
+  }
+}

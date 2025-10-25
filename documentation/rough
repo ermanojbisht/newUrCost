@@ -1,0 +1,50 @@
+  Key Stages and Outcomes:
+
+   1. Table Migration Review:
+       * `skeleton`: Migrated successfully, conversion_plan.md updated.
+       * `languages`: Deemed unnecessary, removed from conversion_plan.md.
+       * `units`: Migration corrected for language_id discrepancy.
+       * `items`: Documentation clarified (item.md).
+       * `rate_card_groups`: Deemed unnecessary, removed from conversion_plan.md.
+       * `files`: Significant discrepancies noted; documentation prioritized for now.
+       * `truck_speeds`: Missing primary key (id) added to migration.
+       * Other tables: sors, job_groups, unit_groups, overhead_master, region_indexings, man_mule_cart_rules, resources, resource_capacity_rules, rates, labor_indices,
+         machine_indices, lead_distances, pol_skeletons, pol_rates, subitem_dependencies, subitem_rates, nested_table_items, item_rates, oheads were reviewed, with most
+         being in line or having minor discrepancies.
+
+   2. Documentation Management:
+       * A new file, documentation/tables_summary.md, was created to centralize table migration status, including old/new names, documentation paths, and issues.
+       * Sections for "Tables to be removed" and "Tables to Added as Laravel default" were moved from conversion_plan.md to tables_summary.md as new rows within the table.
+
+   3. Data Migration (Seeding):
+       * `sors`: SorSeeder.php created. Initial failure due to users foreign key constraint.
+       * `users`: UserSeeder.php created to address sors dependency.
+       * `units`: UnitSeeder.php created. Initial failure due to conversion_factor precision; migration updated to decimal(15,4).
+       * Seeder Idempotency: SorSeeder.php and UnitSeeder.php modified to skip existing rows.
+       * `items`: ItemSeeder.php created.
+           * Resolved "Numeric value out of range" for parent_id (-1 converted to null).
+           * Resolved "Column 'name' cannot be null" (default 'Unnamed Item' provided).
+           * Resolved "Duplicate entry '0' for key 'items.items_item_code_unique'" (unique `item_code` generated).
+           * Resolved "foreign key constraint fails (items_unit_id_foreign)" (0 converted to null).
+           * Resolved "foreign key constraint fails (items_parent_id_foreign)" (foreign key checks temporarily disabled/re-enabled).
+
+
+
+are u continiously updating table order .if not then reorder as per your learning . Always follow rules laid down in @migration_learning.md and @documentation/conversion_plan.md. plz read it again. Complete migration of all table. First check how many migration done then take another table from list . first reorder table list in @documentation/conversion_plan.md 
+
+
+ok now let's fetch data from old db to new
+make seeder in a way
+
+As we have maping of table and field of each table listed as Migration Summary](./tables_summary.md)
+and documention and mapping of fileds from old to new system is already saved in documentation file mentioned in this table Migration Summary](./tables_summary.md)
+so migration of data can be done through sql between two db tables.
+
+if a row already exist as per primary key then skip that row for effcient system .
+iFirst short the source table order with relevent fields then do process (as an idea )
+you may temporarily disable foreign key checks before data insertion and re-enable them afterward,
+
+'users','sors' ,'units', 'items' dataseeding is done
+
+now start with 'subitems','rate_cards','truck_speeds','overhead_master','region_indexing'  table
+reload memory specially conversion_plan.md
