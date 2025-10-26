@@ -27,7 +27,9 @@ This Laravel application utilizes the following technologies:
 ### ** User Experience**
 - **Responsive Design:** Mobile-first Tailwind CSS
 - **Clean, responsive layout** that works on desktop and mobile . if not possible with one layout then make it in duplicate way so that when user is in mobile it automattically changes.
-- **Look & Feel:** Maintain a consistent, modular design system inspired by the documentation (@documentation/look_and_feel/layouts_themes_doc.md and @documentation/look_and_feel/layouts_themes_doc_part2.md). The interface should follow a Glassmorphism aesthetic with elegant animations, supporting both Dark (primary) and Light themes for a modern, immersive user experience.   
+- **Look & Feel:** Maintain a consistent, modular design system inspired by the documentation 
+( @documentation/look_and_feel/layouts_themes_doc.md and @documentation/look_and_feel/layouts_themes_doc_part2.md ).
+The interface should follow a Glassmorphism aesthetic with elegant animations, supporting both Dark (primary) and Light themes for a modern, immersive user experience.   
 - **AJAX Integration:** Real-time updates without page reload
 - **Form Validation:** Client and server-side validation
 - **Loading States:** User feedback during operations
@@ -101,6 +103,11 @@ complexities and potential pitfalls of the replace tool's old_string and new_str
 MODULE2: User Role and Permission system (Completed)
 1-spatie/laravel-permission 6.21 system used
 
+MODULE3: CRUD for Some Models where tables are `rate_cards` , `pol_rates`,`pol_skeletons`,`resource_capacity_rules`,`resource_groups`,`sors`,`truck_speeds`,`unit_groups`,`units`
+1-create role 'sor-admin' and add permissions for tables like 'unit create', 'unit edit' etc for tables
+2-use proper policies . 
+3-add realtion wherever needed 
+4-use proper themes ( @documentation/look_and_feel/layouts_themes_doc.md ) for both dark and light,  use relevent icon or made
 
 
 

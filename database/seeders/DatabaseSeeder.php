@@ -14,6 +14,8 @@ use App\Models\Resource;
 use App\Models\ResourceGroup;
 use App\Models\Subitem;
 use App\Models\TruckSpeed;
+use App\Models\Unit;
+use App\Models\UnitGroup;
 use App\Models\User;
 use Database\Seeders\RateSeeder;
 use Illuminate\Database\Seeder;
@@ -40,6 +42,16 @@ class DatabaseSeeder extends Seeder
             $seedersToCall[] = ResourceGroupSeeder::class;
         }
 
+         if (UnitGroup::count() === 0) {
+            $seedersToCall[] = UnitGroupSeeder::class;
+        }
+
+        if (Unit::count() === 0) {
+            $seedersToCall[] = UnitSeeder::class;
+        }
+
+        //dependent
+
         if (\App\Models\Sor::count() === 0) {
             $seedersToCall[] = SorSeeder::class;
         }
@@ -47,7 +59,6 @@ class DatabaseSeeder extends Seeder
         if (\App\Models\Item::count() === 0) {
             $seedersToCall[] = ItemSeeder::class;
         }
-
 
 
 

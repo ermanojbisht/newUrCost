@@ -48,3 +48,9 @@ you may temporarily disable foreign key checks before data insertion and re-enab
 
 now start with 'subitems','rate_cards','truck_speeds','overhead_master','region_indexing'  table
 reload memory specially conversion_plan.md
+
+
+
+
+//
+resCapacityGrId field in old resources table not used . only one place for view . so i m just taking it in new db . i think it is some kind of grouping

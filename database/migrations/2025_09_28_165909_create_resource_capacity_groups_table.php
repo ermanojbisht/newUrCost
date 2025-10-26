@@ -26,3 +26,6 @@ return new class extends Migration
         Schema::dropIfExists('resource_capacity_groups');
     }
 };
+
+
+//mkb  i think it's almost useless table seems to be group resources then apply same capacity rule for that group

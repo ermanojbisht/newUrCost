@@ -21,7 +21,7 @@ return new class extends Migration
             $table->timestamps();
 
             // Foreign key constraints
-            $table->foreign('base_unit_id')->references('id')->on('units')->onDelete('set null');
+            //$table->foreign('base_unit_id')->references('id')->on('units')->onDelete('set null');
         });
     }
 
@@ -30,6 +30,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('unit_groups');
+        Schema::enableForeignKeyConstraints();
     }
 };

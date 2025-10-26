@@ -26,10 +26,23 @@ class ResourceSeeder extends Seeder
 
         foreach ($legacyResources as $legacyResource) {
             Resource::create([
-                'id' => $legacyResource->code,
+                'id' => $legacyResource->ID,
                 'name' => $legacyResource->name,
+                'resource_code' => $legacyResource->code,
                 'resource_group_id' => $legacyResource->resgr,
-                'res_code' => $legacyResource->resCode,
+                'secondary_code' => $legacyResource->resCode,
+                'unit_group_id' => $legacyResource->UnitGrpId,
+                'unit_id' => $legacyResource->TechUnitID,
+                'description' => $legacyResource->description,
+                'items_using_count' => $legacyResource->numItemUsed ?? 0,
+                'resource_capacity_rule_id' => $legacyResource->resCapacityGr,
+                'resource_capacity_group_id' => $legacyResource->resCapacityGrId,
+                'dsr_code' => $legacyResource->dsrcode,
+                'is_canceled' => $legacyResource->canceled,
+                'created_at' => $legacyResource->insert_date,
+                'updated_at' => $legacyResource->modify_date,
+                'created_by' => $legacyResource->created_by,
+                'updated_by' => $legacyResource->modify_by,
             ]);
         }
     }

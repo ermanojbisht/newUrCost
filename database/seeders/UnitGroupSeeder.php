@@ -13,14 +13,15 @@ class UnitGroupSeeder extends Seeder
     public function run(): void
     {
         // Assuming 'legacy_mysql' is configured in config/database.php for the old database
-        $oldUnitGroups = DB::connection('legacy_mysql')->table('unit_group')->get();
+        $oldUnitGroups = DB::connection('legacy_mysql')->table('unitsgroup')->get();
 
         foreach ($oldUnitGroups as $oldUnitGroup) {
             // Check if a row with the same ID already exists
-            if (!DB::table('unit_groups')->where('id', $oldUnitGroup->iUnitgrpID)->exists()) {
+            if (!DB::table('unit_groups')->where('id', $oldUnitGroup->ParentID)->exists()) {
                 DB::table('unit_groups')->insert([
-                    'id' => $oldUnitGroup->iUnitgrpID,
+                    'id' => $oldUnitGroup->ParentID,
                     'name' => $oldUnitGroup->vUnitGrpName,
+                    'base_unit_id' => $oldUnitGroup->BaseUnitID,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
