@@ -27,6 +27,7 @@ This Laravel application utilizes the following technologies:
 ### ** User Experience**
 - **Responsive Design:** Mobile-first Tailwind CSS
 - **Clean, responsive layout** that works on desktop and mobile . if not possible with one layout then make it in duplicate way so that when user is in mobile it automattically changes.
+- **Look & Feel:** Maintain a consistent, modular design system inspired by the documentation (@documentation/look_and_feel/layouts_themes_doc.md and @documentation/look_and_feel/layouts_themes_doc_part2.md). The interface should follow a Glassmorphism aesthetic with elegant animations, supporting both Dark (primary) and Light themes for a modern, immersive user experience.   
 - **AJAX Integration:** Real-time updates without page reload
 - **Form Validation:** Client and server-side validation
 - **Loading States:** User feedback during operations
@@ -89,6 +90,7 @@ complexities and potential pitfalls of the replace tool's old_string and new_str
 
 1- confirm page working through MCP google
 2- npm run dev and php artisan serve is running in another terminals
+3- For documentation refer context7 MCP
 
 # MODULE1: Layout and Theme Creation ,Theme Switcher Implementation (Completed)
 ### Tailwind CSS v4 Configuration
@@ -96,17 +98,13 @@ complexities and potential pitfalls of the replace tool's old_string and new_str
 - **Dark Mode**: Implemented using class-based dark mode with `@variant dark (&:where(.dark, .dark *))`
 - **Forms Plugin**: Integrated @tailwindcss/forms for better form styling
 
-MODULE2: User Role and Permission system
-1-spatie/laravel-permission 6.21 system already added through composer . Read documentation
-2-Add User having superadmin power (again read doc for superadmin)
-3-Add A Role 'user manager' having permission 'add user', 'edit-user', 'add-role', edit-role all such permission to manage user , role , permission for this role
-4-make seperate route , controller , views folder for manage user , thier roles permission . make crud for all these 3 Models
-5- when list a Model always use yazara datatable
-6-use proper gate , policies for crud
-7-for look and feel use rules at /var/www/newUrCost/documentation/look_and_feel/layouts_themes_doc.md 
-8-may use layout file /var/www/newUrCost/resources/views/layouts/layout001/app.blade.php 
-9-use partial for this user management menu only show to user who has power to manage user
-10-if u have any question then ask before making guess.
+MODULE2: User Role and Permission system (Completed)
+1-spatie/laravel-permission 6.21 system used
+
+
+
+
+
 
 
 

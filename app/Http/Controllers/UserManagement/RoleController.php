@@ -24,13 +24,15 @@ class RoleController extends Controller
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function($row){
-                    $btn = '<a href="' . route('roles.show', $row->id) . '" class="edit btn btn-primary btn-sm">View</a>';
-                    $btn .= ' <a href="' . route('roles.edit', $row->id) . '" class="edit btn btn-info btn-sm">Edit</a>';
-                    $btn .= ' <form action="' . route('roles.destroy', $row->id) . '" method="POST" style="display:inline">
-                                ' . csrf_field() . '
-                                ' . method_field('DELETE') . '
-                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                            </form>';
+                    $btn = '<div class="flex justify-end space-x-2">' . 
+                           '<a href="' . route('roles.show', $row->id) . '" class="inline-flex items-center justify-center p-2 text-sm font-medium text-white bg-gray-500 rounded-lg hover:bg-gray-600">' . config('icons.magnifying-glass') . '</a>' . 
+                           '<a href="' . route('roles.edit', $row->id) . '" class="inline-flex items-center justify-center p-2 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600">' . config('icons.pen') . '</a>' . 
+                           '<form action="' . route('roles.destroy', $row->id) . '" method="POST" style="display:inline">' . 
+                               csrf_field() . 
+                               method_field('DELETE') . 
+                               '<button type="submit" class="inline-flex items-center justify-center p-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600">' . config('icons.delete') . '</button>' . 
+                           '</form>' . 
+                           '</div>';
                     return $btn;
                 })
                 ->rawColumns(['action'])

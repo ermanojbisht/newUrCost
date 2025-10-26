@@ -1,19 +1,25 @@
 @extends('layouts.layout001.app')
 
+@section('title', 'Permissions Management')
+
 @section('content')
 <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-4">
-        <h1 class="text-2xl font-bold">Permissions</h1>
-        <a href="{{ route('permissions.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Create Permission</a>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Permissions</h1>
+        <a href="{{ route('permissions.create') }}" class="btn-primary inline-flex items-center">
+            {!! config('icons.add') !!}
+            <span class="ml-2">Create Permission</span>
+        </a>
     </div>
-    <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg">
+
+    <div class="card">
         <div class="p-6">
-            <table class="w-full table-auto data-table">
-                <thead class="bg-gray-50 dark:bg-gray-700">
+            <table class="w-full table-auto data-table table-responsive">
+                <thead class="table-header">
                     <tr>
-                        <th class="px-4 py-2 text-left">No</th>
-                        <th class="px-4 py-2 text-left">Name</th>
-                        <th class="px-4 py-2 text-left" width="100px">Action</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">No</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -35,7 +41,7 @@
         columns: [
             {data: 'id', name: 'id'},
             {data: 'name', name: 'name'},
-            {data: 'action', name: 'action', orderable: false, searchable: false},
+            {data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-right'},
         ]
     });
     
