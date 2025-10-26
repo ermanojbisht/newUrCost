@@ -15,6 +15,7 @@ return new class extends Migration
             // Old Column Name: ID, New Column Name: id, Data Type: bigIncrements, Description: Primary key for the table.
             $table->bigIncrements('id');
             // Old Column Name: ResID, New Column Name: resource_id, Data Type: unsignedBigInteger, Description: The ID of the resource. Foreign key to the resources table.
+            //if one 1 then it means it is applicable to all labor resources if for a particular resource no value is avilable
             $table->unsignedBigInteger('resource_id');
             // Old Column Name: RateCardID, New Column Name: rate_card_id, Data Type: unsignedBigInteger, Description: The ID of the rate card. Foreign key to the rate_cards table.
             $table->unsignedBigInteger('rate_card_id');
@@ -33,7 +34,6 @@ return new class extends Migration
             $table->unsignedBigInteger('created_by')->nullable();
 
             // Foreign key constraints
-            $table->foreign('resource_id')->references('id')->on('resources')->onDelete('cascade');
             $table->foreign('rate_card_id')->references('id')->on('rate_cards')->onDelete('cascade');
             $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
         });

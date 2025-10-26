@@ -10,6 +10,8 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
+use Log;
 
 class LaborIndexSeeder extends Seeder
 {
@@ -24,20 +26,22 @@ class LaborIndexSeeder extends Seeder
         DB::table('labor_indices')->truncate();
         Schema::enableForeignKeyConstraints();
 
-        $seededResources = Resource::all()->pluck('id')->toArray();
         $seededRatecards = Ratecard::all()->pluck('id')->toArray();
 
         $legacyLaborIndices = DB::connection('legacy_mysql')
                                 ->table('laborindex')
-                                ->whereIn('ResID', $seededResources)
                                 ->whereIn('RateCardID', $seededRatecards)
                                 ->get();
 
         foreach ($legacyLaborIndices as $legacyLaborIndex) {
             LaborIndex::create([
                 'resource_id' => $legacyLaborIndex->ResID,
-                'ratecard_id' => $legacyLaborIndex->RateCardID,
-                'percent_index' => $legacyLaborIndex->perIndex,
+                'rate_card_id' => $legacyLaborIndex->RateCardID,
+                'index_value' => $legacyLaborIndex->perIndex,
+                'is_canceled' => $legacyLaborIndex->canceled,
+                'is_locked' => $legacyLaborIndex->locked,
+                'valid_from' => Carbon::createFromTimestamp($legacyLaborIndex->predate),
+                'valid_to'   => Carbon::createFromTimestamp($legacyLaborIndex->postdate),
             ]);
         }
     }

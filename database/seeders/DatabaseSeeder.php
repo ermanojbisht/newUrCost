@@ -7,6 +7,7 @@ use App\Models\LeadDistance;
 use App\Models\MachineIndex;
 use App\Models\Ohead;
 use App\Models\OverheadMaster;
+use App\Models\PolRate;
 use App\Models\Rate;
 use App\Models\Ratecard;
 use App\Models\RegionIndexing;
@@ -50,6 +51,26 @@ class DatabaseSeeder extends Seeder
             $seedersToCall[] = UnitSeeder::class;
         }
 
+        if (ResourceCapacityRule::count() === 0) {
+            $seedersToCall[] = ResourceCapacityRuleSeeder::class;
+        }
+
+        if (Ratecard::count() === 0) {
+            $seedersToCall[] = RateCardSeeder::class;
+        }
+
+        if (PolRate::count() === 0) {
+            $seedersToCall[] = PolRateSeeder::class;
+        }
+
+        if (OverheadMaster::count() === 0) {
+            $seedersToCall[] = OverheadMasterSeeder::class;
+        }
+
+        if (TruckSpeed::count() === 0) {
+            $seedersToCall[] = TruckSpeedSeeder::class;
+        }
+
         //dependent
 
         if (\App\Models\Sor::count() === 0) {
@@ -60,19 +81,29 @@ class DatabaseSeeder extends Seeder
             $seedersToCall[] = ItemSeeder::class;
         }
 
-
-
         if (Resource::count() === 0) {
             $seedersToCall[] = ResourceSeeder::class;
         }
+
+        //only after ratecard and resource table
+        if (LaborIndex::count() === 0) {
+            $seedersToCall[] = LaborIndexSeeder::class;
+        }
+        //only after ratecard and resource table
+        if (MachineIndex::count() === 0) {
+            $seedersToCall[] = MachineIndexSeeder::class;
+        }
+
+
+
 
         if (\App\Models\Skeleton::count() === 0) {
             $seedersToCall[] = SkeletonSeeder::class;
         }
 
-        if (Ratecard::count() === 0) {
-            $seedersToCall[] = RateCardSeeder::class;
-        }
+
+
+
 
 
 
@@ -92,21 +123,13 @@ class DatabaseSeeder extends Seeder
             $seedersToCall[] = LeadDistanceSeeder::class;
         }
 
-        if (LaborIndex::count() === 0) {
-            $seedersToCall[] = LaborIndexSeeder::class;
-        }
 
-        if (MachineIndex::count() === 0) {
-            $seedersToCall[] = MachineIndexSeeder::class;
-        }
 
-        if (TruckSpeed::count() === 0) {
-            $seedersToCall[] = TruckSpeedSeeder::class;
-        }
 
-        if (OverheadMaster::count() === 0) {
-            $seedersToCall[] = OverheadMasterSeeder::class;
-        }
+
+
+
+
 
         if (RegionIndexing::count() === 0) {
             $seedersToCall[] = RegionIndexingSeeder::class;
@@ -115,6 +138,30 @@ class DatabaseSeeder extends Seeder
         if (User::count() === 0) {
             $seedersToCall[] = UserSeeder::class;
             $seedersToCall[] = SuperAdminSeeder::class;
+
+            DB::table('users')->insert([
+                'id' => 4,
+                'name' => 'Seeder User',
+                'email' => 'seeder@example.com',
+                'password' => bcrypt('password'),
+            ]);
+
+
+            DB::table('users')->insert([
+                'id' => 5,
+                'name' => 'Seeder User5',
+                'email' => 'seeder5@example.com',
+                'password' => bcrypt('password'),
+            ]);
+
+            DB::table('users')->insert([
+                'id' => 7,
+                'name' => 'Seeder User7',
+                'email' => 'seeder7@example.com',
+                'password' => bcrypt('password'),
+            ]);
+
+            //1-6 user id is needed
         }
 
         $this->call($seedersToCall);

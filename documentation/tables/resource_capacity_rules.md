@@ -3,7 +3,7 @@
 
 This table stores the capacity rules for resources.
 
-## Old System
+## Old System table name rescaprules
 
 | Column | Type | Description |
 |---|---|---|
@@ -16,7 +16,7 @@ This table stores the capacity rules for resources.
 | `MuleFactor` | double | The mule factor. |
 | `sampleResource` | text | A sample resource. |
 
-## New System
+## New System table name resource_capacity_rules
 
 | Old Column Name | New Column Name | Data Type | Description | Remarks |
 |---|---|---|---|---|

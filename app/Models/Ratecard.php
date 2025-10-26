@@ -12,18 +12,11 @@ class Ratecard extends Model
     protected $table = 'rate_cards';
 
     protected $fillable = [
-        'rate_card_code',
         'name',
-        'group_id',
         'description',
         'created_by',
         'updated_by',
     ];
-
-    public function rateCardGroup()
-    {
-        return $this->belongsTo(RateCardGroup::class, 'group_id');
-    }
 
     public function createdBy()
     {

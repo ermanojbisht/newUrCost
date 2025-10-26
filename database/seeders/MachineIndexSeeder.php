@@ -10,6 +10,8 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
+use Log;
 
 class MachineIndexSeeder extends Seeder
 {
@@ -24,20 +26,22 @@ class MachineIndexSeeder extends Seeder
         DB::table('machine_indices')->truncate();
         Schema::enableForeignKeyConstraints();
 
-        $seededResources = Resource::all()->pluck('id')->toArray();
         $seededRatecards = Ratecard::all()->pluck('id')->toArray();
 
         $legacyMachineIndices = DB::connection('legacy_mysql')
                                 ->table('machindex')
-                                ->whereIn('ResID', $seededResources)
                                 ->whereIn('RateCardID', $seededRatecards)
                                 ->get();
 
         foreach ($legacyMachineIndices as $legacyMachineIndex) {
             MachineIndex::create([
                 'resource_id' => $legacyMachineIndex->ResID,
-                'ratecard_id' => $legacyMachineIndex->RateCardID,
-                'percent_index' => $legacyMachineIndex->perIndex,
+                'rate_card_id' => $legacyMachineIndex->RateCardID,
+                'index_value' => $legacyMachineIndex->perIndex,
+                'is_canceled' => $legacyMachineIndex->canceled,
+                'is_locked' => $legacyMachineIndex->locked,
+                'valid_from' => Carbon::createFromTimestamp($legacyMachineIndex->predate),
+                'valid_to'   => Carbon::createFromTimestamp($legacyMachineIndex->postdate),
             ]);
         }
     }

@@ -20,4 +20,9 @@ class UnitGroup extends Model
     {
         return $this->belongsTo(Unit::class, 'base_unit_id');
     }
+
+    public function units()
+    {
+        return $this->hasMany(Unit::class);
+    }
 }

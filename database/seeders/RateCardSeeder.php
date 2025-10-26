@@ -22,8 +22,7 @@ class RateCardSeeder extends Seeder
 
         foreach ($old_rate_cards as $old_rate_card) {
             DB::table('rate_cards')->insert([
-                'id' => $old_rate_card->id,
-                'rate_card_code' => $old_rate_card->ratecardid,
+                'id' => $old_rate_card->ratecardid,
                 'name' => $old_rate_card->ratecardname,
                 'description' => $old_rate_card->description,
                 'created_at' => $old_rate_card->insert_date,

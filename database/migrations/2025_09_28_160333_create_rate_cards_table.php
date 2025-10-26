@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('rate_cards', function (Blueprint $table) {
-            // Old Column Name: id, New Column Name: id, Data Type: bigIncrements, Description: Primary key for the table.
-            $table->bigIncrements('id');
-            // Old Column Name: ratecardid, New Column Name: rate_card_code, Data Type: string, Description: The unique code for the rate card.
-            $table->string('rate_card_code')->unique();
+            // Old Column Name: id, New Column Name: droped as not needed
+
+            // Old Column Name: ratecardid, New Column Name: rate_card_code, Data Type: bigIncrements, Description: Primary key for the table. The unique code for the rate card. id,
+            $table->bigIncrements('id')->unique();
             // Old Column Name: ratecardname, New Column Name: name, Data Type: string, Description: The name of the rate card (region).
             $table->string('name');
             // Old Column Name: ratecardgrpid, removed as not needed
@@ -39,6 +39,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('rate_cards');
+        Schema::enableForeignKeyConstraints();
     }
 };

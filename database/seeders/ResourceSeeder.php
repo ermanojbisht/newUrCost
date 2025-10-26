@@ -18,13 +18,17 @@ class ResourceSeeder extends Seeder
     {
         Model::unguard();
 
-        Schema::disableForeignKeyConstraints();
-        DB::table('resources')->truncate();
-        Schema::enableForeignKeyConstraints();
+        // DO NOT truncate table
+        // Schema::disableForeignKeyConstraints();
+        // DB::table('resources')->truncate();
+        // Schema::enableForeignKeyConstraints();
 
         $legacyResources = DB::connection('legacy_mysql')->table('resource')->get();
 
         foreach ($legacyResources as $legacyResource) {
+            if (Resource::where('id', $legacyResource->ID)->exists()) {
+                continue;
+            }
             Resource::create([
                 'id' => $legacyResource->ID,
                 'name' => $legacyResource->name,
