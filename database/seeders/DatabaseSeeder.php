@@ -89,6 +89,11 @@ class DatabaseSeeder extends Seeder
             $seedersToCall[] = RegionIndexingSeeder::class;
         }
 
+        if (User::count() === 0) {
+            $seedersToCall[] = UserSeeder::class;
+            $seedersToCall[] = SuperAdminSeeder::class;
+        }
+
         $this->call($seedersToCall);
     }
 }
