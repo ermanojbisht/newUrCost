@@ -2,19 +2,20 @@
 
 namespace Database\Seeders;
 
+use App\Models\LaborIndex;
+use App\Models\LeadDistance;
+use App\Models\MachineIndex;
+use App\Models\Ohead;
+use App\Models\OverheadMaster;
 use App\Models\Rate;
 use App\Models\Ratecard;
-use App\Models\Resource;
-use App\Models\Ohead; // Added
-use App\Models\LeadDistance; // Added
-use App\Models\LaborIndex; // Added
-use App\Models\MachineIndex; // Added
-use App\Models\Subitem; // Added
-use App\Models\TruckSpeed;
-use App\Models\OverheadMaster;
 use App\Models\RegionIndexing;
-use Database\Seeders\RateSeeder; // Added
+use App\Models\Resource;
+use App\Models\ResourceGroup;
+use App\Models\Subitem;
+use App\Models\TruckSpeed;
 use App\Models\User;
+use Database\Seeders\RateSeeder;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -33,12 +34,25 @@ class DatabaseSeeder extends Seeder
 
         $seedersToCall = [];
 
+        //isolated
+
+        if (\App\Models\ResourceGroup::count() === 0) {
+            $seedersToCall[] = ResourceGroupSeeder::class;
+        }
+
         if (\App\Models\Sor::count() === 0) {
             $seedersToCall[] = SorSeeder::class;
         }
 
         if (\App\Models\Item::count() === 0) {
             $seedersToCall[] = ItemSeeder::class;
+        }
+
+
+
+
+        if (Resource::count() === 0) {
+            $seedersToCall[] = ResourceSeeder::class;
         }
 
         if (\App\Models\Skeleton::count() === 0) {
@@ -49,9 +63,7 @@ class DatabaseSeeder extends Seeder
             $seedersToCall[] = RateCardSeeder::class;
         }
 
-        if (Resource::count() === 0) {
-            $seedersToCall[] = ResourceSeeder::class;
-        }
+
 
         if (Rate::count() === 0) {
             $seedersToCall[] = RateSeeder::class;

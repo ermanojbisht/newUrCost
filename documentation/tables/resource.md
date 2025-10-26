@@ -34,7 +34,7 @@ This table stores the master list of all resources (man, material, machine).
 | `ID` | `id` | `bigIncrements` | Primary key for the table. | Changed to be more conventional with Laravel's naming standards. |
 | `name` | `name` | `string` | The name of the resource. | - |
 | `code` | `resource_code` | `string` | A unique code for the resource. | Renamed for clarity. |
-| `resgr` | `group_id` | `unsignedBigInteger` | The resource group. | Renamed for clarity. |
+| `resgr` | `resource_group_id` | `unsignedBigInteger` | The resource group. | Renamed for clarity. |
 | `resCode` | `secondary_code` | `string` | Another code for the resource. | Renamed for clarity. |
 | `UnitGrpId` | `unit_group_id` | `unsignedBigInteger` | The ID of the unit group. | Renamed for clarity. |
 | `TechUnitID` | `unit_id` | `unsignedBigInteger` | The ID of the unit. | Renamed for clarity. |
@@ -58,3 +58,6 @@ This table stores the master list of all resources (man, material, machine).
 | `modify_date` | Replaced by `updated_at`. |
 | `modify_by` | Replaced by `updated_by`. |
 | `resCode_new` | This field was likely used for a one-time migration and is not needed in the new system. |
+
+
+ResourceGroup Model created as in legecy system no such master avilabe
