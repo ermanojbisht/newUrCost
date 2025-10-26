@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\UserManagement;
+
+use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -37,7 +39,7 @@ class UserController extends Controller
                 ->make(true);
         }
 
-        return view('users.index');
+        return view('user-management.users.index');
     }
 
     /**
@@ -48,7 +50,7 @@ class UserController extends Controller
     public function create()
     {
         $roles = Role::pluck('name','name')->all();
-        return view('users.create', compact('roles'));
+        return view('user-management.users.create', compact('roles'));
     }
 
     /**
@@ -85,7 +87,7 @@ class UserController extends Controller
     public function show($id)
     {
         $user = User::find($id);
-        return view('users.show',compact('user'));
+        return view('user-management.users.show',compact('user'));
     }
 
     /**
@@ -100,7 +102,7 @@ class UserController extends Controller
         $roles = Role::pluck('name','name')->all();
         $userRole = $user->roles->pluck('name','name')->all();
 
-        return view('users.edit',compact('user','roles','userRole'));
+        return view('user-management.users.edit',compact('user','roles','userRole'));
     }
 
     /**

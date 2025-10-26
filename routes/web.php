@@ -27,9 +27,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::resource('users', App\Http\Controllers\UserController::class)->middleware(['permission:user-list|user-create|user-edit|user-delete']);
-    Route::resource('roles', App\Http\Controllers\RoleController::class)->middleware(['permission:role-list|role-create|role-edit|role-delete']);
-    Route::resource('permissions', App\Http\Controllers\PermissionController::class)->middleware(['permission:permission-list|permission-create|permission-edit|permission-delete']);
+    require __DIR__.'/user-management.php';
 });
 
 require __DIR__.'/auth.php';

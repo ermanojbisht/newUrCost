@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\UserManagement;
+
+use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
@@ -34,7 +36,7 @@ class PermissionController extends Controller
                 ->make(true);
         }
 
-        return view('permissions.index');
+        return view('user-management.permissions.index');
     }
 
     /**
@@ -44,7 +46,7 @@ class PermissionController extends Controller
      */
     public function create()
     {
-        return view('permissions.create');
+        return view('user-management.permissions.create');
     }
 
     /**
@@ -74,7 +76,7 @@ class PermissionController extends Controller
     public function show($id)
     {
         $permission = Permission::find($id);
-        return view('permissions.show', compact('permission'));
+        return view('user-management.permissions.show', compact('permission'));
     }
 
     /**
@@ -86,7 +88,7 @@ class PermissionController extends Controller
     public function edit($id)
     {
         $permission = Permission::find($id);
-        return view('permissions.edit', compact('permission'));
+        return view('user-management.permissions.edit', compact('permission'));
     }
 
     /**

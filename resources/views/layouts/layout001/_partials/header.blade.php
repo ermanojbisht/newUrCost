@@ -25,6 +25,42 @@
                     Demo
                 </a>
 
+                @if(auth()->user()->can('user-list') || auth()->user()->can('role-list') || auth()->user()->can('permission-list'))
+                <div class="hidden sm:flex sm:items-center sm:ms-6">
+                    <x-dropdown align="right" width="48">
+                        <x-slot name="trigger">
+                            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
+                                <div>User Management</div>
+
+                                <div class="ms-1">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                            </button>
+                        </x-slot>
+
+                        <x-slot name="content">
+                            @can('user-list')
+                                <x-dropdown-link :href="route('users.index')">
+                                    {{ __('Users') }}
+                                </x-dropdown-link>
+                            @endcan
+                            @can('role-list')
+                                <x-dropdown-link :href="route('roles.index')">
+                                    {{ __('Roles') }}
+                                </x-dropdown-link>
+                            @endcan
+                            @can('permission-list')
+                                <x-dropdown-link :href="route('permissions.index')">
+                                    {{ __('Permissions') }}
+                                </x-dropdown-link>
+                            @endcan
+                        </x-slot>
+                    </x-dropdown>
+                </div>
+                @endif
+
                 <!-- Theme Toggle Button -->
                 <button @click="toggleTheme()"
                         type="button"
@@ -147,6 +183,30 @@
                    class="block px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors {{ request()->is('demo') ? 'bg-blue-50 dark:bg-blue-900 text-blue-500 dark:text-blue-400 font-bold' : '' }}">
                     Demo
                 </a>
+                @if(auth()->user()->can('user-list') || auth()->user()->can('role-list') || auth()->user()->can('permission-list'))
+                <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
+                    <div class="px-4">
+                        <div class="font-medium text-base text-gray-800 dark:text-gray-200">User Management</div>
+                    </div>
+                    <div class="mt-3 space-y-1">
+                        @can('user-list')
+                            <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                                {{ __('Users') }}
+                            </x-responsive-nav-link>
+                        @endcan
+                        @can('role-list')
+                            <x-responsive-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.*')">
+                                {{ __('Roles') }}
+                            </x-responsive-nav-link>
+                        @endcan
+                        @can('permission-list')
+                            <x-responsive-nav-link :href="route('permissions.index')" :active="request()->routeIs('permissions.*')">
+                                {{ __('Permissions') }}
+                            </x-responsive-nav-link>
+                        @endcan
+                    </div>
+                </div>
+                @endif
             </div>
 
             <!-- Responsive Settings Options -->

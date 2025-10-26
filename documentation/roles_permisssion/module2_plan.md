@@ -11,11 +11,9 @@ This document outlines the plan for implementing the user role and permission sy
 
 ## 2. Roles and Permissions CRUD
 
-*   **DONE**: Create `RoleController` with methods for `index`, `create`, `store`, `edit`, `update`, `destroy`.
-*   **DONE**: Create `PermissionController` with methods for `index`, `create`, `store`, `edit`, `update`, `destroy`.
-*   **DONE**: Create `UserController` with methods for `index`, `create`, `store`, `edit`, `update`, `destroy`.
-*   **DONE**: Create routes for Users, Roles, and Permissions in `routes/web.php`.
-*   **DONE**: Create views for Users, Roles, and Permissions CRUD operations.
+*   **DONE**: Create `RoleController`, `PermissionController`, and `UserController` in `app/Http/Controllers/UserManagement/`.
+*   **DONE**: Create routes for Users, Roles, and Permissions in `routes/user-management.php`.
+*   **DONE**: Create views for Users, Roles, and Permissions CRUD operations in `resources/views/user-management/`.
     *   Use Yajra Datatables for the `index` views.
     *   Ensure the views are responsive and follow the UI guidelines.
     *   Use the layout `/var/www/newUrCost/resources/views/layouts/layout001/app.blade.php`.
@@ -39,7 +37,7 @@ This document outlines the plan for implementing the user role and permission sy
 
 ## 4. Authorization
 
-*   **DONE**: Apply middleware and/or policies to the routes and controller methods to restrict access based on permissions.
+*   **DONE**: Apply middleware to the routes in `routes/user-management.php` to restrict access based on permissions.
 *   **DONE**: Create a partial view for the user management menu and conditionally display it based on user permissions.
 
 ## 5. Documentation
