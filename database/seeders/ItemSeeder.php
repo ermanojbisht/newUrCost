@@ -25,7 +25,7 @@ class ItemSeeder extends Seeder
                     'id' => $oldItem->chId, // Old: chId, New: id
                     'sor_id' => $oldItem->sorId, // Old: sorId, New: sor_id
                     'parent_id' => ($oldItem->chParentId == -1) ? null : $oldItem->chParentId, // Old: chParentId, New: parent_id
-                    'item_code' => ($oldItem->itemcode == 0) ? 'ITEM_CODE_0_' . $oldItem->chId : $oldItem->itemcode, // Old: itemcode, New: item_code
+                    'item_code' => $oldItem->itemcode, // Old: itemcode, New: item_code
                     'name' => $oldItem->itemname ?? 'Unnamed Item', // Old: itemname, New: name
                     'order_in_parent' => $oldItem->orderInParent, // Old: orderInParent, New: order_in_parent
                     'specification_code' => $oldItem->SpcCode, // Old: SpcCode, New: specification_code

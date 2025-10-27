@@ -10,6 +10,8 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
+use Log;
 
 class LeadDistanceSeeder extends Seeder
 {
@@ -36,9 +38,14 @@ class LeadDistanceSeeder extends Seeder
         foreach ($legacyLeadDistances as $legacyLeadDistance) {
             LeadDistance::create([
                 'resource_id' => $legacyLeadDistance->ResID,
-                'ratecard_id' => $legacyLeadDistance->RateCardID,
-                'lead' => $legacyLeadDistance->Lead,
-                'lead_type' => $legacyLeadDistance->leadType,
+                'rate_card_id' => $legacyLeadDistance->RateCardID,
+                'distance' => $legacyLeadDistance->Lead,
+                'type' => $legacyLeadDistance->leadType,
+                'applicable_date' => $legacyLeadDistance->appdate,
+                'valid_from' => Carbon::createFromTimestamp($legacyLeadDistance->predate),
+                'valid_to'   => Carbon::createFromTimestamp($legacyLeadDistance->postdate),
+                'is_canceled' => $legacyLeadDistance->canceled,
+                'is_locked' => $legacyLeadDistance->locked,
             ]);
         }
     }

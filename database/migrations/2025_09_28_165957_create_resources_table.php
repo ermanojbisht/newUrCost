@@ -12,12 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('resources', function (Blueprint $table) {
-            // Old Column Name: ID, New Column Name: id, Data Type: bigIncrements, Description: Primary key for the table.
-            $table->bigIncrements('id');
+            // Old Column Name: ID, Droped as it is of no use
             // Old Column Name: name, New Column Name: name, Data Type: string, Description: The name of the resource.
             $table->text('name');
-            // Old Column Name: code, New Column Name: resource_code, Data Type: string, Description: A unique code for the resource.
-            $table->string('resource_code')->unique();
+            // Old Column Name: code, New Column Name: id, Data Type: bigIncrements, Description: A unique code for the resource Primary key for the table.
+            $table->bigIncrements('id')->unique();
             // Old Column Name: resgr, New Column Name: resource_group_id, Data Type: unsignedBigInteger, Description: The resource group.
             $table->unsignedBigInteger('resource_group_id')->nullable();
             // Old Column Name: resCode, New Column Name: secondary_code, Data Type: string, Description: Another code for the resource.

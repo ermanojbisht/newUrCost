@@ -13,13 +13,13 @@ return new class extends Migration
     {
         Schema::create('items', function (Blueprint $table) {
             // Old Column Name: chId, New Column Name: id, Data Type: bigIncrements, Description: Primary key for the items table.
-            $table->bigIncrements('id');
+            $table->bigIncrements('id')->unique();
             // Old Column Name: sorId, New Column Name: sor_id, Data Type: unsignedBigInteger, Description: Foreign key to the sors table.
             $table->unsignedBigInteger('sor_id');
             // Old Column Name: chParentId, New Column Name: parent_id, Data Type: unsignedBigInteger, Description: Foreign key to the same table for self-referencing.
             $table->unsignedBigInteger('parent_id')->nullable();
             // Old Column Name: itemcode, New Column Name: item_code, Data Type: string, Description: The unique code for the item.
-            $table->string('item_code')->unique();
+            $table->string('item_code');
             // Old Column Name: itemname, New Column Name: name, Data Type: text, Description: The full, hierarchical name of the item.
             $table->text('name');
             // Old Column Name: orderInParent, New Column Name: order_in_parent, Data Type: integer, Description: The order of the item within its parent chapter.
@@ -83,6 +83,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('items');
+        Schema::enableForeignKeyConstraints();
     }
 };

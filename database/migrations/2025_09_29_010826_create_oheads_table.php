@@ -15,9 +15,9 @@ return new class extends Migration
             // Old Column Name: ID, New Column Name: id, Data Type: bigIncrements, Description: Primary key for the table.
             $table->bigIncrements('id');
             // Old Column Name: raitemid, New Column Name: item_id, Data Type: unsignedBigInteger, Description: Foreign key to the items table.
-            $table->unsignedBigInteger('item_id');
+            $table->string('item_id');
             // Old Column Name: oheadid, New Column Name: overhead_id, Data Type: unsignedBigInteger, Description: The ID of the overhead.
-            $table->unsignedBigInteger('overhead_id');
+            $table->integer('overhead_id')->nullable();
             // Old Column Name: oon, New Column Name: calculation_type, Data Type: integer, Description: The type of overhead calculation.
             $table->integer('calculation_type');
             // Old Column Name: paramtr, New Column Name: parameter, Data Type: decimal, Description: The parameter for the overhead calculation.
@@ -29,7 +29,7 @@ return new class extends Migration
             // Old Column Name: ohdesc, New Column Name: description, Data Type: text, Description: A description of the overhead.
             $table->text('description')->nullable();
             // Old Column Name: BasedonID, New Column Name: based_on_id, Data Type: unsignedBigInteger, Description: Specifies what the overhead is based on.
-            $table->unsignedBigInteger('based_on_id')->nullable(); // Assuming foreign key to overhead_masters table
+            $table->integer('based_on_id')->nullable(); // Assuming foreign key to overhead_masters table
             // Old Column Name: predate, New Column Name: valid_from, Data Type: date, Description: The start date for the validity of this overhead entry.
             $table->date('valid_from')->nullable();
             // Old Column Name: postdate, New Column Name: valid_to, Data Type: date, Description: The end date for the validity of this overhead entry.
@@ -45,9 +45,9 @@ return new class extends Migration
             $table->unsignedBigInteger('updated_by')->nullable();
 
             // Foreign key constraints
-            $table->foreign('item_id')->references('id')->on('items')->onDelete('cascade');
-            $table->foreign('overhead_id')->references('id')->on('overhead_masters')->onDelete('cascade');
-            $table->foreign('based_on_id')->references('id')->on('overhead_masters')->onDelete('set null'); // Assuming foreign key to overhead_masters table
+            //$table->foreign('item_id')->references('item_code')->on('items')->onDelete('cascade');
+            //$table->foreign('overhead_id')->references('id')->on('overhead_masters')->onDelete('cascade');
+           // $table->foreign('based_on_id')->references('id')->on('overhead_masters')->onDelete('set null'); // Assuming foreign key to overhead_masters table
             $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
             $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
         });
@@ -58,6 +58,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('oheads');
+        Schema::enableForeignKeyConstraints();
     }
 };

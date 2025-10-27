@@ -31,9 +31,9 @@ This table stores the master list of all resources (man, material, machine).
 
 | Old Column Name | New Column Name | Data Type | Description | Remarks |
 |---|---|---|---|---|
-| `ID` | `id` | `bigIncrements` | Primary key for the table. | Changed to be more conventional with Laravel's naming standards. |
+| `ID` | -- | `bigIncrements` | Primary key for the table. |Dropped as of no use |
 | `name` | `name` | `string` | The name of the resource. | - |
-| `code` | `resource_code` | `string` | A unique code for the resource. | Renamed for clarity. |
+| `code` | `id` | `bigIncrements` | A unique code for the resource. | Renamed for clarity.  |
 | `resgr` | `resource_group_id` | `unsignedBigInteger` | The resource group. | Renamed for clarity. |
 | `resCode` | `secondary_code` | `string` | Another code for the resource. | Renamed for clarity. |
 | `UnitGrpId` | `unit_group_id` | `unsignedBigInteger` | The ID of the unit group. | Renamed for clarity. |

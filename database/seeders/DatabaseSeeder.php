@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\LaborIndex;
 use App\Models\LeadDistance;
 use App\Models\MachineIndex;
+use App\Models\ManMuleCartRule;
 use App\Models\Ohead;
 use App\Models\OverheadMaster;
 use App\Models\PolRate;
@@ -71,6 +72,10 @@ class DatabaseSeeder extends Seeder
             $seedersToCall[] = TruckSpeedSeeder::class;
         }
 
+        if (ManMuleCartRule::count() === 0) {
+            $seedersToCall[] = ManMuleCartRuleSeeder::class;
+        }
+
         //dependent
 
         if (\App\Models\Sor::count() === 0) {
@@ -94,11 +99,17 @@ class DatabaseSeeder extends Seeder
             $seedersToCall[] = MachineIndexSeeder::class;
         }
 
+        //only after ratecard and resource table
+        if (LeadDistance::count() === 0) {
+            $seedersToCall[] = LeadDistanceSeeder::class;
+        }
 
 
 
-        if (\App\Models\Skeleton::count() === 0) {
-            $seedersToCall[] = SkeletonSeeder::class;
+
+
+        if (Ohead::count() === 0) {
+            $seedersToCall[] = OheadSeeder::class;
         }
 
 
@@ -106,6 +117,10 @@ class DatabaseSeeder extends Seeder
 
 
 
+
+        if (\App\Models\Skeleton::count() === 0) {
+            $seedersToCall[] = SkeletonSeeder::class;
+        }
 
         if (Rate::count() === 0) {
             $seedersToCall[] = RateSeeder::class;
@@ -115,13 +130,9 @@ class DatabaseSeeder extends Seeder
             $seedersToCall[] = SubitemSeeder::class;
         }
 
-        if (Ohead::count() === 0) {
-            $seedersToCall[] = OheadSeeder::class;
-        }
 
-        if (LeadDistance::count() === 0) {
-            $seedersToCall[] = LeadDistanceSeeder::class;
-        }
+
+
 
 
 
@@ -136,31 +147,7 @@ class DatabaseSeeder extends Seeder
         }
 
         if (User::count() === 0) {
-            $seedersToCall[] = UserSeeder::class;
             $seedersToCall[] = SuperAdminSeeder::class;
-
-            DB::table('users')->insert([
-                'id' => 4,
-                'name' => 'Seeder User',
-                'email' => 'seeder@example.com',
-                'password' => bcrypt('password'),
-            ]);
-
-
-            DB::table('users')->insert([
-                'id' => 5,
-                'name' => 'Seeder User5',
-                'email' => 'seeder5@example.com',
-                'password' => bcrypt('password'),
-            ]);
-
-            DB::table('users')->insert([
-                'id' => 7,
-                'name' => 'Seeder User7',
-                'email' => 'seeder7@example.com',
-                'password' => bcrypt('password'),
-            ]);
-
             //1-6 user id is needed
         }
 

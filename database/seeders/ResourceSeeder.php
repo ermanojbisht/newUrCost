@@ -26,13 +26,12 @@ class ResourceSeeder extends Seeder
         $legacyResources = DB::connection('legacy_mysql')->table('resource')->get();
 
         foreach ($legacyResources as $legacyResource) {
-            if (Resource::where('id', $legacyResource->ID)->exists()) {
+            if (Resource::where('id', $legacyResource->code)->exists()) {
                 continue;
             }
             Resource::create([
-                'id' => $legacyResource->ID,
                 'name' => $legacyResource->name,
-                'resource_code' => $legacyResource->code,
+                'id' => $legacyResource->code,
                 'resource_group_id' => $legacyResource->resgr,
                 'secondary_code' => $legacyResource->resCode,
                 'unit_group_id' => $legacyResource->UnitGrpId,

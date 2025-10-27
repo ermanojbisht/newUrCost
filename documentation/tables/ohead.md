@@ -47,7 +47,7 @@ This table defines the overheads that are applied to an SOR item.
 | `created_at` | `created_at` | `timestamp` | The date the record was created. | Added to follow Laravel's conventions. |
 | `updated_at` | `updated_at` | `timestamp` | The date the record was last updated. | Added to follow Laravel's conventions. |
 | `created_by` | `created_by` | `unsignedBigInteger` | Foreign key to the `users` table. | Follows Laravel's foreign key naming conventions. |
-| `updated_by` | `updated_by` | `unsignedBigInteger` | Foreign key to the `users` table. | Follows Laravel's foreign key naming conventions. |
+| `modify_by` | `updated_by` | `unsignedBigInteger` | Foreign key to the `users` table. | Follows Laravel's foreign key naming conventions. |
 
 ### Fields left behind
 

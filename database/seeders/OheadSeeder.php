@@ -9,6 +9,8 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
+use Log;
 
 class OheadSeeder extends Seeder
 {
@@ -23,28 +25,36 @@ class OheadSeeder extends Seeder
         DB::table('oheads')->truncate();
         Schema::enableForeignKeyConstraints();
 
-        $seededItems = Item::all()->pluck('id', 'itemcode')->toArray(); // Map old_itemcode to new_id
+        $seededItems = Item::all()->pluck('id')->toArray(); // Map old_itemcode to new_id
 
         $legacyOheads = DB::connection('legacy_mysql')
                             ->table('ohead')
-                            ->whereIn('raitemid', array_keys($seededItems)) // Filter by legacy itemcodes
+                            //->whereIn('raitemid', array_keys($seededItems)) // Filter by legacy itemcodes
                             ->get();
+        Log::info("OheadSeeder  legacyOheads count= ".print_r($legacyOheads->count(),true));
 
         foreach ($legacyOheads as $legacyOhead) {
-            $newItemId = $seededItems[$legacyOhead->raitemid] ?? null;
+            //$newItemId = $seededItems[$legacyOhead->raitemid] ?? null;
 
-            if ($newItemId) {
+            //if ($newItemId) {
                 Ohead::create([
-                    'item_id' => $newItemId,
-                    'ohead_id' => $legacyOhead->oheadid,
-                    'overhead_calculation_type' => $legacyOhead->oon,
+                    'id' => $legacyOhead->ID,
+                    'item_id' => $legacyOhead->raitemid,
+                    'overhead_id' => $legacyOhead->oheadid,
+                    'calculation_type' => $legacyOhead->oon,
                     'parameter' => $legacyOhead->paramtr,
-                    'sorder' => $legacyOhead->sorder,
-                    'onitm' => $legacyOhead->onitm,
-                    'ohdesc' => $legacyOhead->ohdesc,
-                    'furtherOhead' => $legacyOhead->furtherOhead,
+                    'sort_order' => $legacyOhead->sorder,
+                    'applicable_items' => $legacyOhead->onitm,
+                    'description' => $legacyOhead->ohdesc,
+                    'allow_further_overhead' => $legacyOhead->furtherOhead,
+                    'valid_from' => Carbon::createFromTimestamp($legacyOhead->predate),
+                    'valid_to'   => Carbon::createFromTimestamp($legacyOhead->postdate),
+                    'is_canceled' => $legacyOhead->canceled,
+                    'created_by' => $legacyOhead->created_by,
+                    'updated_by' => $legacyOhead->modify_by,
+                    'based_on_id' => $legacyOhead->BasedonID,
                 ]);
-            }
+            //}
         }
     }
 }
