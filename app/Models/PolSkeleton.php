@@ -1,14 +1,11 @@
 <?php
 
-namespace App\\\Models;
+namespace App\Models;
 
-use Illuminate\\\Database\\\Eloquent\\\Factories\\\HasFactory;
-use Illuminate\\\Database\\\Eloquent\\\Model;
+use Illuminate\Database\Eloquent\Model;
 
 class PolSkeleton extends Model
 {
-    use HasFactory;
-
     protected $table = 'pol_skeletons';
 
     protected $fillable = [

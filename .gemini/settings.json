@@ -3,6 +3,36 @@
     "preferredEditor": "code",
     "checkpointing": {"enabled": true}
   },
+  "mcpServers": {
+    "context7": {
+      "httpUrl": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "ctx7sk-5b5e43c9-40be-4ab3-9759-e692368a97cc",
+        "Accept": "application/json, text/event-stream"
+      }
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest"
+      ]
+    },
+    "laravel-boost": {
+      "command": "php",
+      "args": ["./artisan", "boost:mcp"],
+      "cwd": "/var/www/newUrCost",
+      "timeout": 30000,
+      "trust": false
+    }
+  },
+  "mcp": {
+    "allowed": [
+      "chrome-devtools",
+      "context7",
+      "laravel-boost"
+    ]
+  },
   "ui": {
     "theme": "GitHub",
     "hideBanner": true,

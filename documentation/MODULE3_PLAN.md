@@ -83,7 +83,7 @@ I will process each model listed above sequentially, following these steps. The 
 | **ResourceCapacityRule**| **Done**        | ✅           | ✅      | ✅                     | ✅      | ✅          | ✅     |
 | **PolSkeleton**         | **Done**        | ✅           | ✅      | ✅                     | ✅      | ✅          | ✅     |
 | **PolRate**             | **Done**        | ✅           | ✅      | ✅                     | ✅      | ✅          | ✅     |
-| **RateCard**            | **In Progress** | ✅           | ✅      | ✅                     | ✅      | ✅          | ☐     |
+| **RateCard**            | **Done**        | ✅           | ✅      | ✅                     | ✅      | ✅          | ✅     |
 
 ---
 *I will update the checkboxes (`☐` to `✅`) as each step is completed.*

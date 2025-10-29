@@ -18,35 +18,117 @@ class RoleAndPermissionSeeder extends Seeder
         // Reset cached roles and permissions
         app()['cache']->forget('spatie.permission.cache');
 
-        // create permissions
-        Permission::create(['name' => 'user-list']);
-        Permission::create(['name' => 'user-create']);
-        Permission::create(['name' => 'user-edit']);
-        Permission::create(['name' => 'user-delete']);
-        Permission::create(['name' => 'role-list']);
-        Permission::create(['name' => 'role-create']);
-        Permission::create(['name' => 'role-edit']);
-        Permission::create(['name' => 'role-delete']);
-        Permission::create(['name' => 'permission-list']);
-        Permission::create(['name' => 'permission-create']);
-        Permission::create(['name' => 'permission-edit']);
-        Permission::create(['name' => 'permission-delete']);
+        $permissions = [
+            'user-list',
+            'user-create',
+            'user-edit',
+            'user-delete',
+            'role-list',
+            'role-create',
+            'role-edit',
+            'role-delete',
+            'permission-list',
+            'permission-create',
+            'permission-edit',
+            'permission-delete',
+            'view units',
+            'create units',
+            'edit units',
+            'delete units',
+            'view unitgroups',
+            'create unitgroups',
+            'edit unitgroups',
+            'delete unitgroups',
+            'view resourcegroups',
+            'create resourcegroups',
+            'edit resourcegroups',
+            'delete resourcegroups',
+            'view truckspeeds',
+            'create truckspeeds',
+            'edit truckspeeds',
+            'delete truckspeeds',
+            'view sors',
+            'create sors',
+            'edit sors',
+            'delete sors',
+            'view resourcecapacityrules',
+            'create resourcecapacityrules',
+            'edit resourcecapacityrules',
+            'delete resourcecapacityrules',
+            'view polskeletons',
+            'create polskeletons',
+            'edit polskeletons',
+            'delete polskeletons',
+            'view polrates',
+            'create polrates',
+            'edit polrates',
+            'delete polrates',
+            'view ratecards',
+            'create ratecards',
+            'edit ratecards',
+            'delete ratecards',
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission]);
+        }
 
         // create roles and assign created permissions
 
-        $role = Role::create(['name' => 'user-manager']);
-        $role->givePermissionTo('user-list');
-        $role->givePermissionTo('user-create');
-        $role->givePermissionTo('user-edit');
-        $role->givePermissionTo('user-delete');
-        $role->givePermissionTo('role-list');
-        $role->givePermissionTo('role-create');
-        $role->givePermissionTo('role-edit');
-        $role->givePermissionTo('role-delete');
-        $role->givePermissionTo('permission-list');
-        $role->givePermissionTo('permission-create');
-        $role->givePermissionTo('permission-edit');
-        $role->givePermissionTo('permission-delete');
+        $role = Role::firstOrCreate(['name' => 'user-manager']);
+        $role->givePermissionTo([
+            'user-list',
+            'user-create',
+            'user-edit',
+            'user-delete',
+            'role-list',
+            'role-create',
+            'role-edit',
+            'role-delete',
+            'permission-list',
+            'permission-create',
+            'permission-edit',
+            'permission-delete',
+        ]);
 
+        $sorAdminRole = Role::firstOrCreate(['name' => 'sor-admin']);
+        $sorAdminRole->givePermissionTo([
+            'view units',
+            'create units',
+            'edit units',
+            'delete units',
+            'view unitgroups',
+            'create unitgroups',
+            'edit unitgroups',
+            'delete unitgroups',
+            'view resourcegroups',
+            'create resourcegroups',
+            'edit resourcegroups',
+            'delete resourcegroups',
+            'view truckspeeds',
+            'create truckspeeds',
+            'edit truckspeeds',
+            'delete truckspeeds',
+            'view sors',
+            'create sors',
+            'edit sors',
+            'delete sors',
+            'view resourcecapacityrules',
+            'create resourcecapacityrules',
+            'edit resourcecapacityrules',
+            'delete resourcecapacityrules',
+            'view polskeletons',
+            'create polskeletons',
+            'edit polskeletons',
+            'delete polskeletons',
+            'view polrates',
+            'create polrates',
+            'edit polrates',
+            'delete polrates',
+            'view ratecards',
+            'create ratecards',
+            'edit ratecards',
+            'delete ratecards',
+        ]);
     }
 }

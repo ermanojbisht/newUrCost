@@ -29,7 +29,7 @@ class SuperAdminSeeder extends Seeder
                 'password' => bcrypt('12345678')
             ]);
 
-            $role = Role::create(['name' => 'super-admin']);
+            $role = Role::firstOrCreate(['name' => 'super-admin']);
             $user->assignRole($role);
 
             $user = User::create([
@@ -62,11 +62,11 @@ class SuperAdminSeeder extends Seeder
                 'password' => bcrypt('12345678'),
             ]);
 
-
-
-
-
-
+            User::create(['id' => 1000], [
+                'name' => 'System User',
+                'email' => 'system@example.com',
+                'password' => bcrypt('12345678'),
+            ]);
 
     }
 }

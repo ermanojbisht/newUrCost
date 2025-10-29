@@ -1,7 +1,9 @@
 @extends('layouts.layout001.app')
 
 @section('title', config('app.name', 'Laravel'))
-
+@section('sidebar')
+@include('layouts.layout001._partials.sidebar')
+@endsection
 @section('page-header')
     @isset($header)
         <div class="flex flex-col md:flex-row md:items-center md:justify-between">

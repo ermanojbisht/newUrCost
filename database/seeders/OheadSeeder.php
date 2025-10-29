@@ -2,14 +2,15 @@
 
 namespace Database\Seeders;
 
-use App\Models\Ohead;
 use App\Models\Item;
+use App\Models\Ohead;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
 use Log;
 
 class OheadSeeder extends Seeder
@@ -21,24 +22,26 @@ class OheadSeeder extends Seeder
     {
         Model::unguard();
 
-        Schema::disableForeignKeyConstraints();
+        /*Schema::disableForeignKeyConstraints();
         DB::table('oheads')->truncate();
-        Schema::enableForeignKeyConstraints();
-
-        $seededItems = Item::all()->pluck('id')->toArray(); // Map old_itemcode to new_id
+        Schema::enableForeignKeyConstraints();*/
 
         $legacyOheads = DB::connection('legacy_mysql')
                             ->table('ohead')
-                            //->whereIn('raitemid', array_keys($seededItems)) // Filter by legacy itemcodes
                             ->get();
-        Log::info("OheadSeeder  legacyOheads count= ".print_r($legacyOheads->count(),true));
+        $existingUsers = User::pluck('id')->toArray();
 
         foreach ($legacyOheads as $legacyOhead) {
-            //$newItemId = $seededItems[$legacyOhead->raitemid] ?? null;
+            $createdBy = in_array($legacyOhead->created_by, $existingUsers)
+                        ? $legacyOhead->created_by
+                        : null;
 
-            //if ($newItemId) {
-                Ohead::create([
-                    'id' => $legacyOhead->ID,
+            $updatedBy = in_array($legacyOhead->modify_by, $existingUsers)
+                        ? $legacyOhead->modify_by
+                        : null;
+            Ohead::updateOrCreate(
+                ['id' => $legacyOhead->ID], // Unique key to match existing row
+                [
                     'item_id' => $legacyOhead->raitemid,
                     'overhead_id' => $legacyOhead->oheadid,
                     'calculation_type' => $legacyOhead->oon,
@@ -50,11 +53,12 @@ class OheadSeeder extends Seeder
                     'valid_from' => Carbon::createFromTimestamp($legacyOhead->predate),
                     'valid_to'   => Carbon::createFromTimestamp($legacyOhead->postdate),
                     'is_canceled' => $legacyOhead->canceled,
-                    'created_by' => $legacyOhead->created_by,
-                    'updated_by' => $legacyOhead->modify_by,
+                    'created_by' => $createdBy,
+                    'updated_by' => $updatedBy,
                     'based_on_id' => $legacyOhead->BasedonID,
-                ]);
-            //}
+                ]
+            );
         }
+
     }
 }

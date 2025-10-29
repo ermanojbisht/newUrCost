@@ -9,13 +9,18 @@ use Illuminate\Http\Request;
 
 class SorController extends Controller
 {
+    public function __construct()
+    {
+        $this->authorizeResource(Sor::class, 'sor');
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $sors = Sor::all();
-        return view('sors.index', compact('sors'));
+        $sors = Sor::paginate(10);
+        return view('pages.sors.index', compact('sors'));
     }
 
     /**
@@ -23,7 +28,7 @@ class SorController extends Controller
      */
     public function create()
     {
-        return view('sors.create');
+        return view('pages.sors.create');
     }
 
     /**
@@ -31,14 +36,15 @@ class SorController extends Controller
      */
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
-            'sorname' => 'required|max:255',
-            'locked' => 'boolean',
+        $request->validate([
+            'name' => 'required|string|max:255|unique:sors',
+            'is_locked' => 'boolean',
             'display_details' => 'nullable|string',
             'filename' => 'nullable|string',
+            'short_name' => 'nullable|string|max:255',
         ]);
 
-        $sor = Sor::create($validatedData);
+        $sor = Sor::create($request->all());
 
         return redirect()->route('sors.index')->with('success', 'SOR created successfully!');
     }
@@ -51,7 +57,7 @@ class SorController extends Controller
         $items = $sor->items()->paginate(20);
         $ratecards = Ratecard::all();
 
-        return view('sors.show', compact('sor', 'items', 'ratecards'));
+        return view('pages.sors.show', compact('sor', 'items', 'ratecards'));
     }
 
     /**
@@ -59,7 +65,7 @@ class SorController extends Controller
      */
     public function edit(Sor $sor)
     {
-        return view('sors.edit', compact('sor'));
+        return view('pages.sors.edit', compact('sor'));
     }
 
     /**
@@ -67,16 +73,17 @@ class SorController extends Controller
      */
     public function update(Request $request, Sor $sor)
     {
-        $validatedData = $request->validate([
-            'sorname' => 'required|max:255',
-            'locked' => 'boolean',
+        $request->validate([
+            'name' => 'required|string|max:255|unique:sors,name,'.$sor->id,
+            'is_locked' => 'boolean',
             'display_details' => 'nullable|string',
             'filename' => 'nullable|string',
+            'short_name' => 'nullable|string|max:255',
         ]);
 
-        $sor->update($validatedData);
+        $sor->update($request->all());
 
-        return redirect()->route('sors.show', $sor)->with('success', 'SOR updated successfully!');
+        return redirect()->route('sors.index')->with('success', 'SOR updated successfully!');
     }
 
     /**
