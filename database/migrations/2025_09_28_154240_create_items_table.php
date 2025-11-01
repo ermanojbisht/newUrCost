@@ -21,7 +21,7 @@ return new class extends Migration
             // Old Column Name: itemcode, New Column Name: item_code, Data Type: string, Description: The unique code for the item.
             $table->string('item_code');
             // Old Column Name: itemname, New Column Name: name, Data Type: text, Description: The full, hierarchical name of the item.
-            $table->text('name');
+            $table->text('name')->nullable();
             // Old Column Name: orderInParent, New Column Name: order_in_parent, Data Type: integer, Description: The order of the item within its parent chapter.
             $table->integer('order_in_parent')->nullable();
             // Old Column Name: SpcCode, New Column Name: specification_code, Data Type: text, Description: The specification code.
