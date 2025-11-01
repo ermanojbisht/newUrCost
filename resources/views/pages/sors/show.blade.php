@@ -39,12 +39,7 @@
                 </thead>
                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse ($items as $item)
-                        <tr class="table-row">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ $item->item_no }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">{{ $item->item_short_desc }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ $item->unit->name ?? '' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">-</td>
-                        </tr>
+                        @include('pages.sors._item', ['item' => $item, 'level' => 0])
                     @empty
                         <tr>
                             <td colspan="4" class="px-6 py-4 text-center text-gray-500">No items found in this SOR.</td>
@@ -54,24 +49,7 @@
             </table>
         </div>
 
-        <div class="md:hidden">
-            @foreach($items as $item)
-                <div class="card mb-4">
-                    <div class="flex justify-between">
-                        <div>
-                            <h3 class="font-semibold">{{ $item->item_no }}</h3>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">{{ $item->item_short_desc }}</p>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">{{ $item->unit->name ?? '' }}</p>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">-</p>
-                        </div>
-                    </div>
-                </div>
-            @endforeach
-        </div>
 
-        <div class="p-4">
-            {{ $items->links() }}
-        </div>
     </div>
 </div>
 @endsection

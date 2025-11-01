@@ -109,7 +109,7 @@ class Subitem extends Model
      * @param int $pos The position counter (passed by reference).
      * @param int $level The current depth level of the recursion.
      */
-    private static function buildDependencyTree(int $root_item_code, int $parent_item_code, int &$pos, int $level)
+    private static function buildDependencyTree(int $root_item_code, int $parent_item_code, int & $pos, int $level)
     {
         // Fetch all direct subitems for the current parent item_code.
         $subitems = self::where('item_id', $parent_item_code)->orderBy('sort_order')->get();
@@ -143,6 +143,60 @@ class Subitem extends Model
 
             // Recurse for the children of the current subitem.
             self::buildDependencyTree($root_item_code, $subitem->sub_item_id, $pos, $level + 1);
+        }
+    }
+
+    /**
+     * Update the sub_item_level for a single item based on its max level in the dependency tree.
+     *
+     * @param int $item_code
+     * @return void
+     */
+    public static function updateSubitemLevelInfo(int $item_code)
+    {
+        if ($item_code) {
+            $max_level = SubitemDependency::where('sub_item_id', $item_code)->max('level');
+            
+            if (is_null($max_level)) {
+                $max_level = 0;
+            }
+
+            Item::where('item_code', $item_code)->update(['sub_item_level' => $max_level]);
+            Log::debug("Updated sub_item_level for item_code {$item_code} to {$max_level}");
+        }
+    }
+
+    /**
+     * Update sub_item_level for a group of items, either by SOR or a single RA item.
+     *
+     * @param int|null $sor_id
+     * @param int|null $item_code
+     * @return void
+     */
+    public static function updateSubitemLevelInfoForGroup(int $sor_id = null, int $item_code = null)
+    {
+        $subitems_query = self::query();
+
+        if ($item_code) {
+            $subitems_query->where('item_id', $item_code);
+        } elseif ($sor_id) {
+            // This is a potentially destructive operation, as it resets levels for the whole SOR.
+            // Replicating old system's logic.
+            Log::warning("Resetting sub_item_level to 0 for all items in sor_id: {$sor_id}");
+            Item::where('sor_id', $sor_id)->update(['sub_item_level' => 0]);
+
+            $subitems_query->whereHas('item', function ($q) use ($sor_id) {
+                $q->where('sor_id', $sor_id);
+            });
+        } else {
+            // No parameters provided, do nothing.
+            return;
+        }
+
+        $distinct_subitems = $subitems_query->distinct()->pluck('sub_item_id');
+
+        foreach ($distinct_subitems as $sub_item_id) {
+            self::updateSubitemLevelInfo($sub_item_id);
         }
     }
 }

@@ -47,12 +47,12 @@ class Item extends Model
 
     public function parent()
     {
-        return $this->belongsTo(Item::class, 'ch_parent_id'); // Updated to match migration
+        return $this->belongsTo(Item::class, 'parent_id');
     }
 
     public function children()
     {
-        return $this->hasMany(Item::class, 'ch_parent_id'); // Updated to match migration
+        return $this->hasMany(Item::class, 'parent_id');
     }
 
     public function skeletons()

@@ -14,6 +14,14 @@ class SorController extends Controller
         $this->authorizeResource(Sor::class, 'sor');
     }
 
+    public function sorCards()
+    {
+        $sors = Sor::all();
+        return view('sors.index', compact('sors'));
+    }
+
+
+
     /**
      * Display a listing of the resource.
      */

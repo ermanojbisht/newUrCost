@@ -12,10 +12,17 @@
                    class="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors {{ request()->routeIs('dashboard') ? 'font-bold text-blue-500 dark:text-blue-400' : '' }}">
                     {{ __('Dashboard') }}
                 </a>
-                <a href="{{ route('sors.index') }}"
-                   class="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors {{ request()->routeIs('sors.*') ? 'font-bold text-blue-500 dark:text-blue-400' : '' }}">
-                    SORs
+                <a href="{{ route('sorCards') }}"
+                   class="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors {{ request()->routeIs('sorCards') ? 'font-bold text-blue-500 dark:text-blue-400' : '' }}">
+                    SOR Cards
                 </a>
+                @can('sor-admin')
+                <a href="#"
+                   class="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors {{ request()->routeIs('sors.admin') ? 'font-bold text-blue-500 dark:text-blue-400' : '' }}">
+                    SOR Admin
+                </a>
+                @endcan
+
                 <a href="{{ route('items.index') }}"
                    class="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors {{ request()->routeIs('items.*') ? 'font-bold text-blue-500 dark:text-blue-400' : '' }}">
                     Items
@@ -172,9 +179,16 @@
                     {{ __('Dashboard') }}
                 </x-responsive-nav-link>
                 <a href="{{ route('sors.index') }}"
-                   class="block px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors {{ request()->routeIs('sors.*') ? 'bg-blue-50 dark:bg-blue-900 text-blue-500 dark:text-blue-400 font-bold' : '' }}">
+                   class="block px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors {{ request()->routeIs('sors.index') ? 'bg-blue-50 dark:bg-blue-900 text-blue-500 dark:text-blue-400 font-bold' : '' }}">
                     SORs
                 </a>
+                @can('sor-admin')
+                <a href="#"
+                   class="block px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors {{ request()->routeIs('sors.admin') ? 'bg-blue-50 dark:bg-blue-900 text-blue-500 dark:text-blue-400 font-bold' : '' }}">
+                    SOR Admin
+                </a>
+                @endcan
+
                 <a href="{{ route('items.index') }}"
                    class="block px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors {{ request()->routeIs('items.*') ? 'bg-blue-50 dark:bg-blue-900 text-blue-500 dark:text-blue-400 font-bold' : '' }}">
                     Items
