@@ -102,7 +102,7 @@ This section will serve as a checklist for the implementation process. Please up
 
 **Step 2: Data Migration & Seeding**
 *   **Task:**  already done , all tables are avilable check
-*   **Status:** Pending
+*   **Status:** Completed
 
 **Step 3: Models**
 *   **Task:** Revisit `Sor`, `Item`, and `ItemRate` models. Configure the `Item` model to use `kalnoy/nestedset`. Define the relationships if not exist: `Sor` hasMany `Item`, `Item` hasMany `ItemRate`. Add the `getRateFor($ratecard, $date)` method to the `Item` model.
@@ -122,7 +122,7 @@ This section will serve as a checklist for the implementation process. Please up
 
 ## 4. How to Use This Plan
 
-first create a route show SOR as card which has btn for alltype of view then clicking that btn navigates to that view
+The initial view will be accessed via the `sorCards` route, handled by the `SorController@sorCards` method. This view will display SORs as cards, each with buttons to navigate to different views.
 This document is a living plan for the migration. When working on this task, please follow these guidelines:
 
 1.  **Follow the Steps:** Address the implementation steps in the order they are listed.
