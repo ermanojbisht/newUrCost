@@ -1,20 +1,20 @@
 <?php
 
-namespace App	Models;
+namespace App\Models;
 
-use Illuminate	Database	Eloquent	Factories	HasFactory;
-use Illuminate	Database	Eloquent	Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
-class ItemRate	extends	Model
+class ItemRate extends Model
 {
     use HasFactory;
 
-    protected $table	= 	'item_rates';
+    protected $table = 'item_rates';
 
-    protected $primaryKey	= 	['item_id', 	'rate_card_id', 	'calculation_date'];
-    public $incrementing	= 	false;
+    protected $primaryKey = ['item_id', 'rate_card_id', 'calculation_date'];
+    public $incrementing = false;
 
-    protected $fillable	= 	[
+    protected $fillable = [
         'item_id',
         'rate',
         'labor_cost',
@@ -28,10 +28,10 @@ class ItemRate	extends	Model
         'unit_id',
     ];
 
-    protected $casts	= 	[
-        'calculation_date'	=> 	'date',
-        'valid_from'	=> 	'date',
-        'valid_to'	=> 	'date',
+    protected $casts = [
+        'calculation_date' => 'date',
+        'valid_from' => 'date',
+        'valid_to' => 'date',
     ];
 
     public function item()
@@ -41,7 +41,7 @@ class ItemRate	extends	Model
 
     public function rateCard()
     {
-        return $this->belongsTo(Ratecard::class, 	'rate_card_id');
+        return $this->belongsTo(RateCard::class, 'rate_card_id');
     }
 
     public function unit()

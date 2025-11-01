@@ -8,7 +8,7 @@ use App\Http\Controllers\SorController;
 Route::get('/', function () {
     return view('welcome');
 });
-
+require __DIR__.'/auth.php';
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -35,8 +35,18 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     require __DIR__.'/user-management.php';
+
+    Route::prefix('api/sors/{sor}/tree')->name('api.sors.tree.')->group(function () {
+        Route::get('/', [SorController::class, 'getTreeData'])->name('data');
+        Route::post('/', [SorController::class, 'createNode'])->name('create');
+        Route::put('/{item}', [SorController::class, 'updateNode'])->name('update');
+        Route::delete('/{item}', [SorController::class, 'deleteNode'])->name('delete');
+        Route::post('/move', [SorController::class, 'moveNode'])->name('move');
+    });
+
+    Route::get('api/sors/{sor}/items-datatable', [SorController::class, 'getDataTableData'])->name('api.sors.items-datatable');
 });
 
-require __DIR__.'/auth.php';
-
 Route::get('/sorCards', [SorController::class, 'sorCards'])->name('sorCards');
+Route::get('/sors/{sor}/admin', [SorController::class, 'admin'])->name('sors.admin');
+Route::get('/sors/{sor}/datatable', [SorController::class, 'dataTable'])->name('sors.datatable');

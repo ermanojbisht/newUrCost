@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
-use App\Models\Ratecard;
+use App\Models\RateCard;
 use App\Models\Sor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\DataTables;
 
 class SorController extends Controller
 {
@@ -14,15 +16,7 @@ class SorController extends Controller
         $this->authorizeResource(Sor::class, 'sor');
     }
 
-    public function sorCards()
-    {
-        $sors = Sor::all();
-        return view('sors.index', compact('sors'));
-    }
-
-
-
-    /**
+     /**
      * Display a listing of the resource.
      */
     public function index()
@@ -102,5 +96,136 @@ class SorController extends Controller
         $sor->delete();
 
         return redirect()->route('sors.index')->with('success', 'SOR deleted successfully!');
+    }
+
+    public function sorCards()
+    {
+        $sors = Sor::all();
+        return view('sors.index', compact('sors'));
+    }
+
+    public function admin(Sor $sor)
+    {
+        return view('sors.admin', compact('sor'));
+    }
+
+    public function getTreeData(Sor $sor)
+    {
+        $items = $sor->items()->defaultOrder()->get()->toTree();
+
+        $data = [];
+        foreach ($items as $item) {
+            $data[] = $this->formatNode($item);
+        }
+
+        return response()->json($data);
+    }
+
+    public function createNode(Request $request, Sor $sor)
+    {
+        $this->validate($request, [
+            'parent_id' => 'nullable|exists:items,id',
+            'text' => 'required|string|max:255',
+            'item_type' => 'required|string|in:chapter,item',
+        ]);
+
+        $parent = $request->input('parent_id') ? Item::find($request->input('parent_id')) : null;
+
+        $item = DB::transaction(function () use ($request, $sor, $parent) {
+            $item = new Item([
+                'sor_id' => $sor->id,
+                'name' => $request->input('text'),
+                'item_type' => $request->input('item_type'),
+                'item_code' => 'TEMP-' . uniqid(), // Temporary item code
+            ]);
+
+            if ($parent) {
+                $item->appendToNode($parent)->save();
+            } else {
+                $item->save();
+            }
+            return $item;
+        });
+
+        return response()->json(['id' => $item->id, 'text' => $item->name, 'type' => $item->item_type]);
+    }
+
+    public function updateNode(Request $request, Sor $sor, Item $item)
+    {
+        $this->validate($request, [
+            'text' => 'required|string|max:255',
+        ]);
+
+        $item->update(['name' => $request->input('text')]);
+
+        return response()->json(['status' => 'success']);
+    }
+
+    public function deleteNode(Sor $sor, Item $item)
+    {
+        $item->delete();
+
+        return response()->json(['status' => 'success']);
+    }
+
+    public function moveNode(Request $request, Sor $sor)
+    {
+        $this->validate($request, [
+            'id' => 'required|exists:items,id',
+            'parent' => 'nullable|exists:items,id',
+            'position' => 'required|integer',
+        ]);
+
+        $item = Item::find($request->input('id'));
+        $parent = $request->input('parent') !== '#' ? Item::find($request->input('parent')) : null;
+        $position = $request->input('position');
+
+        DB::transaction(function () use ($item, $parent, $position) {
+            if ($parent) {
+                $item->appendToNode($parent)->save();
+            } else {
+                $item->makeRoot()->save();
+            }
+
+            $item->update(['nested_list_order' => $position]);
+        });
+
+        return response()->json(['status' => 'success']);
+    }
+
+    protected function formatNode(Item $item)
+    {
+        $data = [
+            'id' => $item->id,
+            'text' => $item->item_code . ' - ' . $item->name,
+            'children' => [],
+            'type' => $item->item_type, // 'chapter' or 'item'
+        ];
+
+        foreach ($item->children as $child) {
+            $data['children'][] = $this->formatNode($child);
+        }
+
+        return $data;
+    }
+
+    public function getDataTableData(Sor $sor, Request $request)
+    {
+        if ($request->ajax()) {
+            $data = $sor->items()->select('id', 'item_code', 'name', 'item_type', 'unit_id')->with('unit');
+
+            return Datatables::of($data)
+                ->addIndexColumn()
+                ->addColumn('unit_name', function(Item $item) {
+                    return $item->unit ? $item->unit->name : 'N/A';
+                })
+                ->rawColumns(['unit_name'])
+                ->make(true);
+        }
+    }
+
+    public function dataTable(Sor $sor)
+    {
+        return view('sors.datatable', compact('sor'));
     }
 }

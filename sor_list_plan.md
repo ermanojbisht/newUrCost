@@ -106,19 +106,19 @@ This section will serve as a checklist for the implementation process. Please up
 
 **Step 3: Models**
 *   **Task:** Revisit `Sor`, `Item`, and `ItemRate` models. Configure the `Item` model to use `kalnoy/nestedset`. Define the relationships if not exist: `Sor` hasMany `Item`, `Item` hasMany `ItemRate`. Add the `getRateFor($ratecard, $date)` method to the `Item` model.
-*   **Status:** Pending
+*   **Status:** Completed
 
 **Step 4: Main Hierarchical View**
 *   **Task:** Create the `SorController@show` method. Create the recursive Blade component for rendering the tree. Implement the filter UI and the collapsible chapter functionality.
-*   **Status:** Pending
+*   **Status:** Completed
 
 **Step 5: Administrative Tree View**
 *   **Task:** Create the controller method and API endpoint for the jsTree data. Create the view with the jsTree implementation. Implement the AJAX calls for create, update, delete, and move actions.
-*   **Status:** Pending
+*   **Status:** Completed
 
 **Step 6: Advanced Data Table View**
 *   **Task:** Install `yajra/laravel-datatables-oracle`. Create the controller method and API endpoint for the DataTables data. Create the view and initialize the DataTable with server-side processing.
-*   **Status:** Pending
+*   **Status:** Completed
 
 ## 4. How to Use This Plan
 

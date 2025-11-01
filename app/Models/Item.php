@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Kalnoy\Nestedset\NodeTrait;
 
 class Item extends Model
 {
-    use HasFactory;
+    use HasFactory, NodeTrait;
 
     protected $table = 'items';
 
@@ -38,6 +39,9 @@ class Item extends Model
         'created_by',
         'updated_by',
         'reference_from',
+        'lft',
+        'rgt',
+        'depth',
     ];
 
     public function sor()
@@ -68,5 +72,24 @@ class Item extends Model
     public function oheads()
     {
         return $this->hasMany(Ohead::class);
+    }
+
+    public function itemRates()
+    {
+        return $this->hasMany(ItemRate::class);
+    }
+
+    public function getRateFor($ratecard, $date)
+    {
+        return $this->itemRates()
+            ->where('rate_card_id', $ratecard->id)
+            ->where('effective_date', '<=', $date)
+            ->orderByDesc('effective_date')
+            ->first();
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
     }
 }
