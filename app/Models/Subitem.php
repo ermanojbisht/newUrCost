@@ -68,7 +68,7 @@ class Subitem extends Model
      * Generate the subitem dependency tree for a given RA item.
      * This method replicates the functionality of the old system's subitemlvlFormation.
      *
-     * @param int $raitemid The ID of the Rate Analysis item.
+     * @param int $raitemid The item_code of the Rate Analysis item.
      * @return void
      */
     public static function generateSubitemDependency(int $raitemid)
@@ -77,11 +77,7 @@ class Subitem extends Model
 
         try {
             DB::transaction(function () use ($raitemid) {
-                // Get the actual Item model for the given raitemid (which is an item_code)
-                $mainItem = Item::where('item_code', $raitemid)->firstOrFail();
-                $mainItemId = $mainItem->id;
-
-                // Step 1: Delete existing dependency records for the given main item ID.
+                // Step 1: Delete existing dependency records for the given main item code.
                 SubitemDependency::where('item_id', $raitemid)->delete();
                 Log::debug("Deleted existing dependencies for main item code: {$raitemid}");
 
@@ -89,12 +85,11 @@ class Subitem extends Model
                 $pos = 1000;
 
                 // Step 2: Recursively build the dependency tree.
-                // Pass the main item's ID and the current parent's item_code
-                self::buildDependencyTree($mainItemId, $raitemid, $pos);
+                self::buildDependencyTree($raitemid, $raitemid, $pos, 1);
 
                 // After building the tree, update the subitem count on the main item.
                 $subitemCount = SubitemDependency::where('item_id', $raitemid)->where('quantity', '<>', 0)->count();
-                $mainItem->update(['sub_item_count' => $subitemCount]);
+                Item::where('item_code', $raitemid)->update(['sub_item_count' => $subitemCount]);
                 Log::debug("Updated sub_item_count for main item code {$raitemid} to {$subitemCount}");
 
             });
@@ -109,36 +104,27 @@ class Subitem extends Model
     /**
      * Recursive helper function to build the dependency tree.
      *
-     * @param int $mainItemId The ID of the root Item (from items.id).
-     * @param int $currentParentItemCode The item_code of the current parent Subitem (from subitems.item_id).
+     * @param int $root_item_code The item_code of the root Item.
+     * @param int $parent_item_code The item_code of the current parent Subitem.
      * @param int $pos The position counter (passed by reference).
      * @param int $level The current depth level of the recursion.
      */
-    private static function buildDependencyTree(int $mainItemId, int $currentParentItemCode, int &$pos, int $level = 1)
+    private static function buildDependencyTree(int $root_item_code, int $parent_item_code, int &$pos, int $level)
     {
         // Fetch all direct subitems for the current parent item_code.
-        $subitems = self::where('item_id', $currentParentItemCode)->orderBy('sort_order')->get();
+        $subitems = self::where('item_id', $parent_item_code)->orderBy('sort_order')->get();
 
         // Get the parent Item model to fetch its turnout_quantity
-        $parentItem = Item::where('item_code', $currentParentItemCode)->first();
+        $parentItem = Item::where('item_code', $parent_item_code)->first();
         $parentTurnoutQuantity = $parentItem->turnout_quantity ?? 1;
 
         foreach ($subitems as $subitem) {
             $currentPos = $pos--;
-            Log::debug("Processing subitem: {$subitem->sub_item_id} for parent item_code: {$currentParentItemCode} at level: {$level}, pos: {$currentPos}");
-
-            // Get the actual Item ID for the sub_item_id (which is an item_code)
-            $childItem = Item::where('item_code', $subitem->sub_item_id)->first();
-            $childItemId = $childItem->id ?? null; // Handle case where sub_item_id might not exist in items table
-
-            if (is_null($childItemId)) {
-                Log::warning("Subitem with item_code {$subitem->sub_item_id} not found in items table. Skipping dependency creation.");
-                continue;
-            }
+            Log::debug("Processing subitem: {$subitem->sub_item_id} for parent item_code: {$parent_item_code} at level: {$level}, pos: {$currentPos}");
 
             // Create the dependency record.
             SubitemDependency::create([
-                'item_id' => $currentParentItemCode,
+                'item_id' => $root_item_code,
                 'sub_item_id' => $subitem->sub_item_id,
                 'level' => $level,
                 'position' => $currentPos,
@@ -152,13 +138,11 @@ class Subitem extends Model
             ]);
 
             // Update the subitem level on the item itself.
-            // Use the childItem's ID for updating
-            Item::where('id', $childItemId)->update(['sub_item_level' => $level]);
-            Log::debug("Updated sub_item_level for item ID {$childItemId} to {$level}");
+            Item::where('item_code', $subitem->sub_item_id)->update(['sub_item_level' => $level]);
+            Log::debug("Updated sub_item_level for item code {$subitem->sub_item_id} to {$level}");
 
             // Recurse for the children of the current subitem.
-            // Pass the main item's ID and the current subitem's item_code
-            self::buildDependencyTree($mainItemId, $subitem->sub_item_id, $pos, $level + 1);
+            self::buildDependencyTree($root_item_code, $subitem->sub_item_id, $pos, $level + 1);
         }
     }
 }
