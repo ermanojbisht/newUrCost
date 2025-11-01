@@ -50,15 +50,15 @@
             </div>
             <div>
                 <h3 class="text-lg font-semibold">{{ __('Valid From') }}</h3>
-                <p>{{ $polRate->valid_from->format('d-m-Y') }}</p>
+                <p>{{ $polRate->valid_from ? $polRate->valid_from->format('d-m-Y') : '' }}</p>
             </div>
             <div>
                 <h3 class="text-lg font-semibold">{{ __('Valid To') }}</h3>
-                <p>{{ $polRate->valid_to->format('d-m-Y') }}</p>
+                <p>{{ $polRate->valid_to ? $polRate->valid_to->format('d-m-Y') : '' }}</p>
             </div>
             <div>
                 <h3 class="text-lg font-semibold">{{ __('Published At') }}</h3>
-                <p>{{ $polRate->published_at->format('d-m-Y H:i') }}</p>
+                <p>{{ $polRate->published_at ? $polRate->published_at->format('d-m-Y H:i') : '' }}</p>
             </div>
             <div>
                 <h3 class="text-lg font-semibold">{{ __('Is Locked') }}</h3>

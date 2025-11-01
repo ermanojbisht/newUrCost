@@ -16,23 +16,22 @@ return new class extends Migration
             $table->id();
 
             // Old Column: sorid (int)
-            $table->unsignedBigInteger('sor_id');
-            $table->foreign('sor_id')->references('id')->on('sors')->onDelete('cascade');
+            $table->integer('sor_id');
+           // $table->foreign('sor_id')->references('id')->on('sors')->onDelete('cascade');
 
             // Old Column: resourceid (int)
             $table->unsignedBigInteger('resource_id');
-            $table->foreign('resource_id')->references('id')->on('resources')->onDelete('cascade');
+
 
             // Old Column: quantity (double)
             $table->decimal('quantity', 10, 4); // Assuming 10 total digits and 4 decimal places
 
             // Old Column: unit (int)
             $table->unsignedBigInteger('unit_id');
-            $table->foreign('unit_id')->references('id')->on('units')->onDelete('cascade');
+
 
             // Old Column: raitemid (int)
-            $table->unsignedBigInteger('item_id');
-            $table->foreign('item_id')->references('id')->on('items')->onDelete('cascade');
+            $table->string('item_code');
 
             // Old Column: res_desc (text)
             $table->text('resource_description')->nullable();
@@ -58,17 +57,24 @@ return new class extends Migration
             // Old Column: insert_date, created_by, modify_date, modify_by
             $table->timestamps();
             $table->unsignedBigInteger('created_by')->nullable();
-            $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
             $table->unsignedBigInteger('updated_by')->nullable();
+            /*$table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
             $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
+            $table->foreign('resource_id')->references('id')->on('resources')->onDelete('cascade');
+            $table->foreign('unit_id')->references('id')->on('units')->onDelete('cascade');
+            $table->foreign('item_code')->references('item_code')->on('items')->onDelete('cascade');*/
+
         });
     }
 
     /**
      * Reverse the migrations.
      */
+
     public function down(): void
     {
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('skeletons');
+        Schema::enableForeignKeyConstraints();
     }
 };

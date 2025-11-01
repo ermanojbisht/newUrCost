@@ -62,3 +62,6 @@ This table defines the sub-items that are part of an SOR item's composition.
 | `oldsubitemcode` | This field contains historical data and is not needed in the new system. |
 | `turnOutQty` | This is a denormalized field from the `item` table. It can be calculated on the fly. |
 | `dsr16id` | This field contains historical data and is not needed in the new system. |
+
+mkb:
+ItemID,turnOutQty currently droped but may be used in future . ItemID was chid of items table subraitem in previous system
