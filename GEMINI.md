@@ -118,7 +118,11 @@ Your task is to act as my primary developer on this migration. You will follow t
 
 Please begin by reading the entire `sor_list_plan.md` file to get a complete understanding of the project.
 
-After you have read the file, please start with **Step 1: Setup & Migration**. Let me know what commands you need to run to install the `kalnoy/nestedset` package . We will update the status of Step 1 to "In Progress" and then "Completed" as we proceed.
+After you have read the file, please start with **Step 5 administrative Node Tree View**. Let me know what commands you need to run . We will update the status of Step 5 to "In Progress" and then "Completed" as we proceed. 
+make a detailed plan to execute task before going further
+like first how to create a node in sor's item table 
+if it is chapter ,sub-chapter, item then what are the default values , calculated values, value to edit for user after node creation. etc.
+
 
 
 

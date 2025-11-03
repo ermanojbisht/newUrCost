@@ -60,6 +60,9 @@ return new class extends Migration
             $table->string('dsr_16_id')->nullable();
             // Old Column Name: locked, New Column Name: is_locked, Data Type: boolean, Description: A flag to indicate if the item is locked.
             $table->boolean('is_locked')->default(false);
+            $table->unsignedInteger('lft')->default(0);
+            $table->unsignedInteger('rgt')->default(0);
+            $table->unsignedInteger('depth')->default(0);
             $table->timestamps();
             // Old Column Name: created_by, New Column Name: created_by, Data Type: unsignedBigInteger, Description: Foreign key to the users table.
             $table->unsignedBigInteger('created_by')->nullable();

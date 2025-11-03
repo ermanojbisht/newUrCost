@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Kalnoy\Nestedset\NodeTrait;
+use Log;
 
 class Item extends Model
 {
@@ -79,12 +80,32 @@ class Item extends Model
         return $this->hasMany(ItemRate::class);
     }
 
+    public function getLftName()
+    {
+        return 'lft';
+    }
+
+    public function getRgtName()
+    {
+        return 'rgt';
+    }
+
+    public function getParentIdName()
+    {
+        return 'parent_id';
+    }
+
+    public function getScopedColumns()
+    {
+        return ['sor_id'];
+    }
+
     public function getRateFor($ratecard, $date)
     {
         return $this->itemRates()
             ->where('rate_card_id', $ratecard->id)
-            ->where('effective_date', '<=', $date)
-            ->orderByDesc('effective_date')
+            ->where('valid_to', '<=', $date)
+            ->orderByDesc('valid_to')
             ->first();
     }
 
@@ -92,4 +113,6 @@ class Item extends Model
     {
         return $this->belongsTo(Unit::class);
     }
+
+
 }

@@ -15,10 +15,12 @@
         <table id="sor-items-datatable" class="display min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead>
                 <tr>
+                    <th>Row No</th>
                     <th>ID</th>
                     <th>Item Code</th>
+                    <th>Item Number</th>
                     <th>Name</th>
-                    <th>Type</th>
+                    <th>Rate</th>
                     <th>Unit</th>
                 </tr>
             </thead>
@@ -41,12 +43,16 @@
                 processing: true,
                 serverSide: true,
                 ajax: '{{ route('api.sors.items-datatable', $sor) }}',
+                order: [[0, 'asc']], // Initial sort by the first column (lft)
                 columns: [
+                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
                     { data: 'id', name: 'id' },
                     { data: 'item_code', name: 'item_code' },
-                    { data: 'name', name: 'name' },
-                    { data: 'item_type', name: 'item_type' },
+                    { data: 'item_number', name: 'item_number' },
+                    { data: 'name', name: 'name', class: 'whitespace-pre-wrap' },
+                    { data: 'price', name: 'price' },
                     { data: 'unit_name', name: 'unit_name' },
+                    { data: 'lft', name: 'lft', visible: false, searchable: false }, // Hidden column for sorting
                 ]
             });
         });

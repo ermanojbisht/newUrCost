@@ -12,8 +12,8 @@
                     <h2 class="text-xl font-bold gradient-text-primary mb-2">{{ $sor->name }}</h2>
                     <p class="text-glass-secondary mb-4">{{ $sor->description }}</p>
                     <div class="flex flex-col space-y-2">
-                        <a href="{{ route('sors.show', $sor) }}" class="btn-glass-primary">Hierarchical View</a>
-                        <a href="{{ route('sors.admin', $sor) }}" class="btn-glass-primary">Administrative View</a>
+                        <a href="{{ route('sors.show', $sor) }}" class="btn-glass-primary">Chapters & Items</a>
+                        <a href="{{ route('sors.admin', $sor) }}" class="btn-glass-primary">Node View</a>
                         <a href="{{ route('sors.datatable', $sor) }}" class="btn-glass-primary">Data Table View</a>
                     </div>
                 </div>

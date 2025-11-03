@@ -1,5 +1,13 @@
 <?php
 
 return [
-    'registration' => env('ALLOW_REGISTRATION', true),
+    'default_rate_cards' => [
+        1 => 1000,
+        2 => 1,
+        3 => 1,
+        4 => 1,
+        5 => 1,
+        6 => 1,
+        7 => 1,
+    ],
 ];

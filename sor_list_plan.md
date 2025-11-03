@@ -57,7 +57,7 @@ We will replicate and enhance the legacy functionality by creating three distinc
 
 ### 2.2. Proposed Views
 
-#### View 1: Main Hierarchical SOR View (for General Users)
+#### View 1: Main 'Chapter and Items' SOR View (for General Users) -- (completed except Linked Items (`ref_from`))
 
 *   **Description:** A read-only, indented list of all chapters and items in an SOR. Chapters will be collapsible to allow for easy navigation. This view will be the primary interface for users who need to browse the SOR.
 *   **Key Features:**
@@ -70,7 +70,18 @@ We will replicate and enhance the legacy functionality by creating three distinc
     *   A recursive Blade component will be used to render the hierarchy.
     *   Simple JavaScript (e.g., using Bootstrap's Collapse component) will be used for the collapsible functionality.
 
-#### View 2: Administrative Tree View
+#### View 2: Advanced Data Table View -- (completed )
+
+*   **Description:** A flat, searchable, and sortable table of all items in the SOR.
+*   **Key Features:**
+    *   Server-side processing for performance with large datasets.
+    *   Global and column-specific search.
+    *   Sorting by any column.
+*   **Implementation:**
+    *   We will use the **Yajra DataTables** package.
+    *   The table will be populated by an AJAX call to a dedicated API endpoint that provides the data in the format required by DataTables.
+
+#### View 3: Administrative Node Tree View -- (in progress)
 
 *   **Description:** An interactive tree view for administrators to manage the SOR structure.
 *   **Key Features:**
@@ -81,16 +92,7 @@ We will replicate and enhance the legacy functionality by creating three distinc
     *   The tree will be populated by an AJAX call to a dedicated API endpoint.
     *   All actions (move, create, delete) will trigger AJAX calls to the backend, which will use the `kalnoy/nestedset` methods to update the tree.
 
-#### View 3: Advanced Data Table View
 
-*   **Description:** A flat, searchable, and sortable table of all items in the SOR.
-*   **Key Features:**
-    *   Server-side processing for performance with large datasets.
-    *   Global and column-specific search.
-    *   Sorting by any column.
-*   **Implementation:**
-    *   We will use the **Yajra DataTables** package.
-    *   The table will be populated by an AJAX call to a dedicated API endpoint that provides the data in the format required by DataTables.
 
 ## 3. Implementation Steps & Progress Tracking
 
@@ -108,17 +110,17 @@ This section will serve as a checklist for the implementation process. Please up
 *   **Task:** Revisit `Sor`, `Item`, and `ItemRate` models. Configure the `Item` model to use `kalnoy/nestedset`. Define the relationships if not exist: `Sor` hasMany `Item`, `Item` hasMany `ItemRate`. Add the `getRateFor($ratecard, $date)` method to the `Item` model.
 *   **Status:** Completed
 
-**Step 4: Main Hierarchical View**
+**Step 4: Chapter and Items View**
 *   **Task:** Create the `SorController@show` method. Create the recursive Blade component for rendering the tree. Implement the filter UI and the collapsible chapter functionality.
 *   **Status:** Completed
 
-**Step 5: Administrative Tree View**
-*   **Task:** Create the controller method and API endpoint for the jsTree data. Create the view with the jsTree implementation. Implement the AJAX calls for create, update, delete, and move actions.
-*   **Status:** Completed
-
-**Step 6: Advanced Data Table View**
+**Step 5: Advanced Data Table View**
 *   **Task:** Install `yajra/laravel-datatables-oracle`. Create the controller method and API endpoint for the DataTables data. Create the view and initialize the DataTable with server-side processing.
 *   **Status:** Completed
+
+**Step 5: administrative Node Tree View**
+*   **Status:** In Progress
+    *   **Sub-task:** Create a new chapter via context menu and save its name.
 
 ## 4. How to Use This Plan
 

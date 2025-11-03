@@ -20,7 +20,8 @@ Route::middleware('auth')->group(function () {
     Route::get("/demo", function () {
         return view("demo");
     });
-    Route::resource("sors", SorController::class);
+    Route::resource("sors", SorController::class)->except(['show']);
+    Route::get('sors/{sor}/{item?}', [SorController::class, 'show'])->where('item', '[0-9]+')->name('sors.show');
     Route::resource("items", ItemController::class);
     Route::resource("units", \App\Http\Controllers\UnitController::class);
     Route::resource("unit-groups", \App\Http\Controllers\UnitGroupController::class);
@@ -42,11 +43,12 @@ Route::middleware('auth')->group(function () {
         Route::put('/{item}', [SorController::class, 'updateNode'])->name('update');
         Route::delete('/{item}', [SorController::class, 'deleteNode'])->name('delete');
         Route::post('/move', [SorController::class, 'moveNode'])->name('move');
+        Route::get('/{item}', [SorController::class, 'getNode'])->name('node');
     });
 
+    Route::get('/sors/{sor}/admin', [SorController::class, 'admin'])->name('sors.admin');
     Route::get('api/sors/{sor}/items-datatable', [SorController::class, 'getDataTableData'])->name('api.sors.items-datatable');
 });
 
 Route::get('/sorCards', [SorController::class, 'sorCards'])->name('sorCards');
-Route::get('/sors/{sor}/admin', [SorController::class, 'admin'])->name('sors.admin');
-Route::get('/sors/{sor}/datatable', [SorController::class, 'dataTable'])->name('sors.datatable');
+Route::get('/sors/{sor}/items-datatable-view', [SorController::class, 'dataTable'])->name('sors.datatable');

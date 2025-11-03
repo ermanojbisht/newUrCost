@@ -8,6 +8,7 @@ use App\Models\Sor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\DataTables;
+use Log;
 
 class SorController extends Controller
 {
@@ -54,12 +55,47 @@ class SorController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Sor $sor)
+    public function show(Request $request, Sor $sor, Item $item = null)
     {
-        $items = $sor->items()->paginate(20);
-        $ratecards = Ratecard::all();
+        if ($item && $item->sor_id !== $sor->id) {
+            abort(404);
+        }
 
-        return view('pages.sors.show', compact('sor', 'items', 'ratecards'));
+        $rateCardId = $request->session()->get('rate_card_id', config('urcost.default_rate_cards.' . $sor->id, 1));
+        $effectiveDate = $request->session()->get('effective_date', now()->toDateString());
+
+        $rateCard = RateCard::find($rateCardId);
+
+        if ($item) {
+            $items = $item->children()->orderBy('order_in_parent')->get();
+        } else {
+            $rootItem = $sor->items()->where('id', $sor->id)->first();
+            $items = $rootItem ? $rootItem->children()->orderBy('order_in_parent')->get() : collect();
+        }
+
+        foreach ($items as $i) {
+            if ($i->item_type != 1 && $i->item_type != 2) {
+                $i->rate = $i->getRateFor($rateCard, $effectiveDate)->rate ?? null;
+            }
+        }
+
+        $rateCards = RateCard::all();
+
+        $breadcrumbs = [
+            ['label' => 'Home', 'route' => route('dashboard')],
+            ['label' => $sor->name, 'route' => route('sors.show', $sor)],
+        ];
+
+        if ($item) {
+            foreach ($item->ancestors->where('sor_id', $sor->id) as $ancestor) {
+                $breadcrumbs[] = ['label' => $ancestor->item_number, 'route' => route('sors.show', [$sor, $ancestor])];
+            }
+            $breadcrumbs[] = ['label' => $item->item_number, 'route' => route('sors.show', [$sor, $item])];
+        }
+
+        $currentItem=$item;
+
+        return view('sors.show', compact('sor', 'items', 'rateCards', 'breadcrumbs', 'rateCardId', 'effectiveDate', 'currentItem'));
     }
 
     /**
@@ -126,16 +162,30 @@ class SorController extends Controller
         $this->validate($request, [
             'parent_id' => 'nullable|exists:items,id',
             'text' => 'required|string|max:255',
-            'item_type' => 'required|string|in:chapter,item',
+            'item_type' => 'required|string|in:chapter,subchapter,item',
         ]);
 
         $parent = $request->input('parent_id') ? Item::find($request->input('parent_id')) : null;
 
+        if ($parent && $parent->item_type == 3) {
+            return response()->json(['status' => 'error', 'message' => 'An item cannot be a child of another item.'], 422);
+        }
+
+        if ($parent && $parent->item_type == 3 && $request->input('item_type') == 'chapter') {
+            return response()->json(['status' => 'error', 'message' => 'A chapter cannot be a child of an item.'], 422);
+        }
+
         $item = DB::transaction(function () use ($request, $sor, $parent) {
+            $item_type_map = [
+                'chapter' => 1,
+                'subchapter' => 2,
+                'item' => 3,
+            ];
+
             $item = new Item([
                 'sor_id' => $sor->id,
                 'name' => $request->input('text'),
-                'item_type' => $request->input('item_type'),
+                'item_type' => $item_type_map[$request->input('item_type')],
                 'item_code' => 'TEMP-' . uniqid(), // Temporary item code
             ]);
 
@@ -147,16 +197,22 @@ class SorController extends Controller
             return $item;
         });
 
-        return response()->json(['id' => $item->id, 'text' => $item->name, 'type' => $item->item_type]);
+        return response()->json(['id' => $item->id, 'text' => $item->name, 'type' => $request->input('item_type')]);
     }
 
     public function updateNode(Request $request, Sor $sor, Item $item)
     {
-        $this->validate($request, [
+        Log::info('Update node request', $request->all());
+        $request->validate([
             'text' => 'required|string|max:255',
+            'item_number' => 'required|string|max:255|unique:items,item_number,'.$item->id,
         ]);
 
-        $item->update(['name' => $request->input('text')]);
+        $item->update([
+            'description' => $request->input('text'),
+            'item_number' => $request->input('item_number'),
+        ]);
+        Log::info('item updated', $item->toArray());
 
         return response()->json(['status' => 'success']);
     }
@@ -209,17 +265,53 @@ class SorController extends Controller
         return $data;
     }
 
+    public function getNode(Sor $sor, Item $item)
+    {
+        $rateCardId = session('rate_card_id', config('urcost.default_rate_cards.' . $sor->id, 1));
+        $effectiveDate = session('effective_date', now()->toDateString());
+        $rateCard = RateCard::find($rateCardId);
+
+        return response()->json([
+            'id' => $item->id,
+            'item_number' => $item->item_number,
+            'item_code' => $item->item_code,
+            'name' => $item->name,
+            'unit' => $item->unit ? $item->unit->name : 'N/A',
+            'rate' => $item->getRateFor($rateCard, $effectiveDate)->rate ?? null,
+        ]);
+    }
+
     public function getDataTableData(Sor $sor, Request $request)
     {
         if ($request->ajax()) {
-            $data = $sor->items()->select('id', 'item_code', 'name', 'item_type', 'unit_id')->with('unit');
+            $rateCardId = $request->session()->get('rate_card_id', config('urcost.default_rate_cards.' . $sor->id, 1));
+            $effectiveDate = $request->session()->get('effective_date', now()->toDateString());
+            $rateCard = RateCard::find($rateCardId);
+
+            $data = $sor->items()->select('id', 'item_code', 'item_number', 'name', 'unit_id', 'item_type', 'lft')->with('unit');
 
             return Datatables::of($data)
                 ->addIndexColumn()
+                ->orderColumn('lft', '-lft $1') // Initial sort by lft
+                ->setRowClass(function ($item) {
+                    if ($item->item_type == 1) {
+                        return 'text-blue-600 dark:text-blue-400';
+                    } elseif ($item->item_type == 2) {
+                        return 'text-green-600 dark:text-green-400';
+                    }
+                    return '';
+                })
                 ->addColumn('unit_name', function(Item $item) {
                     return $item->unit ? $item->unit->name : 'N/A';
                 })
-                ->rawColumns(['unit_name'])
+                ->addColumn('price', function(Item $item) use ($rateCard, $effectiveDate) {
+                    if ($item->item_type != 1 && $item->item_type != 2) {
+                        $rate = $item->getRateFor($rateCard, $effectiveDate)->rate ?? null;
+                        return $rate !== null ? number_format($rate, 2) : '';
+                    }
+                    return '';
+                })
+                ->rawColumns(['unit_name', 'price'])
                 ->make(true);
         }
     }
