@@ -122,11 +122,66 @@ This section will serve as a checklist for the implementation process. Please up
 *   **Status:** In Progress
     *   **Sub-task:** Create a new chapter via context menu and save its name.
 
-## 4. How to Use This Plan
+#### **Sub-step 5.1: Implement Node Creation (`create_node.jstree`)**
 
-The initial view will be accessed via the `sorCards` route, handled by the `SorController@sorCards` method. This view will display SORs as cards, each with buttons to navigate to different views.
-This document is a living plan for the migration. When working on this task, please follow these guidelines:
+*   **Status:** `✅ Completed`
+*   **Actions Taken:**
+    *   The `create_node.jstree` event handler is implemented in `resources/views/sors/admin.blade.php`.
+    *   It correctly determines `parent_id` and `item_type`.
+    *   It sends an AJAX `POST` request to the `api.sors.tree.create` endpoint.
+    *   The `SorController@createNode` method on the backend handles the creation logic, including generating the correct `item_code` and `order_in_parent`.
+    *   On success, the frontend updates the new node's ID and text with the data returned from the server.
 
-1.  **Follow the Steps:** Address the implementation steps in the order they are listed.
-2.  **Update Status:** As you work on a step, update its status to "In Progress". When the step is complete, update its status to "Completed".
-3.  **Add Notes:** If you encounter any issues, or if the plan needs to be adjusted, add notes to the relevant step to document the changes.
+---
+
+#### **Sub-step 5.2: Implement Node Renaming (`rename_node.jstree`)**
+
+*   **Status:** `✅ Completed`
+*   **Actions Taken:**
+    1.  **Frontend (`admin.blade.php`):**
+        *   The `rename_node.jstree` event handler has been implemented.
+        *   It captures the node's ID, new text, old text, and `item_type`.
+        *   It parses the new text into `item_number` and `description` based on `item_type`.
+        *   It sends an AJAX `PUT` request to the `api.sors.tree.update` endpoint.
+        *   Error handling is in place to revert the node's text and show an alert on failure.
+    2.  **Backend (`SorController.php`):**
+        *   The `updateNode` method has been modified.
+        *   It validates `description` (required) and `item_number` (nullable).
+        *   It updates the `item` model's `description` and `item_number` fields.
+        *   It returns a JSON success response.
+
+---
+
+#### **Sub-step 5.3: Implement Node Deletion (`delete_node.jstree`)**
+
+*   **Status:** `✅ Completed`
+*   **Actions Taken:**
+    1.  **Frontend (`admin.blade.php`):**
+        *   The `delete_node.jstree` event handler has been implemented.
+        *   It prompts for user confirmation before deletion.
+        *   It sends an AJAX `DELETE` request to the `api.sors.tree.delete` endpoint.
+        *   Error handling is in place to refresh the tree and show an alert on failure.
+    2.  **Backend (`SorController.php`):**
+        *   The `deleteNode` method has been modified.
+        *   It includes validation to prevent deletion of chapters/sub-chapters with children.
+        *   It performs the deletion within a database transaction.
+        *   It returns a JSON success response or an error response with a message.
+
+---
+
+#### **Sub-step 5.4: Implement Node Movement (`move_node.jstree`)**
+
+*   **Status:** `✅ Completed`
+*   **Actions Taken:**
+    1.  **Frontend (`admin.blade.php`):**
+        *   The `move_node.jstree` event handler has been implemented.
+        *   It extracts the node ID, new parent ID, and new position.
+        *   It sends an AJAX `POST` request to the `api.sors.tree.move` endpoint.
+        *   Error handling is in place to refresh the tree and show an alert on failure.
+    2.  **Backend (`SorController.php`):**
+        *   The `moveNode` method has been modified.
+        *   It validates the incoming data.
+        *   It applies hierarchy rules to prevent items from becoming parents.
+        *   It uses `kalnoy/nestedset` methods (`prependToNode`, `appendToNode`, `beforeNode`) to perform the move based on the `position`.
+        *   It re-calculates and updates the `order_in_parent` for affected siblings and the moved item.
+        *   It returns a JSON success response or an error response.

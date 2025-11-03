@@ -161,55 +161,78 @@ class SorController extends Controller
     {
         $this->validate($request, [
             'parent_id' => 'nullable|exists:items,id',
-            'text' => 'required|string|max:255',
-            'item_type' => 'required|string|in:chapter,subchapter,item',
+            'description' => 'required|string|max:255',
+            'item_number' => 'nullable|string|max:255',
+            'item_type' => 'required|integer|in:1,2,3', // 1: Chapter, 2: Sub-chapter, 3: Item
         ]);
 
-        $parent = $request->input('parent_id') ? Item::find($request->input('parent_id')) : null;
-
-        if ($parent && $parent->item_type == 3) {
-            return response()->json(['status' => 'error', 'message' => 'An item cannot be a child of another item.'], 422);
+        $parent = null;
+        if ($request->input('parent_id')) {
+            $parent = Item::find($request->input('parent_id'));
+            if (!$parent) {
+                return response()->json(['status' => 'error', 'message' => 'Parent node not found.'], 404);
+            }
+        } else {
+            // If no parent_id is provided, the parent is the SOR itself (root of the SOR's items)
+            $parent = Item::where('sor_id', $sor->id)->whereNull('parent_id')->first();
+            if (!$parent) {
+                // This should ideally not happen if SORs are properly initialized with a root item
+                return response()->json(['status' => 'error', 'message' => 'Root SOR item not found.'], 500);
+            }
         }
 
-        if ($parent && $parent->item_type == 3 && $request->input('item_type') == 'chapter') {
-            return response()->json(['status' => 'error', 'message' => 'A chapter cannot be a child of an item.'], 422);
+        // Validate hierarchy constraints
+        if ($parent->item_type == 3) { // An item cannot have children
+            return response()->json(['status' => 'error', 'message' => 'An item cannot be a parent to another node.'], 422);
         }
 
-        $item = DB::transaction(function () use ($request, $sor, $parent) {
-            $item_type_map = [
-                'chapter' => 1,
-                'subchapter' => 2,
-                'item' => 3,
-            ];
+        $itemType = $request->input('item_type');
+        $itemCode = ($itemType == 3) ? $this->generateNextItemCode($sor->id) : '0';
 
-            $item = new Item([
+        // Determine order_in_parent
+        $maxOrder = $parent->children()->max('order_in_parent');
+        $orderInParent = $maxOrder !== null ? $maxOrder + 1 : 1;
+
+        $item = DB::transaction(function () use ($request, $sor, $parent, $itemType, $itemCode, $orderInParent) {
+            $newItem = new Item([
                 'sor_id' => $sor->id,
-                'name' => $request->input('text'),
-                'item_type' => $item_type_map[$request->input('item_type')],
-                'item_code' => 'TEMP-' . uniqid(), // Temporary item code
+                'description' => $request->input('description'),
+                'item_number' => $request->input('item_number'),
+                'item_type' => $itemType,
+                'item_code' => $itemCode,
+                'order_in_parent' => $orderInParent,
             ]);
 
-            if ($parent) {
-                $item->appendToNode($parent)->save();
-            } else {
-                $item->save();
-            }
-            return $item;
+            $newItem->appendToNode($parent)->save();
+            return $newItem;
         });
 
-        return response()->json(['id' => $item->id, 'text' => $item->name, 'type' => $request->input('item_type')]);
+        // Re-fetch the item to ensure observer-generated 'name' is included
+        $item = Item::find($item->id);
+
+        return response()->json([
+            'id' => $item->id,
+            'text' => $item->item_number . ' ' . $item->description, // jsTree expects 'text'
+            'type' => $item->item_type,
+            'parent' => $item->parent_id,
+            'item_code' => $item->item_code,
+            'item_number' => $item->item_number,
+            'description' => $item->description,
+            'name' => $item->name,
+            'order_in_parent' => $item->order_in_parent,
+        ]);
     }
 
     public function updateNode(Request $request, Sor $sor, Item $item)
     {
         Log::info('Update node request', $request->all());
         $request->validate([
-            'text' => 'required|string|max:255',
-            'item_number' => 'required|string|max:255|unique:items,item_number,'.$item->id,
+            'description' => 'required|string|max:255',
+            'item_number' => 'nullable|string|max:255',
         ]);
 
         $item->update([
-            'description' => $request->input('text'),
+            'description' => $request->input('description'),
             'item_number' => $request->input('item_number'),
         ]);
         Log::info('item updated', $item->toArray());
@@ -219,41 +242,111 @@ class SorController extends Controller
 
     public function deleteNode(Sor $sor, Item $item)
     {
-        $item->delete();
+        // Ensure the item belongs to the current SOR
+        if ($item->sor_id !== $sor->id) {
+            return response()->json(['status' => 'error', 'message' => 'Item does not belong to this SOR.'], 403);
+        }
 
-        return response()->json(['status' => 'success']);
+        // Apply Deletion Rules (from items_table_structure.md):
+        // 1. Chapter/Sub-chapter Deletion: Allowed only if it has no child nodes.
+        //    If it has sub-chapters, deletion should prompt a confirmation warning (handled by frontend).
+        //    If it contains items, deletion is not allowed unless items are first removed.
+        if (($item->item_type === 1 || $item->item_type === 2) && $item->children()->count() > 0) {
+            return response()->json(['status' => 'error', 'message' => 'Cannot delete a chapter/sub-chapter that contains child nodes. Please remove children first.'], 409);
+        }
+
+        // 2. Item Deletion: Allowed only if not used in other dependent tables.
+        //    For now, assuming no direct dependencies are set up in the Item model for sub_item or dependency tables.
+        //    If such relationships exist, checks would need to be added here.
+        //    Example: if ($item->subItems()->count() > 0) { ... }
+
+        DB::transaction(function () use ($item) {
+            $item->delete();
+        });
+
+        return response()->json(['status' => 'success', 'message' => 'Node deleted successfully.']);
     }
 
     public function moveNode(Request $request, Sor $sor)
     {
         $this->validate($request, [
             'id' => 'required|exists:items,id',
-            'parent' => 'nullable|exists:items,id',
+            'parent' => 'nullable|string',
             'position' => 'required|integer',
         ]);
 
         $item = Item::find($request->input('id'));
-        $parent = $request->input('parent') !== '#' ? Item::find($request->input('parent')) : null;
+        if (!$item || $item->sor_id !== $sor->id) {
+            return response()->json(['status' => 'error', 'message' => 'Item not found or does not belong to this SOR.'], 404);
+        }
+
+        $newParentId = $request->input('parent');
         $position = $request->input('position');
 
-        DB::transaction(function () use ($item, $parent, $position) {
-            if ($parent) {
-                $item->appendToNode($parent)->save();
-            } else {
-                $item->makeRoot()->save();
+        DB::transaction(function () use ($item, $newParentId, $position, $sor) {
+            $newParent = null;
+            if ($newParentId !== '#') {
+                $newParent = Item::find($newParentId);
+                if (!$newParent || $newParent->sor_id !== $sor->id) {
+                    return response()->json(['status' => 'error', 'message' => 'New parent node not found or does not belong to this SOR.'], 404);
+                }
+
+                // Apply Hierarchy Rules: An item cannot have children
+                if ($newParent->item_type === 3) {
+                    return response()->json(['status' => 'error', 'message' => 'An item cannot be a parent to another node.'], 422);
+                }
             }
 
-            $item->update(['nested_list_order' => $position]);
+            if ($newParent) {
+                // Get siblings of the new parent
+                $siblings = $newParent->children()->orderBy('order_in_parent')->get();
+
+                if ($position === 0) {
+                    // Move to be the first child
+                    $item->prependToNode($newParent)->save();
+                } elseif ($position >= $siblings->count()) {
+                    // Move to be the last child
+                    $item->appendToNode($newParent)->save();
+                } else {
+                    // Move before a specific sibling
+                    $targetSibling = $siblings->get($position);
+                    if ($targetSibling) {
+                        $item->beforeNode($targetSibling)->save();
+                    } else {
+                        // Fallback to append if target sibling not found (shouldn't happen with jstree)
+                        $item->appendToNode($newParent)->save();
+                    }
+                }
+            } else {
+                // Moving to root (under the SOR's own root item)
+                $sorRootItem = Item::where('sor_id', $sor->id)->whereNull('parent_id')->first();
+                if (!$sorRootItem) {
+                    return response()->json(['status' => 'error', 'message' => 'Root SOR item not found.'], 500);
+                }
+                $item->appendToNode($sorRootItem)->save();
+            }
+
+            // Re-calculate order_in_parent for affected siblings and the moved item
+            // This is important because nestedset doesn't automatically manage a sequential order_in_parent
+            if ($newParent) {
+                $parentChildren = $newParent->children()->defaultOrder()->get();
+            } else {
+                $parentChildren = $sorRootItem->children()->defaultOrder()->get();
+            }
+
+            $parentChildren->each(function ($child, $index) {
+                $child->update(['order_in_parent' => $index + 1]);
+            });
         });
 
-        return response()->json(['status' => 'success']);
+        return response()->json(['status' => 'success', 'message' => 'Node moved successfully.']);
     }
 
     protected function formatNode(Item $item)
     {
         $data = [
             'id' => $item->id,
-            'text' => $item->item_code . ' - ' . $item->name,
+            'text' => $item->item_number . ' ' . $item->description, // jsTree expects 'text'
             'children' => [],
             'type' => $item->item_type, // 'chapter' or 'item'
         ];
@@ -319,5 +412,25 @@ class SorController extends Controller
     public function dataTable(Sor $sor)
     {
         return view('sors.datatable', compact('sor'));
+    }
+
+    /**
+     * Generate the next available item code for a given SOR.
+     * Item codes are numeric and unique within an SOR for item_type = 3.
+     * Chapters (item_type 1 and 2) always have item_code = 0.
+     */
+    private function generateNextItemCode(int $sorId): string
+    {
+        $maxItemCode = Item::where('sor_id', $sorId)
+                           ->where('item_type', 3) // Only consider actual items for code generation
+                           ->max('item_code');
+
+        if ($maxItemCode) {
+            // Increment the numeric part of the item code
+            return (string)((int)$maxItemCode + 1);
+        }
+
+        // Default starting item code if no items exist for this SOR
+        return ($sorId*1000000)+1; // Example starting code, adjust as needed
     }
 }
