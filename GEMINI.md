@@ -112,7 +112,7 @@ MODULE3: CRUD for Some Models where tables are `rate_cards` , `pol_rates`,`pol_s
 
 MODULE4: Generate A particular SOR chapter and Item listing system
 
-Hello Gemini. I am starting the migration of a major feature from a CodeIgniter 3 application to Laravel 12. I have created a detailed migration plan in the file `sor_list_plan.md`.
+I am starting the migration of a major feature from a CodeIgniter 3 application to Laravel 12. I have created a detailed migration plan in the file `sor_list_plan.md`.
 
 Your task is to act as my primary developer on this migration. You will follow the steps outlined in `sor_list_plan.md`, and we will use this file to track our progress.
 

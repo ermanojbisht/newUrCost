@@ -200,7 +200,7 @@
                 }
 
                 $.ajax({
-                    url: '{{ route('api.sors.tree.update', ['sor' => $sor->id, 'item' => '']) }}' + node.id,
+                    url: '{{ url('api/sors/' . $sor->id . '/tree') }}/' + node.id,
                     type: 'PUT',
                     data: {
                         'item_number': itemNumber,
@@ -229,7 +229,7 @@
                 }
 
                 $.ajax({
-                    url: '{{ route('api.sors.tree.delete', ['sor' => $sor->id, 'item' => '']) }}' + node.id,
+                    url: '{{ url('api/sors/' . $sor->id . '/tree') }}/' + node.id,
                     type: 'DELETE',
                     data: {
                         '_token': '{{ csrf_token() }}'

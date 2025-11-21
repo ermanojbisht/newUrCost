@@ -57,7 +57,7 @@ We will replicate and enhance the legacy functionality by creating three distinc
 
 ### 2.2. Proposed Views
 
-#### View 1: Main 'Chapter and Items' SOR View (for General Users) -- (completed except Linked Items (`ref_from`))
+#### View 1: Main 'Chapter and Items' SOR View (for General Users) -- (completed)
 
 *   **Description:** A read-only, indented list of all chapters and items in an SOR. Chapters will be collapsible to allow for easy navigation. This view will be the primary interface for users who need to browse the SOR.
 *   **Key Features:**
@@ -119,7 +119,7 @@ This section will serve as a checklist for the implementation process. Please up
 *   **Status:** Completed
 
 **Step 5: administrative Node Tree View**
-*   **Status:** In Progress
+*   **Status:** in progress
     *   **Sub-task:** Create a new chapter via context menu and save its name.
 
 #### **Sub-step 5.1: Implement Node Creation (`create_node.jstree`)**

@@ -100,19 +100,34 @@ class Item extends Model
         return ['sor_id'];
     }
 
-    public function getRateFor($ratecard, $date)
-    {
-        return $this->itemRates()
-            ->where('rate_card_id', $ratecard->id)
-            ->where('valid_to', '<=', $date)
-            ->orderByDesc('valid_to')
-            ->first();
-    }
-
     public function unit()
     {
         return $this->belongsTo(Unit::class);
     }
 
+    /*public function refFrom()
+    {
+        return $this->belongsTo(Item::class, 'ref_from');
+    }
 
+    public function getEffectiveDescriptionAttribute()
+    {
+        return $this->ref_from ? $this->refFrom->description : $this->description;
+    }*/
+
+    public function getEffectiveUnitIdAttribute()
+    {
+        return $this->ref_from ? $this->refFrom->unit_id : $this->unit_id;
+    }
+
+    public function getRateFor($ratecard, $date)
+    {
+        $itemToRate = $this->ref_from ? $this->refFrom : $this;
+
+        return $itemToRate->itemRates()
+            ->where('rate_card_id', $ratecard->id)
+            ->where('valid_to', '<=', $date)
+            ->orderByDesc('valid_to')
+            ->first();
+    }
 }
