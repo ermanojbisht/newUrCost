@@ -8,7 +8,7 @@ use App\Http\Controllers\SorController;
 Route::get('/', function () {
     return view('welcome');
 });
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -35,7 +35,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    require __DIR__.'/user-management.php';
+    require __DIR__ . '/user-management.php';
 
     Route::prefix('api/sors/{sor}/tree')->name('api.sors.tree.')->group(function () {
         Route::get('/', [SorController::class, 'getTreeData'])->name('data');
@@ -44,6 +44,8 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{item}', [SorController::class, 'deleteNode'])->name('delete');
         Route::post('/move', [SorController::class, 'moveNode'])->name('move');
         Route::get('/{item}', [SorController::class, 'getNode'])->name('node');
+        Route::get('/{item}/details', [SorController::class, 'getNodeDetails'])->name('details');
+        Route::put('/{item}/details', [SorController::class, 'updateNodeDetails'])->name('update_details');
     });
 
     Route::get('/sors/{sor}/admin', [SorController::class, 'admin'])->name('sors.admin');

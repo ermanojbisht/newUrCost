@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Item;
 use App\Models\RateCard;
 use App\Models\Sor;
+use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\DataTables;
@@ -17,7 +18,7 @@ class SorController extends Controller
         $this->authorizeResource(Sor::class, 'sor');
     }
 
-     /**
+    /**
      * Display a listing of the resource.
      */
     public function index()
@@ -93,7 +94,7 @@ class SorController extends Controller
             $breadcrumbs[] = ['label' => $item->item_number, 'route' => route('sors.show', [$sor, $item])];
         }
 
-        $currentItem=$item;
+        $currentItem = $item;
 
         return view('sors.show', compact('sor', 'items', 'rateCards', 'breadcrumbs', 'rateCardId', 'effectiveDate', 'currentItem'));
     }
@@ -112,7 +113,7 @@ class SorController extends Controller
     public function update(Request $request, Sor $sor)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:sors,name,'.$sor->id,
+            'name' => 'required|string|max:255|unique:sors,name,' . $sor->id,
             'is_locked' => 'boolean',
             'display_details' => 'nullable|string',
             'filename' => 'nullable|string',
@@ -159,7 +160,7 @@ class SorController extends Controller
 
     public function createNode(Request $request, Sor $sor)
     {
-        $this->validate($request, [
+        $request->validate([
             'parent_id' => 'nullable|exists:items,id',
             'description' => 'required|string|max:255',
             'item_number' => 'nullable|string|max:255',
@@ -269,7 +270,7 @@ class SorController extends Controller
 
     public function moveNode(Request $request, Sor $sor)
     {
-        $this->validate($request, [
+        $request->validate([
             'id' => 'required|exists:items,id',
             'parent' => 'nullable|string',
             'position' => 'required|integer',
@@ -283,18 +284,23 @@ class SorController extends Controller
         $newParentId = $request->input('parent');
         $position = $request->input('position');
 
+        // Validation: Check new parent before transaction
+        if ($newParentId !== '#') {
+            $newParent = Item::find($newParentId);
+            if (!$newParent || $newParent->sor_id !== $sor->id) {
+                return response()->json(['status' => 'error', 'message' => 'New parent node not found or does not belong to this SOR.'], 404);
+            }
+
+            // Apply Hierarchy Rules: An item cannot have children
+            if ($newParent->item_type == 3) {
+                return response()->json(['status' => 'error', 'message' => 'An item cannot be a parent to another node.'], 422);
+            }
+        }
+
         DB::transaction(function () use ($item, $newParentId, $position, $sor) {
             $newParent = null;
             if ($newParentId !== '#') {
                 $newParent = Item::find($newParentId);
-                if (!$newParent || $newParent->sor_id !== $sor->id) {
-                    return response()->json(['status' => 'error', 'message' => 'New parent node not found or does not belong to this SOR.'], 404);
-                }
-
-                // Apply Hierarchy Rules: An item cannot have children
-                if ($newParent->item_type === 3) {
-                    return response()->json(['status' => 'error', 'message' => 'An item cannot be a parent to another node.'], 422);
-                }
             }
 
             if ($newParent) {
@@ -344,11 +350,17 @@ class SorController extends Controller
 
     protected function formatNode(Item $item)
     {
+        $typeMap = [
+            1 => 'chapter',
+            2 => 'sub-chapter',
+            3 => 'item',
+        ];
+
         $data = [
             'id' => $item->id,
             'text' => $item->item_number . ' ' . $item->description, // jsTree expects 'text'
             'children' => [],
-            'type' => $item->item_type, // 'chapter' or 'item'
+            'type' => $typeMap[$item->item_type] ?? 'file', // 'chapter', 'sub-chapter', or 'item'
         ];
 
         foreach ($item->children as $child) {
@@ -394,10 +406,10 @@ class SorController extends Controller
                     }
                     return '';
                 })
-                ->addColumn('unit_name', function(Item $item) {
+                ->addColumn('unit_name', function (Item $item) {
                     return $item->unit ? $item->unit->name : 'N/A';
                 })
-                ->addColumn('price', function(Item $item) use ($rateCard, $effectiveDate) {
+                ->addColumn('price', function (Item $item) use ($rateCard, $effectiveDate) {
                     if ($item->item_type != 1 && $item->item_type != 2) {
                         $rate = $item->getRateFor($rateCard, $effectiveDate)->rate ?? null;
                         return $rate !== null ? number_format($rate, 2) : '';
@@ -422,15 +434,44 @@ class SorController extends Controller
     private function generateNextItemCode(int $sorId): string
     {
         $maxItemCode = Item::where('sor_id', $sorId)
-                           ->where('item_type', 3) // Only consider actual items for code generation
-                           ->max('item_code');
+            ->where('item_type', 3) // Only consider actual items for code generation
+            ->max('item_code');
 
         if ($maxItemCode) {
             // Increment the numeric part of the item code
-            return (string)((int)$maxItemCode + 1);
+            return (string) ((int) $maxItemCode + 1);
         }
 
         // Default starting item code if no items exist for this SOR
-        return ($sorId*1000000)+1; // Example starting code, adjust as needed
+        return ($sorId * 1000000) + 1; // Example starting code, adjust as needed
+    }
+
+    public function getNodeDetails(Sor $sor, Item $item)
+    {
+        $units = Unit::all(['id', 'name', 'code']);
+        return response()->json([
+            'item' => $item,
+            'units' => $units,
+        ]);
+    }
+
+    public function updateNodeDetails(Request $request, Sor $sor, Item $item)
+    {
+        $request->validate([
+            'item_number' => 'nullable|string|max:255',
+            'description' => 'required|string',
+            'short_description' => 'nullable|string',
+            'unit_id' => 'nullable|exists:units,id',
+            'specification_code' => 'nullable|string|max:255',
+            'specification_page_number' => 'nullable|string|max:255',
+            'turnout_quantity' => 'nullable|numeric',
+            'assumptions' => 'nullable|string',
+            'footnotes' => 'nullable|string',
+            'is_canceled' => 'boolean',
+        ]);
+
+        $item->update($request->all());
+
+        return response()->json(['status' => 'success', 'message' => 'Item updated successfully.', 'item' => $item]);
     }
 }

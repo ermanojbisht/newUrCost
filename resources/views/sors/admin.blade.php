@@ -4,15 +4,34 @@
 
 @section('headstyles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        /* Custom Icon Colors */
+        .text-yellow-500 {
+            color: #f59e0b;
+        }
+
+        .text-yellow-400 {
+            color: #fbbf24;
+        }
+
+        .text-blue-500 {
+            color: #3b82f6;
+        }
+
+        .text-gray-500 {
+            color: #6b7280;
+        }
+    </style>
 @endsection
 
 @section('breadcrumbs')
     <x-breadcrumbs :items="[
-        ['label' => 'Home', 'route' => 'home'],
-        ['label' => 'SORs', 'route' => 'sors.index'],
-        ['label' => $sor->name, 'route' => 'sors.show', 'params' => ['sor' => $sor->id]],
-        ['label' => 'Admin']
-    ]" />
+            ['label' => 'Home', 'route' => 'home'],
+            ['label' => 'SORs', 'route' => 'sors.index'],
+            ['label' => $sor->name, 'route' => 'sors.show', 'params' => ['sor' => $sor->id]],
+            ['label' => 'Admin']
+        ]" />
 @endsection
 
 @section('page-header')
@@ -39,14 +58,144 @@
     <div class="card">
         <div id="sor-tree"></div>
     </div>
+
+    <!-- Edit Node Modal -->
+    <div id="editNodeModal" class="fixed inset-0 z-[100] hidden" aria-labelledby="modal-title" role="dialog"
+        aria-modal="true">
+        <!-- Overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity backdrop-blur-sm" aria-hidden="true"></div>
+
+        <!-- Modal Panel Container -->
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <!-- Modal Panel -->
+                <div
+                    class="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-gray-200 dark:border-gray-700">
+                    <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                <h3 class="text-lg leading-6 font-bold text-gray-900 dark:text-white" id="modal-title">
+                                    Edit Node Details
+                                </h3>
+                                <div class="mt-4 grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-6">
+                                    <input type="hidden" id="edit_node_id">
+
+                                    <!-- Item Number -->
+                                    <div class="sm:col-span-2">
+                                        <label for="edit_item_number"
+                                            class="block text-sm font-bold text-gray-700 dark:text-gray-200">Item
+                                            Number</label>
+                                        <input type="text" id="edit_item_number"
+                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400">
+                                    </div>
+
+                                    <!-- Description -->
+                                    <div class="sm:col-span-6">
+                                        <label for="edit_description"
+                                            class="block text-sm font-bold text-gray-700 dark:text-gray-200">Description</label>
+                                        <textarea id="edit_description" rows="3"
+                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"></textarea>
+                                    </div>
+
+                                    <!-- Item Only Fields Container (Sub-grid) -->
+                                    <div id="item-only-fields"
+                                        class="sm:col-span-6 grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-6 hidden">
+
+                                        <!-- Short Description -->
+                                        <div class="sm:col-span-6">
+                                            <label for="edit_short_description"
+                                                class="block text-sm font-bold text-gray-700 dark:text-gray-200">Short
+                                                Description</label>
+                                            <input type="text" id="edit_short_description"
+                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        </div>
+
+                                        <!-- Unit -->
+                                        <div class="sm:col-span-3">
+                                            <label for="edit_unit_id"
+                                                class="block text-sm font-bold text-gray-700 dark:text-gray-200">Unit</label>
+                                            <div class="mt-1 relative">
+                                                <select id="edit_unit_id"
+                                                    class="select2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                                    <option value="">Select Unit</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <!-- Turnout Quantity -->
+                                        <div class="sm:col-span-3">
+                                            <label for="edit_turnout_quantity"
+                                                class="block text-sm font-bold text-gray-700 dark:text-gray-200">Turnout
+                                                Quantity</label>
+                                            <input type="number" step="0.01" id="edit_turnout_quantity"
+                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        </div>
+
+                                        <!-- Spec Code -->
+                                        <div class="sm:col-span-3">
+                                            <label for="edit_specification_code"
+                                                class="block text-sm font-bold text-gray-700 dark:text-gray-200">Spec
+                                                Code</label>
+                                            <input type="text" id="edit_specification_code"
+                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        </div>
+
+                                        <!-- Spec Page -->
+                                        <div class="sm:col-span-3">
+                                            <label for="edit_specification_page_number"
+                                                class="block text-sm font-bold text-gray-700 dark:text-gray-200">Spec
+                                                Page</label>
+                                            <input type="text" id="edit_specification_page_number"
+                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        </div>
+
+                                        <!-- Assumptions -->
+                                        <div class="sm:col-span-6">
+                                            <label for="edit_assumptions"
+                                                class="block text-sm font-bold text-gray-700 dark:text-gray-200">Assumptions</label>
+                                            <textarea id="edit_assumptions" rows="2"
+                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                                        </div>
+
+                                        <!-- Footnotes -->
+                                        <div class="sm:col-span-6">
+                                            <label for="edit_footnotes"
+                                                class="block text-sm font-bold text-gray-700 dark:text-gray-200">Footnotes</label>
+                                            <textarea id="edit_footnotes" rows="2"
+                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                                        </div>
+
+                                        <!-- Is Canceled -->
+                                        <div class="sm:col-span-6 flex items-center">
+                                            <input type="checkbox" id="edit_is_canceled"
+                                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600">
+                                            <label for="edit_is_canceled"
+                                                class="ml-2 block text-sm font-bold text-gray-900 dark:text-gray-200">Is
+                                                Canceled</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                    <button type="button" id="saveNodeDetails"
+                        class="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto">Save</button>
+                    <button type="button" id="closeNodeModal"
+                        class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto dark:bg-gray-600 dark:text-white dark:ring-gray-500 dark:hover:bg-gray-500">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
 @endsection
 
 @push('scripts')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
     <script>
         $(function () {
-            $('#sor-tree').jstree({
+            var tree = $('#sor-tree').jstree({
                 'core': {
                     'data': {
                         'url': function (node) {
@@ -67,22 +216,30 @@
                 'plugins': ['contextmenu', 'dnd', 'state', 'types'],
                 'types': {
                     'chapter': {
-                        'icon': 'fa fa-folder text-blue-500'
+                        'icon': 'fa fa-folder text-yellow-500'
                     },
-                    'subchapter': {
-                        'icon': 'fa fa-folder-open text-green-500'
+                    'sub-chapter': {
+                        'icon': 'fa fa-folder-open text-yellow-400'
                     },
                     'item': {
-                        'icon': 'fa fa-file text-gray-500'
+                        'icon': 'fa fa-file-alt text-blue-500'
                     },
                     'default': {
-                        'icon': 'fa fa-folder'
+                        'icon': 'fa fa-folder text-yellow-500'
                     }
                 },
                 'contextmenu': {
                     'items': function ($node) {
                         var tree = $('#sor-tree').jstree(true);
                         return {
+                            'EditDetails': {
+                                'separator_before': false,
+                                'separator_after': true,
+                                'label': 'Edit Details',
+                                'action': function (obj) {
+                                    editNodeDetails($node);
+                                }
+                            },
                             'Create': {
                                 'separator_before': false,
                                 'separator_after': true,
@@ -172,9 +329,18 @@
                         data.instance.set_id(data.node, response.id);
                         // Update the node text with the actual item_number and description
                         data.instance.set_text(response.id, response.item_number + ' ' + response.description);
+
+                        // Automatically open edit details for new items
+                        if (itemType === 3) {
+                            // Small delay to ensure node is fully created in UI
+                            setTimeout(function () {
+                                editNodeDetails(data.instance.get_node(response.id));
+                            }, 500);
+                        }
                     },
                     error: function (xhr) {
                         console.error('Error creating node:', xhr.responseText);
+                        alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error creating node');
                         data.instance.refresh(); // Refresh tree on error
                     }
                 });
@@ -264,8 +430,107 @@
                     },
                     error: function (xhr) {
                         console.error('Error moving node:', xhr.responseText);
-                        instance.refresh(); // Revert move in UI on error
-                        alert('Failed to move node. Please try again. ' + xhr.responseJSON.message);
+                        alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error moving node');
+                        $('#sor-tree').jstree(true).refresh(); // Force refresh to revert move
+                    }
+                });
+            }).on('dblclick.jstree', function (e) {
+                var instance = $.jstree.reference(this);
+                var node = instance.get_node(e.target);
+                if (node) {
+                    editNodeDetails(node);
+                }
+            });
+
+            function editNodeDetails(node) {
+                // Fetch node details
+                $.ajax({
+                    url: '{{ url('api/sors/' . $sor->id . '/tree') }}/' + node.id + '/details',
+                    type: 'GET',
+                    success: function (response) {
+                        var item = response.item;
+                        var units = response.units;
+
+                        $('#edit_node_id').val(item.id);
+                        $('#edit_item_number').val(item.item_number);
+                        $('#edit_description').val(item.description);
+                        $('#edit_short_description').val(item.short_description);
+                        $('#edit_specification_code').val(item.specification_code);
+                        $('#edit_specification_page_number').val(item.specification_page_number);
+                        $('#edit_turnout_quantity').val(item.turnout_quantity);
+                        $('#edit_assumptions').val(item.assumptions);
+                        $('#edit_footnotes').val(item.footnotes);
+                        $('#edit_is_canceled').prop('checked', item.is_canceled);
+
+                        // Populate Unit Dropdown
+                        var unitSelect = $('#edit_unit_id');
+                        unitSelect.empty();
+                        unitSelect.append('<option value="">Select Unit</option>');
+                        $.each(units, function (index, unit) {
+                            unitSelect.append('<option value="' + unit.id + '">' + unit.name + ' (' + unit.code + ')</option>');
+                        });
+                        unitSelect.val(item.unit_id).trigger('change');
+
+                        // Show/Hide fields based on type
+                        if (item.item_type == 3) { // Item
+                            $('#item-only-fields').removeClass('hidden');
+                        } else {
+                            $('#item-only-fields').addClass('hidden');
+                        }
+
+                        $('#editNodeModal').removeClass('hidden');
+
+                        // Initialize Select2 after modal is visible
+                        $('#edit_unit_id').select2({
+                            dropdownParent: $('#editNodeModal'),
+                            width: '100%'
+                        });
+                    },
+                    error: function (xhr) {
+                        console.error('Error fetching node details:', xhr.responseText);
+                        alert('Failed to fetch node details.');
+                    }
+                });
+            }
+
+            $('#closeNodeModal').click(function () {
+                $('#editNodeModal').addClass('hidden');
+            });
+
+            $('#saveNodeDetails').click(function () {
+                var nodeId = $('#edit_node_id').val();
+                var data = {
+                    'item_number': $('#edit_item_number').val(),
+                    'description': $('#edit_description').val(),
+                    'short_description': $('#edit_short_description').val(),
+                    'unit_id': $('#edit_unit_id').val(),
+                    'specification_code': $('#edit_specification_code').val(),
+                    'specification_page_number': $('#edit_specification_page_number').val(),
+                    'turnout_quantity': $('#edit_turnout_quantity').val(),
+                    'assumptions': $('#edit_assumptions').val(),
+                    'footnotes': $('#edit_footnotes').val(),
+                    'is_canceled': $('#edit_is_canceled').is(':checked') ? 1 : 0,
+                    '_token': '{{ csrf_token() }}'
+                };
+
+                $.ajax({
+                    url: '{{ url('api/sors/' . $sor->id . '/tree') }}/' + nodeId + '/details',
+                    type: 'PUT',
+                    data: data,
+                    success: function (response) {
+                        $('#editNodeModal').addClass('hidden');
+
+                        // Update tree node text
+                        var tree = $('#sor-tree').jstree(true);
+                        var node = tree.get_node(nodeId);
+                        var newText = response.item.item_number ? response.item.item_number + ' ' + response.item.description : response.item.description;
+                        tree.rename_node(node, newText);
+
+                        alert('Node details updated successfully.');
+                    },
+                    error: function (xhr) {
+                        console.error('Error updating node details:', xhr.responseText);
+                        alert('Failed to update node details. ' + (xhr.responseJSON.message || ''));
                     }
                 });
             });

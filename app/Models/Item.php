@@ -45,6 +45,10 @@ class Item extends Model
         'depth',
     ];
 
+    protected $casts = [
+        'item_type' => 'integer',
+    ];
+
     public function sor()
     {
         return $this->belongsTo(Sor::class);
