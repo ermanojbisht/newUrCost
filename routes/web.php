@@ -48,6 +48,19 @@ Route::middleware('auth')->group(function () {
         Route::put('/{item}/details', [SorController::class, 'updateNodeDetails'])->name('update_details');
     });
 
+    // Skeleton/Rate Analysis Page View
+    Route::get('/sors/{sor}/items/{item}/skeleton', [App\Http\Controllers\ItemSkeletonController::class, 'showPage'])->name('sors.items.skeleton');
+
+    Route::prefix('api/sors/{sor}/items/{item}/skeleton')->name('api.sors.items.skeleton.')->group(function () {
+        Route::get('/', [App\Http\Controllers\ItemSkeletonController::class, 'show'])->name('show');
+        Route::post('/resources', [App\Http\Controllers\ItemSkeletonController::class, 'addResource'])->name('resources.add');
+        Route::delete('/resources/{skeleton}', [App\Http\Controllers\ItemSkeletonController::class, 'removeResource'])->name('resources.remove');
+        Route::post('/subitems', [App\Http\Controllers\ItemSkeletonController::class, 'addSubitem'])->name('subitems.add');
+        Route::delete('/subitems/{subitem}', [App\Http\Controllers\ItemSkeletonController::class, 'removeSubitem'])->name('subitems.remove');
+        Route::post('/overheads', [App\Http\Controllers\ItemSkeletonController::class, 'addOverhead'])->name('overheads.add');
+        Route::delete('/overheads/{ohead}', [App\Http\Controllers\ItemSkeletonController::class, 'removeOverhead'])->name('overheads.remove');
+    });
+
     Route::get('/sors/{sor}/admin', [SorController::class, 'admin'])->name('sors.admin');
     Route::get('api/sors/{sor}/items-datatable', [SorController::class, 'getDataTableData'])->name('api.sors.items-datatable');
 });

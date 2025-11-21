@@ -66,7 +66,7 @@ class Item extends Model
 
     public function skeletons()
     {
-        return $this->hasMany(Skeleton::class);
+        return $this->hasMany(Skeleton::class, 'item_code', 'item_code');
     }
 
     public function subitems()

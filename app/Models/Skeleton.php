@@ -16,7 +16,7 @@ class Skeleton extends Model
         'resource_id',
         'quantity',
         'unit_id',
-        'item_id',
+        'item_code',
         'resource_description',
         'sort_order',
         'valid_from',
@@ -52,7 +52,7 @@ class Skeleton extends Model
 
     public function item()
     {
-        return $this->belongsTo(Item::class);
+        return $this->belongsTo(Item::class, 'item_code', 'item_code');
     }
 
     public function createdBy()

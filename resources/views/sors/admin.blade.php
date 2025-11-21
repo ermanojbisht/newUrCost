@@ -74,9 +74,10 @@
                     <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                         <div class="sm:flex sm:items-start">
                             <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                <h3 class="text-lg leading-6 font-bold text-gray-900 dark:text-white" id="modal-title">
+                                <h3 class="text-lg leading-6 font-bold text-gray-900 dark:text-white mb-4" id="modal-title">
                                     Edit Node Details
                                 </h3>
+
                                 <div class="mt-4 grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-6">
                                     <input type="hidden" id="edit_node_id">
 
@@ -234,10 +235,21 @@
                         return {
                             'EditDetails': {
                                 'separator_before': false,
-                                'separator_after': true,
+                                'separator_after': false,
                                 'label': 'Edit Details',
                                 'action': function (obj) {
                                     editNodeDetails($node);
+                                }
+                            },
+                            'RateAnalysis': {
+                                'separator_before': false,
+                                'separator_after': true,
+                                'label': 'Rate Analysis',
+                                '_disabled': $node.original.type !== 'item', // Only enable for items
+                                'action': function (obj) {
+                                    const sorId = {{ $sor->id }};
+                                    const itemId = $node.id;
+                                    window.location.href = `/sors/${sorId}/items/${itemId}/skeleton`;
                                 }
                             },
                             'Create': {
