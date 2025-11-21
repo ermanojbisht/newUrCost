@@ -110,7 +110,7 @@ MODULE3: CRUD for Some Models where tables are `rate_cards` , `pol_rates`,`pol_s
 4-use proper themes ( @documentation/look_and_feel/layouts_themes_doc.md ) for both dark and light,  use relevent icon or made
 
 
-MODULE4: Generate A particular SOR chapter and Item listing system
+MODULE4: Generate A particular SOR chapter and Item listing system (Completed)
 
 I am starting the migration of a major feature from a CodeIgniter 3 application to Laravel 12. I have created a detailed migration plan in the file `sor_list_plan.md`.
 
@@ -122,6 +122,15 @@ After you have read the file, please start with **Step 5 administrative Node Tre
 make a detailed plan to execute task before going further
 like first how to create a node in sor's item table 
 if it is chapter ,sub-chapter, item then what are the default values , calculated values, value to edit for user after node creation. etc.
+
+
+MODULE5: Item skeleton view 
+
+from old system what is skeleton view , this documentation is done at @documentation/item_skeleton_view.md
+and with this idea view has been started at @resources/views/sors/skeleton.blade.php
+what should be needed in skeleton view in system is also narrated in @documentation/Item_ Skeleton_and_rateanalysis_view.md. but currently it's need betterment in functinality and view
+
+MODULE6: Item Rate Analysis view
 
 
 
