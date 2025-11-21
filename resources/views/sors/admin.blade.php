@@ -342,13 +342,11 @@
                         // Update the node text with the actual item_number and description
                         data.instance.set_text(response.id, response.item_number + ' ' + response.description);
 
-                        // Automatically open edit details for new items
-                        if (itemType === 3) {
-                            // Small delay to ensure node is fully created in UI
-                            setTimeout(function () {
-                                editNodeDetails(data.instance.get_node(response.id));
-                            }, 500);
-                        }
+                        // Automatically open edit details for new nodes
+                        // Small delay to ensure node is fully created in UI
+                        setTimeout(function () {
+                            editNodeDetails(data.instance.get_node(response.id));
+                        }, 500);
                     },
                     error: function (xhr) {
                         console.error('Error creating node:', xhr.responseText);
@@ -497,6 +495,11 @@
                             dropdownParent: $('#editNodeModal'),
                             width: '100%'
                         });
+
+                        // Focus on Description field
+                        setTimeout(function() {
+                            $('#edit_description').focus();
+                        }, 100);
                     },
                     error: function (xhr) {
                         console.error('Error fetching node details:', xhr.responseText);

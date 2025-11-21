@@ -134,3 +134,4 @@ When migrating to Laravel, the following structure is recommended to improve sep
     <strong>Final Rate: {{ $skeleton->final_rate }} / {{ $skeleton->unit }}</strong>
     ```
 This approach moves the complex business logic out of the view and into a dedicated service class, making the code much cleaner, easier to test, and more maintainable, which is a primary goal of moving to a modern framework like Laravel.
+

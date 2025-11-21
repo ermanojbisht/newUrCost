@@ -464,7 +464,7 @@ class SorController extends Controller
             'unit_id' => 'nullable|exists:units,id',
             'specification_code' => 'nullable|string|max:255',
             'specification_page_number' => 'nullable|string|max:255',
-            'turnout_quantity' => 'nullable|numeric',
+            'turnout_quantity' => 'nullable|numeric|min:0',
             'assumptions' => 'nullable|string',
             'footnotes' => 'nullable|string',
             'is_canceled' => 'boolean',
