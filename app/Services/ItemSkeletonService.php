@@ -4,12 +4,18 @@ namespace App\Services;
 
 use App\Models\Item;
 use App\Models\ItemRate;
-use App\Models\Rate;
 use App\Models\RateCard;
 use Illuminate\Support\Facades\Log;
 
 class ItemSkeletonService
 {
+    protected $rateAnalysisService;
+
+    public function __construct(RateAnalysisService $rateAnalysisService)
+    {
+        $this->rateAnalysisService = $rateAnalysisService;
+    }
+
     /**
      * Calculate the rate for an item based on its skeleton, subitems, and overheads.
      *
@@ -26,9 +32,11 @@ class ItemSkeletonService
         if (!$rateCardId) {
             $rateCard = RateCard::first();
             $rateCardId = $rateCard ? $rateCard->id : null;
+        } else {
+            $rateCard = RateCard::find($rateCardId);
         }
 
-        if (!$rateCardId) {
+        if (!$rateCard) {
             return ['error' => 'No rate card found'];
         }
 
@@ -40,24 +48,25 @@ class ItemSkeletonService
         $totalMachine = 0;
 
         foreach ($resources as $res) {
-            // Fetch Rate
-            $rateEntry = Rate::where('resource_id', $res->resource_id)
-                ->where('rate_card_id', $rateCardId)
-                ->where('valid_from', '<=', $date)
-                ->orderBy('valid_from', 'desc')
-                ->first();
+            // Fetch Rate using RateAnalysisService
+            $rateDetails = $this->rateAnalysisService->getResourceRateDetails($res->resource, $rateCard, $date);
 
-            // Fallback to Basic Rate Card (ID = 1) if not found
-            if (!$rateEntry && $rateCardId != 1) {
-                $rateEntry = Rate::where('resource_id', $res->resource_id)
-                    ->where('rate_card_id', 1)
-                    ->where('valid_from', '<=', $date)
-                    ->orderBy('valid_from', 'desc')
-                    ->first();
+            $rate = $rateDetails['total_rate'];
+            $amount = $res->quantity * $rate;
+
+            // Unit Conversion Logic
+            $baseUnit = $res->resource->unit;
+            $usageUnit = $res->unit;
+            $conversionFactor = 1;
+
+            if ($baseUnit && $usageUnit && $baseUnit->id != $usageUnit->id) {
+                $baseFactor = $baseUnit->conversion_factor > 0 ? $baseUnit->conversion_factor : 1;
+                $usageFactor = $usageUnit->conversion_factor > 0 ? $usageUnit->conversion_factor : 1;
+                $conversionFactor = $baseFactor/$usageFactor;
             }
 
-            $rate = $rateEntry ? $rateEntry->rate : 0;
-            $amount = $res->quantity * $rate;
+            // Amount = Quantity * Conversion * Rate
+            $amount = $res->quantity * $conversionFactor * $rate;
 
             // Categorize cost (This logic depends on Resource Group or similar, assuming simplified for now)
             // In real app, we might check $res->resource->group_id to decide category.
@@ -66,7 +75,6 @@ class ItemSkeletonService
 
             // Let's try to guess from group_id if available, or just sum to a generic 'resource_cost'
             // Looking at Resource model, it has group_id.
-            // Let's assume: 1=Labor, 2=Material, 3=Machine (Example IDs)
             // We need to know the actual IDs. For now, I'll just sum them all to 'total_resources' 
             // and maybe separate if I can find the constants.
 
@@ -79,6 +87,7 @@ class ItemSkeletonService
                 'unit' => $res->unit ? $res->unit->name : '',
                 'unit_id' => $res->unit_id, // Pass unit_id
                 'rate' => $rate,
+                'rate_unit' => $baseUnit ? $baseUnit->name : '', // Pass rate unit
                 'amount' => $amount,
                 'resource_group_id' => $res->resource->group_id, // Pass resource_group_id
                 'resource_group_name' => strtolower($res->resource->group->name ?? ''), // Pass resource_group_name
@@ -89,6 +98,7 @@ class ItemSkeletonService
                 'factor' => $res->factor,
                 'is_locked' => $res->is_locked,
                 'is_canceled' => $res->is_canceled,
+                'rate_components' => $rateDetails['components'], // Pass components for tooltip/display
             ];
         }
 

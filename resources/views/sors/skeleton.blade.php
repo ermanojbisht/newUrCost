@@ -44,26 +44,16 @@
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th class="w-10 px-4 py-3"></th>
-                                <th class="w-12 px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">#</th>
-                                <th
-                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                    Name</th>
-                                <th
-                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                    Quantity</th>
-                                <th
-                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                    Rate</th>
-                                <th
-                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                    Amount</th>
-                                <th
-                                    class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                    Action</th>
+                                <th class="w-8 px-2 py-2"></th>
+                                <th class="w-10 px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">#</th>
+                                <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Name</th>
+                                <th class="w-24 px-2 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Qty</th>
+                                <th class="w-24 px-2 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Rate (₹)</th>
+                                <th class="w-24 px-2 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Amount (₹)</th>
+                                <th class="w-16 px-2 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Action</th>
                             </tr>
                         </thead>
-                        <tbody id="resources-table"
+                        <tbody id="resources-body"
                             class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             <tr>
                                 <td colspan="5" class="px-4 py-8 text-center text-gray-500">Loading...</td>
@@ -646,55 +636,84 @@
         }
 
         function renderTables(data) {
-            // Resources
-            let resHtml = data.resources.length === 0
-                ? '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">No resources added yet</td></tr>'
-                : data.resources.map((res, index) => {
-                    let typeIcon = icons.material;
-                    if (res.resource_group_name.includes('labour')) typeIcon = icons.labour;
-                    else if (res.resource_group_name.includes('machine')) typeIcon = icons.machinery;
-                    else if (res.resource_group_name.includes('material')) typeIcon = icons.material;
-                    
-                    return `
-                            <tr data-id="${res.id}">
-                                <td class="px-4 py-3 text-center cursor-move text-gray-400 hover:text-gray-600">
-                                    ${icons.list}
-                                </td>
-                                <td class="px-4 py-3 text-center text-sm text-gray-500">${index + 1}</td>
-                                <td class="px-4 py-3 text-sm">
-                                    <div class="flex flex-col">
-                                        <div class="flex items-center">
-                                            <span class="mr-2 text-gray-500" title="${res.resource_group_name}">${typeIcon}</span>
-                                            <span class="font-medium">
-                                                ${res.secondary_code ? `<span class="text-gray-500 mr-1">[${res.secondary_code}]</span>` : ''}
-                                                <a href="/resources/${res.resource_id}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline">
-                                                    ${res.name}
-                                                </a>
-                                            </span>
-                                        </div>
-                                        ${(res.resource_description || (res.factor && parseFloat(res.factor) !== 1)) ? `
-                                            <div class="text-xs text-gray-500 ml-7 mt-1">
-                                                ${res.resource_description || ''}
-                                                ${(res.factor && parseFloat(res.factor) !== 1) ? `<span class="font-semibold">(Factor: ${res.factor})</span>` : ''}
-                                            </div>
-                                        ` : ''}
-                                    </div>
-                                </td>
-                                <td class="px-4 py-3 text-sm">${res.quantity} ${res.unit}</td>
-                                <td class="px-4 py-3 text-sm">₹${parseFloat(res.rate).toFixed(2)}</td>
-                                <td class="px-4 py-3 text-sm font-semibold">₹${parseFloat(res.amount).toFixed(2)}</td>
-                                <td class="px-4 py-3 text-right text-sm">
-                                    <button onclick='editResource(${JSON.stringify(res)})' class="text-blue-600 hover:text-blue-900 mr-2">Edit</button>
-                                    <button onclick="removeResource(${res.id})" class="text-red-600 hover:text-red-900">Remove</button>
-                                </td>
-                            </tr>
-                        `;
-                }).join('');
-            $('#resources-table').html(resHtml);
+            // Resources Table
+            const resBody = document.getElementById('resources-body');
+            resBody.innerHTML = '';
 
+            if (data.resources.length === 0) {
+                resBody.innerHTML = '<tr><td colspan="9" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No resources added yet.</td></tr>';
+            } else {
+                data.resources.forEach((res, index) => {
+                    const row = document.createElement('tr');
+                    row.className = 'bg-white dark:bg-gray-800 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150';
+                    row.dataset.id = res.id; // For SortableJS
+
+                    // Determine Icon
+                    let iconHtml = icons.list; // Default
+                    if (res.resource_group_name) {
+                        if (res.resource_group_name.includes('labour')) iconHtml = icons.labour;
+                        else if (res.resource_group_name.includes('machine')) iconHtml = icons.machinery;
+                        else if (res.resource_group_name.includes('material')) iconHtml = icons.material;
+                    }
+
+                    // Rate Tooltip
+                    let rateTooltip = '';
+                    if (res.rate_components && res.rate_components.length > 1) {
+                        let tooltipContent = res.rate_components.map(c => `${c.name}: ₹${parseFloat(c.amount).toFixed(2)}`).join('\n');
+                        rateTooltip = `<span class="text-blue-500 cursor-help mr-1" title="${tooltipContent}">&#9432;</span>`;
+                    }
+
+                    // Name Column Content
+                    let nameContent = `
+                        <div class="flex items-start">
+                            <span class="mr-2 text-gray-500 mt-1" title="${res.resource_group_name}">
+                                ${iconHtml}
+                            </span>
+                            <div class="flex-1 min-w-0">
+                                <a href="/resources/${res.resource_id}" target="_blank" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline whitespace-normal break-words block">
+                                    [${res.secondary_code || 'N/A'}] ${res.name}
+                                </a>
+                                ${res.resource_description ? `<div class="text-xs text-gray-500 mt-0.5 whitespace-normal">${res.resource_description}</div>` : ''}
+                                ${parseFloat(res.factor) !== 1 ? `<div class="text-xs text-gray-500 mt-0.5">Factor: ${parseFloat(res.factor).toFixed(4)}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+
+                    row.innerHTML = `
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 drag-handle cursor-move align-top">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path></svg>
+                        </td>
+                        <td class="px-2 py-2 whitespace-nowrap text-center text-sm text-gray-500 dark:text-gray-400 align-top">${index + 1}</td>
+                        <td class="px-2 py-2 text-sm text-gray-900 dark:text-white align-top">
+                            ${nameContent}
+                        </td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right align-top">
+                            ${parseFloat(res.quantity).toFixed(4)}<br>
+                            <span class="text-xs text-gray-400">${res.unit}</span>
+                        </td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right align-top">
+                            <div class="flex justify-end items-center">
+                                ${rateTooltip}
+                                <span>${parseFloat(res.rate).toFixed(2)}</span>
+                            </div>
+                            ${res.rate_unit ? `<div class="text-xs text-gray-400">/${res.rate_unit}</div>` : ''}
+                        </td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right align-top">${parseFloat(res.amount).toFixed(2)}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-right text-sm font-medium align-top">
+                            <button onclick='editResource(${JSON.stringify(res)})' class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-2" title="Edit">
+                                <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                            <button onclick="deleteResource(${res.id})" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Delete">
+                                <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </td>
+                    `;
+                    resBody.appendChild(row);
+                });
+            }
             // Initialize Sortable
-            if (document.getElementById('resources-table')) {
-                new Sortable(document.getElementById('resources-table'), {
+            if (document.getElementById('resources-body')) { // Changed from resources-table to resources-body
+                new Sortable(document.getElementById('resources-body'), {
                     animation: 150,
                     handle: '.cursor-move',
                     onEnd: function (evt) {

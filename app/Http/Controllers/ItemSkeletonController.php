@@ -10,6 +10,7 @@ use App\Models\Subitem;
 use App\Services\ItemSkeletonService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\FilterHelper;
 
 class ItemSkeletonController extends Controller
 {
@@ -33,16 +34,11 @@ class ItemSkeletonController extends Controller
     public function showPage(Request $request, Sor $sor, Item $item)
     {
         // Handle filters from request and store in session
-        if ($request->has('rate_card_id')) {
-            $request->session()->put('rate_card_id', $request->rate_card_id);
-        }
-        if ($request->has('effective_date')) {
-            $request->session()->put('effective_date', $request->effective_date);
-        }
-
         // Retrieve from session or defaults
-        $rateCardId = $request->session()->get('rate_card_id', config('urcost.default_rate_cards.' . $sor->id, 1));
-        $effectiveDate = $request->session()->get('effective_date', now()->toDateString());
+        $filters = FilterHelper::getRateFilters($request, $sor);
+
+        $rateCardId = $filters['rate_card_id'];
+        $effectiveDate = $filters['effective_date'];
 
         $rateCards = \App\Models\RateCard::all();
         $units = \App\Models\Unit::all();

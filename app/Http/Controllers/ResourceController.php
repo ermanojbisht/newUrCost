@@ -2,62 +2,76 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\FilterHelper;
 use App\Models\Rate;
 use App\Models\RateCard;
 use App\Models\Resource;
+use App\Models\ResourceGroup;
+use App\Models\Sor;
 use Illuminate\Http\Request;
+
+use App\Services\RateAnalysisService;
 
 class ResourceController extends Controller
 {
+    protected $rateAnalysisService;
+
+    public function __construct(RateAnalysisService $rateAnalysisService)
+    {
+        $this->rateAnalysisService = $rateAnalysisService;
+    }
+
     public function show(Request $request, Resource $resource)
     {
         // Handle filters from request and store in session
-        if ($request->has('rate_card_id')) {
-            $request->session()->put('rate_card_id', $request->rate_card_id);
-        }
-        if ($request->has('effective_date')) {
-            $request->session()->put('effective_date', $request->effective_date);
-        }
-
         // Retrieve from session or defaults
-        $rateCardId = $request->session()->get('rate_card_id', 1); // Default to Basic Rate Card (ID 1)
-        $effectiveDate = $request->session()->get('effective_date', now()->toDateString());
+        $filters = FilterHelper::getRateFilters($request, Sor::find(1));
+
+        $rateCardId = $filters['rate_card_id'];
+        $effectiveDate = $filters['effective_date'];
 
         $rateCards = RateCard::all();
 
-        // Rate Determination Logic
-        $rateEntry = Rate::where('resource_id', $resource->id)
-            ->where('rate_card_id', $rateCardId)
-            ->where('valid_from', '<=', $effectiveDate)
-            ->orderBy('valid_from', 'desc')
-            ->first();
-
-        $rateSource = 'Selected Rate Card';
-        $isFallback = false;
-
-        // Fallback to Basic Rate Card (ID = 1) if not found and selected is not 1
-        if (!$rateEntry && $rateCardId != 1) {
-            $rateEntry = Rate::where('resource_id', $resource->id)
-                ->where('rate_card_id', 1)
-                ->where('valid_from', '<=', $effectiveDate)
-                ->orderBy('valid_from', 'desc')
-                ->first();
-            
-            if ($rateEntry) {
-                $rateSource = 'Fallback to Basic Rate Card (ID: 1)';
-                $isFallback = true;
-            } else {
-                $rateSource = 'Not Found (Checked Selected and Basic)';
-            }
-        } elseif (!$rateEntry) {
-             $rateSource = 'Not Found in Basic Rate Card';
+        $rateCard = RateCard::find($rateCardId);
+        if (!$rateCard) {
+             $rateCard = RateCard::find(1);
         }
 
-        $rate = $rateEntry ? $rateEntry->rate : 0;
+        $rateDetails = $this->rateAnalysisService->getResourceRateDetails($resource, $rateCard, $effectiveDate);
+        
+        $rate = $rateDetails['total_rate'];
+        $rateComponents = $rateDetails['components'];
+
+        // Get validity from base rate entry for display
+        // We can re-query just for validity dates or modify service to return them.
+        // For simplicity, let's re-query the base rate entry here just for dates, 
+        // or we could add dates to the service response.
+        // Let's keep it simple and re-query for now as it's just metadata.
+        $rateEntry = Rate::where('resource_id', $resource->id)
+            ->where('rate_card_id', $rateCard->id)
+            ->where('valid_from', '<=', $effectiveDate)
+            ->where(function ($query) use ($effectiveDate) {
+                $query->where('valid_to', '>=', $effectiveDate)
+                      ->orWhereNull('valid_to');
+            })
+            ->first();
+
+        // Fallback check for dates if using card 1
+        if (!$rateEntry && $rateCard->id != 1) {
+             $rateEntry = Rate::where('resource_id', $resource->id)
+                ->where('rate_card_id', 1)
+                ->where('valid_from', '<=', $effectiveDate)
+                ->where(function ($query) use ($effectiveDate) {
+                    $query->where('valid_to', '>=', $effectiveDate)
+                          ->orWhereNull('valid_to');
+                })
+                ->first();
+        }
+
         $validFrom = $rateEntry ? $rateEntry->valid_from : null;
         $validTo = $rateEntry ? $rateEntry->valid_to : null;
 
-        $resourceGroups = \App\Models\ResourceGroup::all();
+        $resourceGroups = ResourceGroup::all();
 
         return view('resources.show', compact(
             'resource', 
@@ -65,8 +79,7 @@ class ResourceController extends Controller
             'rateCardId', 
             'effectiveDate', 
             'rate', 
-            'rateSource', 
-            'isFallback',
+            'rateComponents',
             'validFrom',
             'validTo',
             'resourceGroups'

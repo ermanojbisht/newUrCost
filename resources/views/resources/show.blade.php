@@ -108,44 +108,39 @@
         </div>
 
         <!-- Rate Analysis -->
-        <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-            <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4 border-b pb-2 dark:border-gray-700">Rate Analysis</h2>
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Rate Analysis</h3>
             
-            <div class="flex items-center justify-between mb-6">
-                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Calculated Rate</span>
-                <span class="text-3xl font-bold text-gray-900 dark:text-white">₹{{ number_format($rate, 2) }}</span>
-            </div>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-2">
+                    <span class="text-gray-600 dark:text-gray-400">Total Rate</span>
+                    <span class="text-2xl font-bold text-gray-900 dark:text-white">₹{{ number_format($rate, 2) }}</span>
+                </div>
 
-            <div class="bg-gray-50 dark:bg-gray-700 rounded-md p-4">
-                <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-2">Rate Determination Logic</h3>
-                <ul class="list-disc list-inside text-sm text-gray-600 dark:text-gray-300 space-y-1">
-                    <li>
-                        <span class="font-medium">Source:</span> 
-                        <span class="{{ $isFallback ? 'text-yellow-600 dark:text-yellow-400' : 'text-green-600 dark:text-green-400' }}">
-                            {{ $rateSource }}
-                        </span>
-                    </li>
-                    <li>
-                        <span class="font-medium">Valid From:</span> 
-                        {{ $validFrom ? \Carbon\Carbon::parse($validFrom)->format('d-m-Y') : 'N/A' }}
-                    </li>
-                    <li>
-                        <span class="font-medium">Valid To:</span> 
-                        {{ $validTo ? \Carbon\Carbon::parse($validTo)->format('d-m-Y') : 'Open-ended' }}
-                    </li>
-                </ul>
-                
-                @if($isFallback)
-                    <div class="mt-3 text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded border border-yellow-200 dark:border-yellow-800">
-                        <strong>Note:</strong> The rate was not found in the selected Rate Card, so the system fell back to the Basic Rate Card (ID 1) as per standard procedure.
+                <div class="mt-4">
+                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rate Breakdown</h4>
+                    <div class="bg-gray-50 dark:bg-gray-900 rounded-md p-3 space-y-2">
+                        @foreach($rateComponents as $component)
+                            <div class="flex justify-between items-start text-sm">
+                                <div>
+                                    <span class="font-medium text-gray-900 dark:text-white">{{ $component['name'] }}</span>
+                                    @if(!empty($component['description']))
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ $component['description'] }}</p>
+                                    @endif
+                                </div>
+                                <span class="text-gray-700 dark:text-gray-300 font-mono">+ ₹{{ number_format($component['amount'], 2) }}</span>
+                            </div>
+                        @endforeach
                     </div>
-                @endif
-                 @if($rate == 0)
-                    <div class="mt-3 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-2 rounded border border-red-200 dark:border-red-800">
-                        <strong>Alert:</strong> No rate could be determined for this resource in either the selected Rate Card or the Basic Rate Card.
-                    </div>
-                @endif
+                </div>
+
+                <div class="text-sm text-gray-500 dark:text-gray-400 mt-4">
+                    <p><strong>Valid From:</strong> {{ $validFrom ? \Carbon\Carbon::parse($validFrom)->format('d M Y') : 'N/A' }}</p>
+                    <p><strong>Valid To:</strong> {{ $validTo ? \Carbon\Carbon::parse($validTo)->format('d M Y') : 'Ongoing' }}</p>
+                </div>
             </div>
+            
+
         </div>
     </div>
 </div>
