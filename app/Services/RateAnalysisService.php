@@ -11,6 +11,7 @@ use App\Models\PolSkeleton;
 use App\Models\Rate;
 use App\Models\Ratecard;
 use App\Models\Resource;
+use App\Models\TruckSpeed;
 use Log;
 
 class RateAnalysisService
@@ -151,8 +152,8 @@ class RateAnalysisService
 
         // Material Resources
         if ($resource->resource_group_id == 3) {
-            $leadCost = $this->calculateLeadCost($resource, $ratecard);
-            return $baseRate + $leadCost;
+            $leadDetails = $this->calculateLeadCost($resource, $ratecard, $date);
+            return $baseRate + $leadDetails['totalLeadCost'];
         }
 
         // Labor or Machine Resources
@@ -203,15 +204,44 @@ class RateAnalysisService
 
         // Material Resources
         if ($resource->resource_group_id == 3) {
-            $leadCost = $this->calculateLeadCost($resource, $ratecard);
-            if ($leadCost != 0) {
-                $details['lead_cost'] = $leadCost;
-                $details['total_rate'] += $leadCost;
-                $details['components'][] = [
-                    'name' => 'Lead Cost',
-                    'amount' => $leadCost,
-                    'description' => 'Additional cost for transport/lead'
-                ];
+            $leadDetails = $this->calculateLeadCost($resource, $ratecard, $date);
+            $totalLeadCost = $leadDetails['totalLeadCost'];
+
+            if ($totalLeadCost != 0) {
+                $details['lead_cost'] = $totalLeadCost;
+                $details['total_rate'] += $totalLeadCost;
+
+                // Add breakdown components
+                if (!empty($leadDetails['mechLeadCost']) && $leadDetails['mechLeadCost'] > 0) {
+                    $details['components'][] = [
+                        'name' => 'Mechanical Lead',
+                        'amount' => $leadDetails['mechLeadCost'],
+                        'description' => 'Distance: ' . ($leadDetails['mechDistance'] ?? 0) . ' km'
+                    ];
+                }
+                if (!empty($leadDetails['manualLeadCost']) && $leadDetails['manualLeadCost'] > 0) {
+                    $details['components'][] = [
+                        'name' => 'Manual Lead',
+                        'amount' => $leadDetails['manualLeadCost'],
+                        'description' => 'Distance: ' . ($leadDetails['manualDistance'] ?? 0) . ' km'
+                    ];
+                }
+                if (!empty($leadDetails['muleLeadCost']) && $leadDetails['muleLeadCost'] > 0) {
+                    $details['components'][] = [
+                        'name' => 'Mule Lead',
+                        'amount' => $leadDetails['muleLeadCost'],
+                        'description' => 'Distance: ' . ($leadDetails['muleDistance'] ?? 0) . ' km'
+                    ];
+                }
+
+                // Fallback if individual costs are missing but total exists (shouldn't happen with current logic but safe to have)
+                if (empty($leadDetails['mechLeadCost']) && empty($leadDetails['manualLeadCost']) && empty($leadDetails['muleLeadCost'])) {
+                     $details['components'][] = [
+                        'name' => 'Lead Cost',
+                        'amount' => $totalLeadCost,
+                        'description' => 'Total Lead Cost'
+                    ];
+                }
             }
         }
 
@@ -268,7 +298,7 @@ class RateAnalysisService
      */
     public function calculateLeadCost(Resource $resource, Ratecard $ratecard ,$date): array
     {
-        $leadDetail['totalLeadCost'=>0,'mechLeadCost'=>0,'muleLeadCost'=>0,'manualLeadCost'=>0];
+        $leadDetail = ['totalLeadCost'=>0,'mechLeadCost'=>0,'muleLeadCost'=>0,'manualLeadCost'=>0];
         $leadDistances = LeadDistance::where('resource_id', $resource->id)
             ->where('rate_card_id', $ratecard->id)
             ->where('is_canceled', 0)
@@ -292,7 +322,7 @@ class RateAnalysisService
                 ->get();
         }
         //resource capcity of particular resource from its capcity group defined in resource table
-        $resourceCapacityRule=$resource->resourceCapacityRule();
+        $resourceCapacityRule=$resource->resourceCapacityRule;
         if ($leadDistances->isEmpty() || !$resourceCapacityRule) {
             return  $leadDetail;
         }
