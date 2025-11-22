@@ -19,9 +19,12 @@ class RateAnalysisService
      * @param Ratecard $ratecard
      * @return array
      */
-    public function calculateRate(Item $item, Ratecard $ratecard): array
+    public function calculateRate(Item $item, Ratecard $ratecard, $date=false): array
     {
-        $directResources = $this->getDirectResources($item, $ratecard);
+        if(!$date){
+            $date=now();
+        }
+        $directResources = $this->getDirectResources($item, $ratecard, $date);
         $subItems = $this->getSubItems($item, $ratecard);
 
         $resourceCost = collect($directResources)->sum('amount');
@@ -50,12 +53,12 @@ class RateAnalysisService
         return $analysis;
     }
 
-    private function getOverheads(Item $item): \Illuminate\Database\Eloquent\Collection
+    public function getOverheads(Item $item): \Illuminate\Database\Eloquent\Collection
     {
         return $item->oheads()->orderBy('sorder')->get();
     }
 
-    private function calculateOverheadCosts( $overheads, array $resources, array $subItems, float $totalDirectCost): array
+    public function calculateOverheadCosts( $overheads, array $resources, array $subItems, float $totalDirectCost): array
     {
         $calculated = [];
         $cumulativeOverhead = 0;
@@ -76,7 +79,7 @@ class RateAnalysisService
         return $calculated;
     }
 
-    private function getSubItems(Item $item, Ratecard $ratecard): array
+    public function getSubItems(Item $item, Ratecard $ratecard): array
     {
         $subItemData = [];
 
@@ -105,12 +108,12 @@ class RateAnalysisService
      * @param Ratecard $ratecard
      * @return array
      */
-    private function getDirectResources(Item $item, Ratecard $ratecard): array
+    public function getDirectResources(Item $item, Ratecard $ratecard, $date): array
     {
         $resources = [];
 
         foreach ($item->skeletons as $skeleton) {
-            $rate = $this->getResourceRate($skeleton->resource, $ratecard);
+            $rate = $this->getResourceRate($skeleton->resource, $ratecard, $date);
             $amount = $skeleton->quantity * $rate;
 
             $resources[] = [
@@ -131,9 +134,9 @@ class RateAnalysisService
      * @param Ratecard $ratecard
      * @return float
      */
-    private function getResourceRate(Resource $resource, Ratecard $ratecard): float
+    public function getResourceRate(Resource $resource, Ratecard $ratecard, $date): float
     {
-        $baseRate = $this->getBaseRate($resource, $ratecard);
+        $baseRate = $this->getBaseRate($resource, $ratecard, $date);
 
         // Material Resources
         if ($resource->resource_group_id == 3) {
@@ -153,11 +156,12 @@ class RateAnalysisService
     /**
      * Get the base rate for a resource, with fallback to the default rate card.
      */
-    private function getBaseRate(Resource $resource, Ratecard $ratecard): float
+    public function getBaseRate(Resource $resource, Ratecard $ratecard): float
     {
         $rate = Rate::where('resource_id', $resource->id)
-            ->where('ratecard_id', $ratecard->id)
-            ->latest('created_at') // Ignoring predate/postdate for now
+            ->where('rate_card_id', $ratecard->id)
+            ->where('valid_from', '<=', $date)
+            ->where('valid_to', '>=', $date)
             ->first();
 
         if ($rate) {
@@ -176,7 +180,7 @@ class RateAnalysisService
     /**
      * Calculate the lead cost for a material resource.
      */
-    private function calculateLeadCost(Resource $resource, Ratecard $ratecard): float
+    public function calculateLeadCost(Resource $resource, Ratecard $ratecard): float
     {
         $leadDistances = LeadDistance::where('resource_id', $resource->id)
             ->where('ratecard_id', $ratecard->id)
@@ -211,7 +215,7 @@ class RateAnalysisService
     /**
      * Calculate the index cost for a labor or machine resource.
      */
-    private function calculateIndexCost(Resource $resource, Ratecard $ratecard, float $baseRate): float
+    public function calculateIndexCost(Resource $resource, Ratecard $ratecard, float $baseRate): float
     {
         $indexModel = $resource->resource_group_id == 1 ? new LaborIndex() : new MachineIndex();
 

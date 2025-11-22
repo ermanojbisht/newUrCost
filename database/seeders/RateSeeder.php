@@ -4,12 +4,14 @@ namespace Database\Seeders;
 
 use App\Models\Rate;
 use App\Models\Resource;
-use App\Models\Ratecard;
+use App\Models\RateCard;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
+use Log;
 
 class RateSeeder extends Seeder
 {
@@ -19,10 +21,6 @@ class RateSeeder extends Seeder
     public function run(): void
     {
         Model::unguard();
-
-        Schema::disableForeignKeyConstraints();
-        DB::table('rates')->truncate();
-        Schema::enableForeignKeyConstraints();
 
         $seededResources = Resource::all()->pluck('id')->toArray();
         $seededRatecards = Ratecard::all()->pluck('id')->toArray();
@@ -34,21 +32,28 @@ class RateSeeder extends Seeder
                         ->get();
 
         foreach ($legacyRates as $legacyRate) {
-            Rate::create([
-                'resource_id' => $legacyRate->resourceid,
-                'ratecard_id' => $legacyRate->ratecard,
-                'rate' => $legacyRate->rate,
-                'unit_id' => $legacyRate->unit,
-                'created_by' => $legacyRate->created_by ?? null,
-                'modify_by' => $legacyRate->modify_by ?? null,
-                'predate' => $legacyRate->predate,
-                'postdate' => $legacyRate->postdate !== '0000-00-00 00:00:00' ? $legacyRate->postdate : null,
-                'remark' => $legacyRate->remark ?? null,
-                'locked' => $legacyRate->locked,
-                'publish_date' => $legacyRate->publish_date !== '0000-00-00 00:00:00' ? $legacyRate->publish_date : null,
-                'created_at' => $legacyRate->insert_date !== '0000-00-00 00:00:00' ? $legacyRate->insert_date : null,
-                'updated_at' => $legacyRate->modify_date !== '0000-00-00 00:00:00' ? $legacyRate->modify_date : null,
+            Rate::firstOrCreate([
+                'resource_id'     => $legacyRate->resourceid,
+                'rate_card_id'    => $legacyRate->ratecard,
+                'applicable_date' => $legacyRate->appdate,
+            ], [
+                'unit_id'      => $legacyRate->unit??140,
+                'rate'         => $legacyRate->rate,
+                'valid_from'   => Carbon::createFromTimestamp($legacyRate->predate),
+                'valid_to'     => Carbon::createFromTimestamp($legacyRate->postdate),
+                'remarks'      => $legacyRate->remark ?? null,
+                'is_locked'    => $legacyRate->locked,
+                'published_at' => $legacyRate->publish_date !== '0000-00-00 00:00:00'
+                                    ? $legacyRate->publish_date : null,
+                'tax'          => $legacyRate->tax,
+                'created_at'   => $legacyRate->insert_date !== '0000-00-00 00:00:00'
+                                    ? $legacyRate->insert_date : null,
+                'updated_at'   => $legacyRate->modify_date !== '0000-00-00 00:00:00'
+                                    ? $legacyRate->modify_date : null,
+                'created_by'   => 1,
+                'updated_by'   => 1,
             ]);
+
         }
     }
 }

@@ -13,7 +13,6 @@ class Resource extends Model
 
     protected $fillable = [
         'name',
-        'resource_code',
         'group_id',
         'secondary_code',
         'unit_group_id',
@@ -31,6 +30,11 @@ class Resource extends Model
     public function unitGroup()
     {
         return $this->belongsTo(UnitGroup::class);
+    }
+
+    public function group()
+    {
+        return $this->belongsTo(ResourceGroup::class, 'resource_group_id');
     }
 
     public function unit()

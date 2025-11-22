@@ -33,7 +33,7 @@ class ItemSkeletonService
         }
 
         // 1. Fetch Resources (Skeletons)
-        $resources = $item->skeletons()->with(['resource', 'unit'])->orderBy('sort_order')->get();
+        $resources = $item->skeletons()->with(['resource.group', 'unit'])->orderBy('sort_order')->get();
         $resourceData = [];
         $totalLabor = 0;
         $totalMaterial = 0;
@@ -46,6 +46,15 @@ class ItemSkeletonService
                 ->where('valid_from', '<=', $date)
                 ->orderBy('valid_from', 'desc')
                 ->first();
+
+            // Fallback to Basic Rate Card (ID = 1) if not found
+            if (!$rateEntry && $rateCardId != 1) {
+                $rateEntry = Rate::where('resource_id', $res->resource_id)
+                    ->where('rate_card_id', 1)
+                    ->where('valid_from', '<=', $date)
+                    ->orderBy('valid_from', 'desc')
+                    ->first();
+            }
 
             $rate = $rateEntry ? $rateEntry->rate : 0;
             $amount = $res->quantity * $rate;
@@ -64,12 +73,22 @@ class ItemSkeletonService
             $resourceData[] = [
                 'id' => $res->id,
                 'resource_id' => $res->resource_id,
+                'secondary_code' => $res->resource->secondary_code, // Pass secondary_code
                 'name' => $res->resource->name,
                 'quantity' => $res->quantity,
                 'unit' => $res->unit ? $res->unit->name : '',
+                'unit_id' => $res->unit_id, // Pass unit_id
                 'rate' => $rate,
                 'amount' => $amount,
-                'group_id' => $res->resource->group_id,
+                'resource_group_id' => $res->resource->group_id, // Pass resource_group_id
+                'resource_group_name' => strtolower($res->resource->group->name ?? ''), // Pass resource_group_name
+                'unit_group_id' => $res->unit ? $res->unit->unit_group_id : null, // Pass unit_group_id
+                'resource_description' => $res->resource_description,
+                'valid_from' => $res->valid_from ? $res->valid_from->toDateString() : null,
+                'valid_to' => $res->valid_to ? $res->valid_to->toDateString() : null,
+                'factor' => $res->factor,
+                'is_locked' => $res->is_locked,
+                'is_canceled' => $res->is_canceled,
             ];
         }
 

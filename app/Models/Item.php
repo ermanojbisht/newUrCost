@@ -71,7 +71,7 @@ class Item extends Model
 
     public function subitems()
     {
-        return $this->hasMany(Subitem::class);
+        return $this->hasMany(Subitem::class, 'item_id', 'item_code');
     }
 
     public function oheads()

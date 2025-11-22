@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Item;
 use App\Models\RateCard;
+use App\Models\Resource;
 use App\Models\Sor;
 use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Yajra\DataTables\DataTables;
 use Log;
+use Yajra\DataTables\DataTables;
 
 class SorController extends Controller
 {
@@ -473,5 +474,37 @@ class SorController extends Controller
         $item->update($request->all());
 
         return response()->json(['status' => 'success', 'message' => 'Item updated successfully.', 'item' => $item]);
+    }
+
+    public function searchItems(Request $request, Sor $sor)
+    {
+        $query = $request->input('q');
+        $excludeId = $request->input('exclude_id');
+
+        $items = Item::where('sor_id', $sor->id)
+            ->where('item_type', 3) // Only items
+            ->where(function ($q) use ($query) {
+                $q->where('description', 'like', "%{$query}%")
+                  ->orWhere('item_number', 'like', "%{$query}%");
+            })
+            ->when($excludeId, function ($q) use ($excludeId) {
+                $q->where('id', '!=', $excludeId);
+            })
+            ->limit(20)
+            ->get();
+
+        return response()->json($items);
+    }
+
+    public function searchOverheads(Request $request, Sor $sor)
+    {
+        $query = $request->input('q');
+
+        $overheads = \App\Models\OverheadMaster::where('description', 'like', "%{$query}%")
+            ->orWhere('code', 'like', "%{$query}%")
+            ->limit(20)
+            ->get();
+
+        return response()->json($overheads);
     }
 }

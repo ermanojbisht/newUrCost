@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\SorController;
+use App\Http\Controllers\ResourceController;
+use App\Http\Controllers\ItemSkeletonController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -50,10 +52,18 @@ Route::middleware('auth')->group(function () {
 
     // Skeleton/Rate Analysis Page View
     Route::get('/sors/{sor}/items/{item}/skeleton', [App\Http\Controllers\ItemSkeletonController::class, 'showPage'])->name('sors.items.skeleton');
+    Route::post('/sors/{sor}/items/{item}/skeleton/copy', [App\Http\Controllers\ItemSkeletonController::class, 'copySkeleton'])->name('sors.items.skeleton.copy');
+    Route::post('/sors/{sor}/items/{item}/skeleton/resources/reorder', [ItemSkeletonController::class, 'reorderResources'])->name('sors.items.skeleton.resources.reorder');
+
+    // Resource Details
+    Route::get('/resources/search', [ResourceController::class, 'search'])->name('resources.search');
+    Route::get('/resources/{resource}', [ResourceController::class, 'show'])->name('resources.show');
 
     Route::prefix('api/sors/{sor}/items/{item}/skeleton')->name('api.sors.items.skeleton.')->group(function () {
         Route::get('/', [App\Http\Controllers\ItemSkeletonController::class, 'show'])->name('show');
         Route::post('/resources', [App\Http\Controllers\ItemSkeletonController::class, 'addResource'])->name('resources.add');
+        Route::post('/resources/reorder', [App\Http\Controllers\ItemSkeletonController::class, 'reorderResources'])->name('resources.reorder');
+        Route::put('/resources/{skeleton}', [App\Http\Controllers\ItemSkeletonController::class, 'updateResource'])->name('resources.update');
         Route::delete('/resources/{skeleton}', [App\Http\Controllers\ItemSkeletonController::class, 'removeResource'])->name('resources.remove');
         Route::post('/subitems', [App\Http\Controllers\ItemSkeletonController::class, 'addSubitem'])->name('subitems.add');
         Route::delete('/subitems/{subitem}', [App\Http\Controllers\ItemSkeletonController::class, 'removeSubitem'])->name('subitems.remove');
@@ -63,6 +73,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/sors/{sor}/admin', [SorController::class, 'admin'])->name('sors.admin');
     Route::get('api/sors/{sor}/items-datatable', [SorController::class, 'getDataTableData'])->name('api.sors.items-datatable');
+
+    // Search APIs
+    Route::get('api/sors/{sor}/items/search', [SorController::class, 'searchItems'])->name('api.sors.items.search');
+    Route::get('api/sors/{sor}/overheads/search', [SorController::class, 'searchOverheads'])->name('api.sors.overheads.search');
 });
 
 Route::get('/sorCards', [SorController::class, 'sorCards'])->name('sorCards');

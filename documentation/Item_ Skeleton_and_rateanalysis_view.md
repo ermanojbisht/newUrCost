@@ -23,6 +23,7 @@ A central **Resource Table** exists in the system containing all available resou
 * **Code:** Unique identifier
 * **Name & Description**
 * **Unit of Measurement (UoM)**
+* **secondary_code **
 
 Users can select resources from this master table while building or editing a Skeleton.
 
@@ -36,10 +37,10 @@ When the user chooses to add a new resource to the Skeleton:
 
 1. User clicks **Add Resource**
 2. System prompts to select:
-
-   * Resource Type (Labour / Material / Machinery)
-   * Resource Name (from dropdown/table with smart search)
-   * Or directly enter **Resource Code** (if known)
+   * Resource Type (Labour / Material / Machinery)  --resource_group_id
+   * Resource Name (from dropdown/table with smart search) --name
+   * Or directly enter **Resource Code** (if known) --secondary_code 
+   * Or directly enter **Resource Id** (if known) --id 
 3. Resource is added to the Skeleton with **default quantity = 0**
 4. Each row includes an **Edit** button for modifying:
 
