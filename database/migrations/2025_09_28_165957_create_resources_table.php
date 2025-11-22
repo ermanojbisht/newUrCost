@@ -45,7 +45,7 @@ return new class extends Migration
 
 
             // Foreign key constraints
-            $table->foreign('resource_group_id')->references('id')->on('resource_groups')->onDelete('set null');
+           /* $table->foreign('resource_group_id')->references('id')->on('resource_groups')->onDelete('set null');*/
             $table->foreign('unit_group_id')->references('id')->on('unit_groups')->onDelete('set null');
             $table->foreign('unit_id')->references('id')->on('units')->onDelete('set null');
             $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');

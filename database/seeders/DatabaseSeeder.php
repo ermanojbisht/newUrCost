@@ -10,9 +10,10 @@ use App\Models\Ohead;
 use App\Models\OverheadMaster;
 use App\Models\PolRate;
 use App\Models\Rate;
-use App\Models\Ratecard;
+use App\Models\RateCard;
 use App\Models\RegionIndexing;
 use App\Models\Resource;
+use App\Models\ResourceCapacityRule;
 use App\Models\ResourceGroup;
 use App\Models\Subitem;
 use App\Models\TruckSpeed;
@@ -20,6 +21,7 @@ use App\Models\Unit;
 use App\Models\UnitGroup;
 use App\Models\User;
 use Database\Seeders\RateSeeder;
+use Database\Seeders\ResourceCapacityRuleSeeder;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -56,7 +58,7 @@ class DatabaseSeeder extends Seeder
             $seedersToCall[] = ResourceCapacityRuleSeeder::class;
         }
 
-        if (Ratecard::count() === 0) {
+        if (RateCard::count() === 0) {
             $seedersToCall[] = RateCardSeeder::class;
         }
 
@@ -77,6 +79,10 @@ class DatabaseSeeder extends Seeder
         }
 
         //dependent
+        /*if (User::count() === 0) {*/
+            $seedersToCall[] = SuperAdminSeeder::class;
+            //1-6 user id is needed
+        /*}*/
 
         if (\App\Models\Sor::count() === 0) {
             $seedersToCall[] = SorSeeder::class;
@@ -146,10 +152,7 @@ class DatabaseSeeder extends Seeder
             $seedersToCall[] = RegionIndexingSeeder::class;
         }
 
-        if (User::count() === 0) {
-            $seedersToCall[] = SuperAdminSeeder::class;
-            //1-6 user id is needed
-        }
+
 
         $this->call($seedersToCall);
     }
