@@ -141,7 +141,29 @@
                 <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Cost Summary</h2>
                 <div class="space-y-3">
                     <div class="flex justify-between text-sm">
-                        <span class="text-gray-600 dark:text-gray-400">Resource Cost:</span>
+                        <span class="text-gray-600 dark:text-gray-400 flex items-center">
+                            <span class="mr-1 w-4 h-4">{!! config('icons.material') !!}</span>
+                            Material Cost:
+                        </span>
+                        <span id="summary-material-cost" class="font-semibold">₹0.00</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600 dark:text-gray-400 flex items-center">
+                            <span class="mr-1 w-4 h-4">{!! config('icons.labour') !!}</span>
+                            Labor Cost:
+                        </span>
+                        <span id="summary-labor-cost" class="font-semibold">₹0.00</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600 dark:text-gray-400 flex items-center">
+                            <span class="mr-1 w-4 h-4">{!! config('icons.machinery') !!}</span>
+                            Machine Cost:
+                        </span>
+                        <span id="summary-machine-cost" class="font-semibold">₹0.00</span>
+                    </div>
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2 mb-2"></div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600 dark:text-gray-400 font-medium">Total Resources:</span>
                         <span id="summary-resource-cost" class="font-semibold">₹0.00</span>
                     </div>
                     <div class="flex justify-between text-sm">
@@ -772,6 +794,18 @@
                             </tr>
                         `).join('');
             $('#overheads-table').html(ohHtml);
+        }
+
+        function updateSummary(totals) {
+            $('#summary-material-cost').text('₹' + parseFloat(totals.total_material).toFixed(2));
+            $('#summary-labor-cost').text('₹' + parseFloat(totals.total_labor).toFixed(2));
+            $('#summary-machine-cost').text('₹' + parseFloat(totals.total_machine).toFixed(2));
+            $('#summary-resource-cost').text('₹' + parseFloat(totals.resource_cost).toFixed(2));
+            $('#summary-subitem-cost').text('₹' + parseFloat(totals.subitem_cost).toFixed(2));
+            $('#summary-overhead-cost').text('₹' + parseFloat(totals.overhead_cost).toFixed(2));
+            $('#summary-total-cost').text('₹' + parseFloat(totals.grand_total).toFixed(2));
+            $('#summary-turnout').text(parseFloat(totals.turnout).toFixed(2));
+            $('#summary-final-rate').text('₹' + parseFloat(totals.final_rate).toFixed(2));
         }
 
         window.editResource = function(res) {

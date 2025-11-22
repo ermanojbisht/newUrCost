@@ -68,15 +68,16 @@ class ItemSkeletonService
             // Amount = Quantity * Conversion * Rate
             $amount = $res->quantity * $conversionFactor * $rate;
 
-            // Categorize cost (This logic depends on Resource Group or similar, assuming simplified for now)
-            // In real app, we might check $res->resource->group_id to decide category.
-            // For now, let's assume all are 'Material' unless specified. 
-            // TODO: Refine categorization based on Resource Group.
-
-            // Let's try to guess from group_id if available, or just sum to a generic 'resource_cost'
-            // Looking at Resource model, it has group_id.
-            // We need to know the actual IDs. For now, I'll just sum them all to 'total_resources' 
-            // and maybe separate if I can find the constants.
+            // Categorize cost based on Resource Group Name
+            $groupName = strtolower($res->resource->group->name ?? '');
+            if (str_contains($groupName, 'labour') || str_contains($groupName, 'labor')) {
+                $totalLabor += $amount;
+            } elseif (str_contains($groupName, 'machine') || str_contains($groupName, 'machinery')) {
+                $totalMachine += $amount;
+            } else {
+                // Default to Material for everything else (including 'material' group)
+                $totalMaterial += $amount;
+            }
 
             $resourceData[] = [
                 'id' => $res->id,
@@ -90,7 +91,7 @@ class ItemSkeletonService
                 'rate_unit' => $baseUnit ? $baseUnit->name : '', // Pass rate unit
                 'amount' => $amount,
                 'resource_group_id' => $res->resource->group_id, // Pass resource_group_id
-                'resource_group_name' => strtolower($res->resource->group->name ?? ''), // Pass resource_group_name
+                'resource_group_name' => $groupName, // Pass resource_group_name
                 'unit_group_id' => $res->unit ? $res->unit->unit_group_id : null, // Pass unit_group_id
                 'resource_description' => $res->resource_description,
                 'valid_from' => $res->valid_from ? $res->valid_from->toDateString() : null,
@@ -181,6 +182,9 @@ class ItemSkeletonService
             'overheads' => $overheadData,
             'totals' => [
                 'resource_cost' => array_sum(array_column($resourceData, 'amount')),
+                'total_labor' => $totalLabor,
+                'total_material' => $totalMaterial,
+                'total_machine' => $totalMachine,
                 'subitem_cost' => $totalSubitems,
                 'overhead_cost' => $totalOverheads,
                 'grand_total' => $grandTotal,
