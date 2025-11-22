@@ -25,6 +25,7 @@ class Resource extends Model
         'is_canceled',
         'created_by',
         'updated_by',
+        'volume_or_weight',
     ];
 
     public function unitGroup()

@@ -96,6 +96,8 @@ class DatabaseSeeder extends Seeder
             $seedersToCall[] = ResourceSeeder::class;
         }
 
+        $seedersToCall[] =ResourceVolumeWeightSeeder::class;
+
         //only after ratecard and resource table
         if (LaborIndex::count() === 0) {
             $seedersToCall[] = LaborIndexSeeder::class;

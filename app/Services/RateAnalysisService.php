@@ -6,6 +6,8 @@ use App\Models\Item;
 use App\Models\LaborIndex;
 use App\Models\LeadDistance;
 use App\Models\MachineIndex;
+use App\Models\PolRate;
+use App\Models\PolSkeleton;
 use App\Models\Rate;
 use App\Models\Ratecard;
 use App\Models\Resource;
@@ -264,36 +266,84 @@ class RateAnalysisService
     /**
      * Calculate the lead cost for a material resource.
      */
-    public function calculateLeadCost(Resource $resource, Ratecard $ratecard): float
+    public function calculateLeadCost(Resource $resource, Ratecard $ratecard ,$date): array
     {
+        $leadDetail['totalLeadCost'=>0,'mechLeadCost'=>0,'muleLeadCost'=>0,'manualLeadCost'=>0];
         $leadDistances = LeadDistance::where('resource_id', $resource->id)
             ->where('rate_card_id', $ratecard->id)
+            ->where('is_canceled', 0)
+            ->where('valid_from', '<=', $date)
+            ->where(function ($query) use ($date) {
+                $query->where('valid_to', '>=', $date)
+                      ->orWhereNull('valid_to');
+            })
             ->get();
 
-        if ($leadDistances->isEmpty()) {
-            return 0.0;
+        if (!$leadDistances) {
+            // Fallback to default rate card (id=1)
+            $leadDistances = LeadDistance::where('resource_id', $resource->id)
+                ->where('rate_card_id', 1)
+                ->where('is_canceled', 0)
+                ->where('valid_from', '<=', $date)
+                ->where(function ($query) use ($date) {
+                    $query->where('valid_to', '>=', $date)
+                          ->orWhereNull('valid_to');
+                })
+                ->get();
         }
+        //resource capcity of particular resource from its capcity group defined in resource table
+        $resourceCapacityRule=$resource->resourceCapacityRule();
+        if ($leadDistances->isEmpty() || !$resourceCapacityRule) {
+            return  $leadDetail;
+        }
+
+
 
         $totalLeadCost = 0.0;
 
         foreach ($leadDistances as $lead) {
-            switch ($lead->lead_type) {
+            switch ($lead->type) {
                 case 1: // Mechanical
-                    // Placeholder for complex meccartag logic
-                    $totalLeadCost += $lead->lead * 0.5; // Simple placeholder: 0.5 per km
+                    $tripcost = $this->mechanicalCartageDetail( $lead->distance, $date )['costPerTrip'];
+                    $mechLeadCost = round( $tripcost / $resourceCapacityRule->net_mechanical_capacity, 2 );
+                    $totalLeadCost += $mechLeadCost;
+                    $leadDetail[ 'mechLeadCost' ] = $mechLeadCost;
+                    $leadDetail[ 'mechDistance' ] = $lead->distance;
+                    $leadDetail[ 'mechleadid' ] = $lead->id; //code by nand 6-4-2017 to be deleted in future.
                     break;
                 case 2: // Manual
-                    // Placeholder for manMulecartrule logic
-                    $totalLeadCost += $lead->lead * 2; // Simple placeholder: 2 per km
-                    break;
+                    //"Lead Type 2";//for mannual lead
+                    $mode = $resource->volume_or_weight; //for type a and type B selection by voloume 1 and weight 2
+                    $netManualCapacity = $resourceCapacityRule->net_manual_capacity;
+                    $polRate=$this->polRate($date);
+                    $laborerCharges = $polRate?$polRate->laborer_charges:0;
+                    $factor = $this->manMuleCartageFactor( $lead->distance, $mode );
+                    $manualLeadCost = round( $factor * $laborerCharges / $netManualCapacity, 2 );
+                    //log_message('error','manual:factor= '.$factor.', mazdoorcharges='.$laborerCharges.', ManNetCapacity='.$netManualCapacity.', amt='.$manualLeadCost);
+                    $totalLeadCost += $manualLeadCost;
+                    $leadDetail[ 'manualLeadCost' ] = $manualLeadCost;
+                    $leadDetail[ 'manualDistance' ] = $lead->distance;
+                    $leadDetail[ 'manleadid' ] = $lead->id; //code by nand 6-4-2017
+                    break;  //***8112 made the part GROUP 10 instead of 0
                 case 3: // Mule
                     // Placeholder for manMulecartrule logic
-                    $totalLeadCost += $lead->lead * 5; // Simple placeholder: 5 per km
+                    $mode = 3;
+                    $factor = $this->manMuleCartageFactor( $lead->distance, $mode );
+                    $polRate=$this->polRate($date);
+                    $MuleRatefromPOL = $polRate?$polRate->mule_rate:0;
+                    $MuleFactor = $resourceCapacityRule->mule_factor;
+                    $muleLeadCost = round( $factor * $MuleRatefromPOL * $MuleFactor, 2 );
+                    //log_message('error','Mule:factor= '.$factor.', MuleRatefromPOL='.$MuleRatefromPOL.', MuleFactor='.$MuleFactor.' , amt='.$muleLeadCost);
+                    $totalLeadCost += $muleLeadCost;
+                    $leadDetail[ 'muleLeadCost' ] = $muleLeadCost;
+                    $leadDetail[ 'muleDistance' ] = $lead->distance;
+                    $leadDetail[ 'muleleadid' ] = $lead->id; //code by nand 6-4-2017
                     break;
             }
         }
 
-        return $totalLeadCost;
+        $leadDetail['totalLeadCost']=$totalLeadCost;
+        return $leadDetail;
     }
 
     /**
@@ -336,4 +386,136 @@ class RateAnalysisService
 
         return [(round($baseRate * $percentIndex,2)),$percentIndex];
     }
+
+
+    public function mechanicalCartageDetail($km, $date)
+    {
+        // --- 1. Initialize response array with defaults ---
+        $result = [
+            'km'             => $km,
+            'trips'          => 0,
+            'totalKmCovered' => 0,
+
+            'dieselRate'     => 0,
+            'oilRate'        => 0,
+            'laborCharges'   => 0,
+            'hiringCharges'  => 0,
+
+            'dieselMileage'  => 0,
+            'oilMileage'     => 0,
+            'laborCount'     => 0,
+
+            'dieselCost'     => 0,
+            'oilCost'        => 0,
+            'laborCost'      => 0,
+            'totalCost'      => 0,
+            'costPerTrip'    => 0,
+        ];
+
+        // --- 2. Fetch truck speed ---
+        $truckSpeed = TruckSpeed::find($km);
+        $averageSpeed = $truckSpeed ? $truckSpeed->average_speed : 31;
+
+        // --- 3. Trip calculations ---
+        $trips = 8 / ((2 * $km / $averageSpeed) + 1);
+        $totalKmCovered = (2 * $trips * $km) + 6;
+
+        // Put in result
+        $result['trips'] = $trips;
+        $result['totalKmCovered'] = $totalKmCovered;
+
+        // --- 4. POL rate ---
+        $polRate = $this->polRate($date);
+
+        if (!$polRate) {
+            return $result; // return initialized array
+        }
+
+        $result['dieselRate']    = $polRate->diesel_rate;
+        $result['oilRate']       = $polRate->mobile_oil_rate;
+        $result['laborCharges']  = $polRate->laborer_charges;
+        $result['hiringCharges'] = $polRate->hiring_charges;
+
+        // --- 5. Skeleton POL ---
+        $polSkeleton = PolSkeleton::where('valid_from', '<=', $date)
+            ->where(function ($query) use ($date) {
+                $query->where('valid_to', '>=', $date)
+                      ->orWhereNull('valid_to');
+            })
+            ->orderBy('valid_from')
+            ->first();
+
+        if (!$polSkeleton) {
+            return $result; // return initialized array
+        }
+
+        $result['dieselMileage'] = $polSkeleton->diesel_mileage;
+        $result['oilMileage']    = $polSkeleton->mobile_oil_mileage;
+        $result['laborCount']    = $polSkeleton->number_of_laborers;
+
+        // --- 6. Cost calculations ---
+        $dieselCost = ($totalKmCovered * $result['dieselRate']) / $result['dieselMileage'];
+        $oilCost    = ($totalKmCovered * $result['oilRate']) / $result['oilMileage'];
+        $laborCost  = $result['laborCharges'] * $result['laborCount'];
+
+        $totalCost = $dieselCost + $oilCost + $laborCost + $result['hiringCharges'];
+        $costPerTrip = $trips ? ($totalCost / $trips) : 0;
+
+        // Place final values
+        $result['dieselCost']  = $dieselCost;
+        $result['oilCost']     = $oilCost;
+        $result['laborCost']   = $laborCost;
+        $result['totalCost']   = $totalCost;
+        $result['costPerTrip'] = $costPerTrip;
+
+        return $result;
+    }
+
+
+    public function polRate($date)
+    {
+        return $polRate = PolRate::where('valid_from', '<=', $date)
+            ->where(function ($query) use ($date) {
+                $query->where('valid_to', '>=', $date)
+                      ->orWhereNull('valid_to');
+            })
+            ->orderBy('valid_from')
+            ->first();
+    }
+
+    /**
+     * @param $distance
+     * @param $mode
+     * @return int
+     */
+    public function manMuleCartageFactor( $distance, $mode )
+    {
+        switch ( $mode )
+        {
+            case 1:
+                //by man vol
+                $distance = intval( $distance * 20 ) / 20;
+                break;
+            case 2:
+                //by man weight
+                $distance = intval( $distance * 20 ) / 20;
+                break;
+            case 3:
+                //by mule
+                if ( $distance > 0 && $distance < 0.5 )
+                {
+                    $distance = 0.5;
+                }
+                $distance = intval( $distance * 2 ) / 2;
+                break;
+            default:
+                return 0;
+                break;
+        }
+
+        $manMuleCartRule=ManMuleCartRule::where('calculation_method',$mode)->where('distance',$distance)->first();
+        return $manMuleCartRule?$manMuleCartRule->factor:0;
+    }
+
+
 }
