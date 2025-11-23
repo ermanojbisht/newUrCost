@@ -14,8 +14,8 @@ class Subitem extends Model
     protected $table = 'subitems';
 
     protected $fillable = [
-        'item_id',
-        'sub_item_id',
+        'item_code',
+        'sub_item_code',
         'quantity',
         'percentage',
         'based_on_id',
@@ -36,12 +36,12 @@ class Subitem extends Model
 
     public function item()
     {
-        return $this->belongsTo(Item::class, 'item_id', 'item_code');
+        return $this->belongsTo(Item::class, 'item_code', 'item_code');
     }
 
     public function subItem()
     {
-        return $this->belongsTo(Item::class, 'sub_item_id', 'item_code');
+        return $this->belongsTo(Item::class, 'sub_item_code', 'item_code');
     }
 
     public function basedOn()

@@ -71,7 +71,7 @@ class Item extends Model
 
     public function subitems()
     {
-        return $this->hasMany(Subitem::class, 'item_id', 'item_code');
+        return $this->hasMany(Subitem::class, 'item_code', 'item_code');
     }
 
     public function overheads()

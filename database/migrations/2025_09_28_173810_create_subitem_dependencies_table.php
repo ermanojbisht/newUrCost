@@ -15,9 +15,9 @@ return new class extends Migration
             // Old Column Name: ID, New Column Name: id, Data Type: bigIncrements, Description: Primary key for the table.
             $table->bigIncrements('id');
             // Old Column Name: raitemid, New Column Name: item_id, Data Type: unsignedBigInteger, Description: Foreign key to the items table (the main item).
-            $table->string('item_id');
+            $table->string('item_code');
             // Old Column Name: subitem, New Column Name: sub_item_id, Data Type: unsignedBigInteger, Description: Foreign key to the items table (the sub-item).
-            $table->string('sub_item_id');
+            $table->string('sub_item_code');
             // Old Column Name: lvl, New Column Name: level, Data Type: integer, Description: The level of the sub-item in the dependency tree.
             $table->integer('level');
             // Old Column Name: pos, New Column Name: position, Data Type: integer, Description: The position of the sub-item at its level.

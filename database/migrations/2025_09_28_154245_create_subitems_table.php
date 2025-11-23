@@ -15,9 +15,9 @@ return new class extends Migration
             // Old Column Name: ID, New Column Name: id, Data Type: bigIncrements, Description: Primary key for the table.
             $table->bigIncrements('id');
             // Old Column Name: raitemid, New Column Name: item_id, Data Type: unsignedBigInteger, Description: Foreign key to the items table (the main item).
-            $table->unsignedBigInteger('item_id');
+            $table->unsignedBigInteger('item_code');
             // Old Column Name: subraitem, New Column Name: sub_item_id, Data Type: unsignedBigInteger, Description: Foreign key to the items table (the sub-item).
-            $table->unsignedBigInteger('sub_item_id');
+            $table->unsignedBigInteger('sub_item_code');
             // Old Column Name: dResQty, New Column Name: quantity, Data Type: decimal, Description: The quantity of the sub-item required.
             $table->decimal('quantity', 10, 4);
             // Old Column Name: Percentage, New Column Name: percentage, Data Type: decimal, Description: A percentage value for calculating the quantity.
@@ -43,12 +43,12 @@ return new class extends Migration
             $table->unsignedBigInteger('updated_by')->nullable();
 
             // Foreign key constraints
-            $table->foreign('item_id')->references('id')->on('items')->onDelete('cascade');
+           /* $table->foreign('item_id')->references('id')->on('items')->onDelete('cascade');
             $table->foreign('sub_item_id')->references('id')->on('items')->onDelete('cascade');
             $table->foreign('unit_id')->references('id')->on('units')->onDelete('set null');
             $table->foreign('based_on_id')->references('id')->on('subitems')->onDelete('set null'); // Assuming self-referencing
             $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
-            $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
+            $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');*/
         });
     }
 

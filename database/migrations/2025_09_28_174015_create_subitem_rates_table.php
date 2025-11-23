@@ -15,7 +15,7 @@ return new class extends Migration
             // Old Column Name: ID, New Column Name: id, Data Type: bigIncrements, Description: Primary key for the table.
             $table->bigIncrements('id');
             // Old Column Name: racode, New Column Name: sub_item_id, Data Type: unsignedBigInteger, Description: Foreign key to the items table (the sub-item).
-            $table->unsignedBigInteger('sub_item_id');
+            $table->unsignedBigInteger('sub_item_code');
             // Old Column Name: rate, New Column Name: rate, Data Type: decimal, Description: The calculated rate of the sub-item.
             $table->decimal('rate', 10, 4);
             // Old Column Name: laborcost, New Column Name: labor_cost, Data Type: decimal, Description: The labor cost component of the rate.
@@ -41,7 +41,6 @@ return new class extends Migration
             $table->timestamps();
 
             // Foreign key constraints
-            $table->foreign('sub_item_id')->references('id')->on('items')->onDelete('cascade');
             $table->foreign('rate_card_id')->references('id')->on('rate_cards')->onDelete('cascade');
             $table->foreign('unit_id')->references('id')->on('units')->onDelete('set null');
         });

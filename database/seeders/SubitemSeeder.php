@@ -23,8 +23,8 @@ class SubitemSeeder extends Seeder
         foreach ($old_subitems as $old_subitem) {
             DB::table('subitems')->insert([
                 'id' => $old_subitem->ID,
-                'item_id' => $old_subitem->raitemid,
-                'sub_item_id' => $old_subitem->subraitem,
+                'item_code' => $old_subitem->raitemid,
+                'sub_item_code' => $old_subitem->subraitem,
                 'quantity' => $old_subitem->dResQty,
                 'percentage' => $old_subitem->Percentage,
                 'based_on_id' => $old_subitem->BasedonID,
