@@ -170,6 +170,9 @@
 
             // Sub-item Handlers
             $('#btnAddSubitem').click(() => {
+                $('#modal-title-subitem').text('Add Sub-item');
+                $('#btnSaveSubitem').text('Add');
+                $('#edit_subitem_id').val('');
                 $('#sub_id').val(null).trigger('change');
                 $('#sub_qty').val('');
                 $('#addSubitemModal').removeClass('hidden');
@@ -256,15 +259,21 @@
         function saveSubitem() {
             const id = $('#sub_id').val();
             const qty = $('#sub_qty').val();
+            const subitemId = $('#edit_subitem_id').val();
 
             if (!id || !qty) {
                 alert('Please fill all fields');
                 return;
             }
 
+            const url = subitemId
+                ? `/api/sors/${sorId}/items/${itemId}/skeleton/subitems/${subitemId}`
+                : `/api/sors/${sorId}/items/${itemId}/skeleton/subitems`;
+            const method = subitemId ? 'PUT' : 'POST';
+
             $.ajax({
-                url: `/api/sors/${sorId}/items/${itemId}/skeleton/subitems`,
-                type: 'POST',
+                url: url,
+                type: method,
                 data: {
                     _token: '{{ csrf_token() }}',
                     sub_item_code: id,
@@ -274,7 +283,7 @@
                     $('#addSubitemModal').addClass('hidden');
                     loadSkeletonData();
                 },
-                error: (xhr) => alert('Error: ' + (xhr.responseJSON?.message || 'Failed to add sub-item'))
+                error: (xhr) => alert('Error: ' + (xhr.responseJSON?.message || 'Failed to save sub-item'))
             });
         }
 
@@ -458,7 +467,12 @@
                 subHtml = data.subitems.map(sub => {
                     const actionCell = window.isReadonly ? '' : `
                         <td class="px-4 py-3 text-right text-sm">
-                            <button onclick="removeSubitem(${sub.id})" class="text-red-600 hover:text-red-900">Remove</button>
+                            <button onclick='editSubitem(${JSON.stringify(sub)})' class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-2" title="Edit">
+                                <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                            <button onclick="removeSubitem(${sub.id})" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Delete">
+                                <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
                         </td>`;
                     
                     return `
@@ -588,6 +602,21 @@
             }
 
             $('#addResourceModal').removeClass('hidden');
+        };
+
+        window.editSubitem = function(sub) {
+            $('#modal-title-subitem').text('Edit Sub-item');
+            $('#btnSaveSubitem').text('Update');
+            $('#edit_subitem_id').val(sub.id);
+
+            // Pre-fill Sub-item Select2
+            // sub.sub_item_code is needed. sub object from renderTables has it.
+            const option = new Option(`${sub.item_number} - ${sub.name}`, sub.sub_item_code, true, true);
+            $('#sub_id').append(option).trigger('change');
+
+            $('#sub_qty').val(sub.quantity);
+
+            $('#addSubitemModal').removeClass('hidden');
         };
 
         // Remove functions

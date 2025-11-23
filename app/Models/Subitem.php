@@ -17,8 +17,8 @@ class Subitem extends Model
         'item_code',
         'sub_item_code',
         'quantity',
-        'percentage',
-        'based_on_id',
+        'is_oh_applicable', // percentage => ohapplicability in old system ,  percentage=>is_oh_applicable , default 0 , further oh not applicable
+        'is_overhead', //subitem will be used without overheads based_on_id=>is_overhead default 1 means subitem comes with oh
         'sort_order',
         'unit_id',
         'remarks',
@@ -42,11 +42,6 @@ class Subitem extends Model
     public function subItem()
     {
         return $this->belongsTo(Item::class, 'sub_item_code', 'item_code');
-    }
-
-    public function basedOn()
-    {
-        return $this->belongsTo(Subitem::class, 'based_on_id');
     }
 
     public function unit()
@@ -78,7 +73,7 @@ class Subitem extends Model
         try {
             DB::transaction(function () use ($raitemid) {
                 // Step 1: Delete existing dependency records for the given main item code.
-                SubitemDependency::where('item_id', $raitemid)->delete();
+                SubitemDependency::where('item_code', $raitemid)->delete();
                 Log::debug("Deleted existing dependencies for main item code: {$raitemid}");
 
                 // Initialize position counter. In the old system, it started from 1000 and decremented.
@@ -88,7 +83,7 @@ class Subitem extends Model
                 self::buildDependencyTree($raitemid, $raitemid, $pos, 1);
 
                 // After building the tree, update the subitem count on the main item.
-                $subitemCount = SubitemDependency::where('item_id', $raitemid)->where('quantity', '<>', 0)->count();
+                $subitemCount = SubitemDependency::where('item_code', $raitemid)->where('quantity', '<>', 0)->count();
                 Item::where('item_code', $raitemid)->update(['sub_item_count' => $subitemCount]);
                 Log::debug("Updated sub_item_count for main item code {$raitemid} to {$subitemCount}");
 
@@ -112,7 +107,7 @@ class Subitem extends Model
     private static function buildDependencyTree(int $root_item_code, int $parent_item_code, int & $pos, int $level)
     {
         // Fetch all direct subitems for the current parent item_code.
-        $subitems = self::where('item_id', $parent_item_code)->orderBy('sort_order')->get();
+        $subitems = self::where('item_code', $parent_item_code)->orderBy('sort_order')->get();
 
         // Get the parent Item model to fetch its turnout_quantity
         $parentItem = Item::where('item_code', $parent_item_code)->first();
@@ -120,29 +115,29 @@ class Subitem extends Model
 
         foreach ($subitems as $subitem) {
             $currentPos = $pos--;
-            Log::debug("Processing subitem: {$subitem->sub_item_id} for parent item_code: {$parent_item_code} at level: {$level}, pos: {$currentPos}");
+            Log::debug("Processing subitem: {$subitem->sub_item_code} for parent item_code: {$parent_item_code} at level: {$level}, pos: {$currentPos}");
 
             // Create the dependency record.
             SubitemDependency::create([
-                'item_id' => $root_item_code,
-                'sub_item_id' => $subitem->sub_item_id,
+                'item_code' => $root_item_code,
+                'sub_item_code' => $subitem->sub_item_code,
                 'level' => $level,
                 'position' => $currentPos,
                 'quantity' => $subitem->quantity,
                 'unit_id' => $subitem->unit_id,
                 'parent_turnout_quantity' => $parentTurnoutQuantity,
-                'parent_carries_overhead' => $subitem->based_on_id, // Mapping from old system
-                'parent_overhead_applicability' => $subitem->percentage, // Mapping from old system
+                'parent_carries_overhead' => $subitem->is_overhead, // Mapping from old system
+                'parent_overhead_applicability' => $subitem->is_oh_applicable, // Mapping from old system
                 'valid_from' => $subitem->valid_from,
                 'valid_to' => $subitem->valid_to,
             ]);
 
             // Update the subitem level on the item itself.
-            Item::where('item_code', $subitem->sub_item_id)->update(['sub_item_level' => $level]);
-            Log::debug("Updated sub_item_level for item code {$subitem->sub_item_id} to {$level}");
+            Item::where('item_code', $subitem->sub_item_code)->update(['sub_item_level' => $level]);
+            Log::debug("Updated sub_item_level for item code {$subitem->sub_item_code} to {$level}");
 
             // Recurse for the children of the current subitem.
-            self::buildDependencyTree($root_item_code, $subitem->sub_item_id, $pos, $level + 1);
+            self::buildDependencyTree($root_item_code, $subitem->sub_item_code, $pos, $level + 1);
         }
     }
 
@@ -155,7 +150,7 @@ class Subitem extends Model
     public static function updateSubitemLevelInfo(int $item_code)
     {
         if ($item_code) {
-            $max_level = SubitemDependency::where('sub_item_id', $item_code)->max('level');
+            $max_level = SubitemDependency::where('sub_item_code', $item_code)->max('level');
             
             if (is_null($max_level)) {
                 $max_level = 0;
@@ -178,7 +173,7 @@ class Subitem extends Model
         $subitems_query = self::query();
 
         if ($item_code) {
-            $subitems_query->where('item_id', $item_code);
+            $subitems_query->where('item_code', $item_code);
         } elseif ($sor_id) {
             // This is a potentially destructive operation, as it resets levels for the whole SOR.
             // Replicating old system's logic.
@@ -193,10 +188,10 @@ class Subitem extends Model
             return;
         }
 
-        $distinct_subitems = $subitems_query->distinct()->pluck('sub_item_id');
+        $distinct_subitems = $subitems_query->distinct()->pluck('sub_item_code');
 
-        foreach ($distinct_subitems as $sub_item_id) {
-            self::updateSubitemLevelInfo($sub_item_id);
+        foreach ($distinct_subitems as $sub_item_code) {
+            self::updateSubitemLevelInfo($sub_item_code);
         }
     }
 }

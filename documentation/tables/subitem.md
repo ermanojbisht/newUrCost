@@ -11,8 +11,8 @@ This table defines the sub-items that are part of an SOR item's composition.
 | `raitemid` | int | The Rate Analysis code of the main item. Foreign key to the `item` table's `itemcode` field. |
 | `ItemID` | int | This field seems to be a duplicate of `raitemid` or `subraitem`. Its exact purpose is not clear. |
 | `dResQty` | double | The quantity of the sub-item required. |
-| `Percentage` | smallint | A percentage value, likely used for calculating the quantity of the sub-item. |
-| `BasedonID` | int | Likely used to specify what the percentage is based on. |
+| `Percentage` | smallint | further oh will be applicable or not. |
+| `BasedonID` | int | Specifies overhead of item is applicable or not default is 1. |
 | `SrNo` | int | A serial number for ordering the sub-items within the main item. |
 | `UnitID` | int | The unit of measurement for the quantity. Foreign key to the `units` table. |
 | `Remark` | longtext | A remark or description for the sub-item. |
@@ -37,8 +37,8 @@ This table defines the sub-items that are part of an SOR item's composition.
 | `raitemid` | `item_id` | `unsignedBigInteger` | Foreign key to the `items` table (the main item). | Renamed to follow Laravel's conventions. |
 | `subraitem` | `sub_item_id` | `unsignedBigInteger` | Foreign key to the `items` table (the sub-item). | Renamed to follow Laravel's conventions. |
 | `dResQty` | `quantity` | `decimal` | The quantity of the sub-item required. | Renamed for clarity and changed to `decimal` for better precision. |
-| `Percentage` | `percentage` | `decimal` | A percentage value for calculating the quantity. | Changed to `decimal` for better precision. |
-| `BasedonID` | `based_on_id` | `unsignedBigInteger` | Specifies what the percentage is based on. | Renamed to follow Laravel's conventions. |
+| `Percentage` | `is_oh_applicable` | `integer` | further oh will be applicable or not . | Changed to `integer`. |
+| `BasedonID` | `is_overhead` | `Integer` | Specifies overhead of item is applicable or not default is 1. | Renamed to follow Laravel's conventions. |
 | `SrNo` | `sort_order` | `integer` | A serial number for ordering the sub-items. | Renamed for clarity. |
 | `UnitID` | `unit_id` | `unsignedBigInteger` | Foreign key to the `units` table. | Renamed to follow Laravel's conventions. |
 | `Remark` | `remarks` | `text` | A remark or description for the sub-item. | Renamed for clarity. |

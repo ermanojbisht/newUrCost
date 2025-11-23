@@ -71,6 +71,8 @@ Route::middleware('auth')->group(function () {
 
         //subitems in skeleton
         Route::post('/subitems', [App\Http\Controllers\ItemSkeletonController::class, 'addSubitem'])->name('subitems.add');
+        Route::put('/subitems/{subitem}', [App\Http\Controllers\ItemSkeletonController::class, 'updateSubitem'])->name('subitems.update');
+        Route::post('/subitems/reorder', [App\Http\Controllers\ItemSkeletonController::class, 'reorderSubitems'])->name('subitems.reorder');
         Route::delete('/subitems/{subitem}', [App\Http\Controllers\ItemSkeletonController::class, 'removeSubitem'])->name('subitems.remove');
 
         //Overheads in skeleton

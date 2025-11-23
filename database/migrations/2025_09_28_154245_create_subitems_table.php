@@ -20,10 +20,10 @@ return new class extends Migration
             $table->unsignedBigInteger('sub_item_code');
             // Old Column Name: dResQty, New Column Name: quantity, Data Type: decimal, Description: The quantity of the sub-item required.
             $table->decimal('quantity', 10, 4);
-            // Old Column Name: Percentage, New Column Name: percentage, Data Type: decimal, Description: A percentage value for calculating the quantity.
-            $table->decimal('percentage', 5, 2)->nullable();
-            // Old Column Name: BasedonID, New Column Name: based_on_id, Data Type: unsignedBigInteger, Description: Specifies what the percentage is based on.
-            $table->unsignedBigInteger('based_on_id')->nullable(); // Assuming self-referencing or to items table
+            // Old Column Name: Percentage, New Column Name: is_oh_applicable, Data Type: integer, Description: in subitem further oh is applicable or not.
+            $table->integer('is_oh_applicable')->default(0);
+            // Old Column Name: BasedonID, New Column Name: is_overhead, Data Type: integer, Description: subitem oh will be taken or not.
+            $table->integer('is_overhead')->default(1);
             // Old Column Name: SrNo, New Column Name: sort_order, Data Type: integer, Description: A serial number for ordering the sub-items.
             $table->integer('sort_order')->nullable();
             // Old Column Name: UnitID, New Column Name: unit_id, Data Type: unsignedBigInteger, Description: Foreign key to the units table.
@@ -46,7 +46,6 @@ return new class extends Migration
            /* $table->foreign('item_id')->references('id')->on('items')->onDelete('cascade');
             $table->foreign('sub_item_id')->references('id')->on('items')->onDelete('cascade');
             $table->foreign('unit_id')->references('id')->on('units')->onDelete('set null');
-            $table->foreign('based_on_id')->references('id')->on('subitems')->onDelete('set null'); // Assuming self-referencing
             $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
             $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');*/
         });

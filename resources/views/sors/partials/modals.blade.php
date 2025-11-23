@@ -102,7 +102,8 @@
             <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
                 <div class="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-gray-200 dark:border-gray-700">
                     <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">Add Sub-item</h3>
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title-subitem">Add Sub-item</h3>
+                        <input type="hidden" id="edit_subitem_id">
                         <div class="mt-4 space-y-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Sub-item</label>

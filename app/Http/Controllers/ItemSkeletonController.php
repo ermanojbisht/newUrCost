@@ -11,6 +11,7 @@ use App\Services\ItemSkeletonService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\FilterHelper;
+use Log;
 
 class ItemSkeletonController extends Controller
 {
@@ -239,10 +240,55 @@ class ItemSkeletonController extends Controller
         return response()->json(['message' => 'Sub-item added successfully', 'id' => $subitem->id]);
     }
 
+    public function updateSubitem(Request $request, Sor $sor, Item $item, Subitem $subitem)
+    {
+
+        if ($subitem->item_code != $item->item_code) {
+            return response()->json(['message' => 'Sub-item does not belong to this item'], 403);
+        }
+
+        $request->validate([
+            'sub_item_code' => 'required|exists:items,item_code',
+            'quantity' => 'required|numeric|min:0',
+        ]);
+
+        if($request->sub_item_code==$item->item_code){
+            return response()->json(['message' => 'Sub-item can not be same item'], 403);
+        }
+
+        //mkb pending: check sor_id should be same for subitem and item
+
+        $subitem->update([
+            'sub_item_code' => $request->input('sub_item_code'),
+            'quantity' => $request->input('quantity'),
+            'updated_by' => auth()->id(),
+        ]);
+
+        return response()->json(['message' => 'Sub-item updated successfully']);
+    }
+
+    public function reorderSubitems(Request $request, Sor $sor, Item $item)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:subitems,id',
+        ]);
+
+        $ids = $request->input('ids');
+
+        foreach ($ids as $index => $id) {
+            Subitem::where('id', $id)
+                ->where('item_code', $item->item_code)
+                ->update(['sort_order' => $index + 1]);
+        }
+
+        return response()->json(['message' => 'Sub-items reordered successfully']);
+    }
+
     public function removeSubitem(Sor $sor, Item $item, Subitem $subitem)
     {
         // Check if subitem belongs to item (via item_code)
-        if ($subitem->item_id != $item->item_code) {
+        if ($subitem->item_code != $item->item_code) {
             return response()->json(['message' => 'Sub-item does not belong to this item'], 403);
         }
         $subitem->delete();
