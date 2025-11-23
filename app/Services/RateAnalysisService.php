@@ -6,6 +6,7 @@ use App\Models\Item;
 use App\Models\LaborIndex;
 use App\Models\LeadDistance;
 use App\Models\MachineIndex;
+use App\Models\ManMuleCartRule;
 use App\Models\PolRate;
 use App\Models\PolSkeleton;
 use App\Models\Rate;

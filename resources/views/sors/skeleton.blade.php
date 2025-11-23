@@ -49,13 +49,13 @@
         <!-- Summary Sidebar (1/3 width) -->
         <div class="lg:col-span-1">
             <div class="sticky top-4 rounded-xl bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-xl ring-1 ring-black/5 transition-all duration-300 hover:shadow-2xl hover:bg-white/50 dark:hover:bg-gray-900/50 group/card">
-                <div class="px-6 py-4 border-b border-white/20 dark:border-white/5 flex items-center space-x-3">
+                <div class="px-6 py-2 border-b border-white/20 dark:border-white/5 flex items-center space-x-3">
                     <div class="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 group-hover/card:scale-110 transition-transform duration-300">
                         {!! config('icons.calculator') !!}
                     </div>
                     <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100 tracking-wide">Cost Summary</h2>
                 </div>
-                <div class="p-6 space-y-4">
+                <div class="p-2 space-y-0">
                     <div class="flex justify-between text-sm group/item hover:bg-white/20 dark:hover:bg-gray-800/20 p-2 rounded-lg transition-colors">
                         <span class="text-gray-600 dark:text-gray-400 flex items-center font-medium">
                             <span class="mr-2 text-blue-500">{!! config('icons.material') !!}</span>
@@ -111,8 +111,9 @@
                         <div class="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 rounded-full bg-black/10 blur-xl"></div>
                         <div class="relative flex justify-between items-end">
                             <div>
-                                <p class="text-blue-100 text-sm font-medium mb-1">Final Rate (Per Unit)</p>
+                                <p class="text-blue-100 text-sm font-medium mb-1">Final Rate </p>
                                 <p id="summary-final-rate" class="text-3xl font-bold tracking-tight">₹0.00</p>
+                                <span>per {{ $item->unit->name ?? 'unit' }}</span>
                             </div>
                             <div class="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
                                 {!! config('icons.tag') !!}
@@ -125,7 +126,7 @@
     </div>
 
     <!-- Charts Section -->
-    <div class="mt-8 relative">
+    <div class="mt-2 relative">
         <!-- Decorative background elements for glass effect -->
         <div class="absolute top-0 left-0 -mt-20 -ml-20 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
         <div class="absolute bottom-0 right-0 -mb-20 -mr-20 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
