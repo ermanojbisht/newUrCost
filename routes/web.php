@@ -62,12 +62,18 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('api/sors/{sor}/items/{item}/skeleton')->name('api.sors.items.skeleton.')->group(function () {
         Route::get('/', [App\Http\Controllers\ItemSkeletonController::class, 'show'])->name('show');
+
+        //resources in skeleton
         Route::post('/resources', [App\Http\Controllers\ItemSkeletonController::class, 'addResource'])->name('resources.add');
         Route::post('/resources/reorder', [App\Http\Controllers\ItemSkeletonController::class, 'reorderResources'])->name('resources.reorder');
         Route::put('/resources/{skeleton}', [App\Http\Controllers\ItemSkeletonController::class, 'updateResource'])->name('resources.update');
         Route::delete('/resources/{skeleton}', [App\Http\Controllers\ItemSkeletonController::class, 'removeResource'])->name('resources.remove');
+
+        //subitems in skeleton
         Route::post('/subitems', [App\Http\Controllers\ItemSkeletonController::class, 'addSubitem'])->name('subitems.add');
         Route::delete('/subitems/{subitem}', [App\Http\Controllers\ItemSkeletonController::class, 'removeSubitem'])->name('subitems.remove');
+
+        //Overheads in skeleton
         Route::post('/overheads', [App\Http\Controllers\ItemSkeletonController::class, 'addOverhead'])->name('overheads.add');
         Route::put('/overheads/{ohead}', [App\Http\Controllers\ItemSkeletonController::class, 'updateOverhead'])->name('overheads.update');
         Route::post('/overheads/reorder', [App\Http\Controllers\ItemSkeletonController::class, 'reorderOverheads'])->name('overheads.reorder');

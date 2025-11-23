@@ -485,7 +485,8 @@ class SorController extends Controller
             ->where('item_type', 3) // Only items
             ->where(function ($q) use ($query) {
                 $q->where('description', 'like', "%{$query}%")
-                  ->orWhere('item_number', 'like', "%{$query}%");
+                  ->orWhere('item_number', 'like', "%{$query}%")
+                  ->orWhere('item_code', 'like', "%{$query}%");
             })
             ->when($excludeId, function ($q) use ($excludeId) {
                 $q->where('id', '!=', $excludeId);

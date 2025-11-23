@@ -125,6 +125,7 @@ class ItemSkeletonService
         $totalSubitems = 0;
 
         foreach ($subitems as $sub) {
+            Log::info("sub = ".print_r($sub->toArray(),true));
             // Fetch Pre-calculated Rate for Sub-item
             $subRateEntry = ItemRate::where('item_id', $sub->sub_item_id)
                 ->where('rate_card_id', $rateCardId)
@@ -138,7 +139,7 @@ class ItemSkeletonService
 
             $subitemData[] = [
                 'id' => $sub->id,
-                'sub_item_id' => $sub->sub_item_id,
+                'sub_item_code' => $sub->sub_item_code,
                 'name' => $sub->subItem->description ?? 'Unknown Item', // Fallback
                 'item_number' => $sub->subItem->item_number ?? '',
                 'quantity' => $sub->quantity,

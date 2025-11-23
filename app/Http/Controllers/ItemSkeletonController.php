@@ -220,15 +220,15 @@ class ItemSkeletonController extends Controller
     public function addSubitem(Request $request, Sor $sor, Item $item)
     {
         $request->validate([
-            'sub_item_id' => 'required|exists:items,item_code', // Assuming sub_item_id refers to item_code
+            'sub_item_code' => 'required|exists:items,item_code', // Assuming sub_item_id refers to item_code
             'quantity' => 'required|numeric|min:0',
         ]);
 
         $maxOrder = $item->subitems()->max('sort_order') ?? 0;
 
         $subitem = new Subitem([
-            'item_id' => $item->item_code, // Subitem links via item_code usually
-            'sub_item_id' => $request->input('sub_item_id'),
+            'item_code' => $item->item_code, // Subitem links via item_code usually
+            'sub_item_code' => $request->input('sub_item_code'),
             'quantity' => $request->input('quantity'),
             'sort_order' => $maxOrder + 1,
             'valid_from' => now(),

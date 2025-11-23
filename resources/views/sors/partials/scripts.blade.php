@@ -267,7 +267,7 @@
                 type: 'POST',
                 data: {
                     _token: '{{ csrf_token() }}',
-                    sub_item_id: id,
+                    sub_item_code: id,
                     quantity: qty
                 },
                 success: () => {
