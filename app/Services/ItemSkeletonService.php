@@ -146,6 +146,12 @@ class ItemSkeletonService
                 'unit' => $sub->unit ? $sub->unit->name : '',
                 'rate' => $rate,
                 'amount' => $amount,
+                'is_oh_applicable' => $sub->is_oh_applicable,
+                'is_overhead' => $sub->is_overhead,
+                'factor' => $sub->factor,
+                'unit_id' => $sub->unit_id,
+                'valid_to' => $sub->valid_to ? $sub->valid_to->toDateString() : null,
+                'remarks' => $sub->remarks,
             ];
         }
 

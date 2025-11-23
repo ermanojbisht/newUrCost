@@ -221,21 +221,42 @@ class ItemSkeletonController extends Controller
     public function addSubitem(Request $request, Sor $sor, Item $item)
     {
         $request->validate([
-            'sub_item_code' => 'required|exists:items,item_code', // Assuming sub_item_id refers to item_code
+            'sub_item_code' => 'required|exists:items,item_code',
             'quantity' => 'required|numeric|min:0',
+            'factor' => 'nullable|numeric',
+            'unit_id' => 'nullable|exists:units,id',
+            'valid_to' => 'nullable|date',
+            'is_oh_applicable' => 'boolean',
+            'is_overhead' => 'boolean',
+            'remarks' => 'nullable|string',
         ]);
 
-        $maxOrder = $item->subitems()->max('sort_order') ?? 0;
+        if($request->sub_item_code == $item->item_code){
+             return response()->json(['message' => 'Sub-item can not be same item'], 403);
+        }
 
-        $subitem = new Subitem([
-            'item_code' => $item->item_code, // Subitem links via item_code usually
+        // Default unit from sub-item if not provided
+        $unitId = $request->input('unit_id');
+        if (!$unitId) {
+            $subItem = Item::where('item_code', $request->input('sub_item_code'))->first();
+            $unitId = $subItem ? $subItem->unit_id : null;
+        }
+
+        $subitem = Subitem::create([
+            'item_code' => $item->item_code,
             'sub_item_code' => $request->input('sub_item_code'),
             'quantity' => $request->input('quantity'),
-            'sort_order' => $maxOrder + 1,
+            'factor' => $request->input('factor', 1),
+            'unit_id' => $unitId,
+            'sort_order' => $item->subitems()->max('sort_order') ?? 0 + 1, // Recalculate max order here
             'valid_from' => now(),
+            'valid_to' => $request->input('valid_to', '2038-01-19'),
+            'is_oh_applicable' => $request->input('is_oh_applicable', 0),
+            'is_overhead' => $request->input('is_overhead', 1),
+            'remarks' => $request->input('remarks'),
+            'created_by' => auth()->id(),
+            'updated_by' => auth()->id(),
         ]);
-
-        $subitem->save();
 
         return response()->json(['message' => 'Sub-item added successfully', 'id' => $subitem->id]);
     }
@@ -250,9 +271,15 @@ class ItemSkeletonController extends Controller
         $request->validate([
             'sub_item_code' => 'required|exists:items,item_code',
             'quantity' => 'required|numeric|min:0',
+            'factor' => 'nullable|numeric',
+            'unit_id' => 'nullable|exists:units,id',
+            'valid_to' => 'nullable|date',
+            'is_oh_applicable' => 'boolean',
+            'is_overhead' => 'boolean',
+            'remarks' => 'nullable|string',
         ]);
 
-        if($request->sub_item_code==$item->item_code){
+        if($request->sub_item_code == $item->item_code){
             return response()->json(['message' => 'Sub-item can not be same item'], 403);
         }
 
@@ -261,6 +288,12 @@ class ItemSkeletonController extends Controller
         $subitem->update([
             'sub_item_code' => $request->input('sub_item_code'),
             'quantity' => $request->input('quantity'),
+            'factor' => $request->input('factor', 1),
+            'unit_id' => $request->input('unit_id'),
+            'valid_to' => $request->input('valid_to'),
+            'is_oh_applicable' => $request->input('is_oh_applicable', 0),
+            'is_overhead' => $request->input('is_overhead', 1),
+            'remarks' => $request->input('remarks'),
             'updated_by' => auth()->id(),
         ]);
 

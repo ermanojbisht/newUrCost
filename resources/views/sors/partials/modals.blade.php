@@ -115,6 +115,44 @@
                                 <input type="number" id="sub_qty" step="0.0001"
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Unit</label>
+                                    <select id="sub_unit"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                        @foreach($units as $unit)
+                                            <option value="{{ $unit->id }}">{{ $unit->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Factor</label>
+                                    <input type="number" id="sub_factor" step="0.01" value="1"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Valid To</label>
+                                <input type="text" id="sub_valid_to"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Remarks (Optional)</label>
+                                <textarea id="sub_remarks" rows="2"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                            </div>
+                            <div class="flex space-x-4">
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="sub_is_oh_applicable" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <label for="sub_is_oh_applicable" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">Further Overhead applicable</label>
+                                </div>
+                            </div>
+                            <div class="flex space-x-4">
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="sub_is_overhead" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" checked>
+                                    <label for="sub_is_overhead" class="ml-2 block text-sm text-gray-900 dark:text-gray-300">with or without overhead</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">

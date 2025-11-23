@@ -95,24 +95,49 @@
                 dropdownParent: $('#addSubitemModal'),
                 width: '100%',
                 ajax: {
-                    url: `/api/sors/${sorId}/items/search`,
+                    url: '{{ route("api.sors.items.search", $sor->id) }}',
                     dataType: 'json',
                     delay: 250,
                     data: function (params) {
                         return {
                             q: params.term,
-                            exclude_id: itemId
+                            exclude_id: itemId // Exclude current item to prevent circular dependency (basic check)
                         };
                     },
                     processResults: function (data) {
                         return {
-                            results: data.map(item => ({
-                                id: item.item_code, // Use item_code for subitems
-                                text: `${item.item_number} - ${item.description}`
-                            }))
+                            results: data.map(function(item) {
+                                return {
+                                    id: item.item_code, // Use item_code as value
+                                    text: `[${item.item_number}] ${item.description}`,
+                                    unit_id: item.unit_id,
+                                    unit_group_id: item.unit ? item.unit.unit_group_id : null
+                                };
+                            })
                         };
                     },
                     cache: true
+                },
+                minimumInputLength: 1
+            }).on('select2:select', function (e) {
+                const data = e.params.data;
+                const unitSelect = $('#sub_unit');
+                unitSelect.empty();
+
+                // Filter units based on the selected item's unit group
+                let filteredUnits = allUnits;
+                if (data.unit_group_id) {
+                    filteredUnits = allUnits.filter(u => u.unit_group_id == data.unit_group_id);
+                }
+
+                // Populate unit dropdown
+                filteredUnits.forEach(u => {
+                    unitSelect.append(new Option(u.name, u.id));
+                });
+
+                // Select the item's default unit if available
+                if (data.unit_id) {
+                    unitSelect.val(data.unit_id);
                 }
             });
             $('#oh_id').select2({
@@ -142,6 +167,7 @@
             // Initialize Date Pickers
             flatpickr("#res_valid_from", { defaultDate: "today" });
             flatpickr("#res_valid_to", { defaultDate: "2038-01-19" });
+            flatpickr("#sub_valid_to", { defaultDate: "2038-01-19" });
 
             // Add Resource Modal
             $('#btnAddResource').click(() => {
@@ -175,6 +201,21 @@
                 $('#edit_subitem_id').val('');
                 $('#sub_id').val(null).trigger('change');
                 $('#sub_qty').val('');
+                $('#sub_factor').val(1);
+                $('#sub_remarks').val('');
+                $('#sub_is_oh_applicable').prop('checked', false);
+                $('#sub_is_overhead').prop('checked', true);
+
+                // Reset Unit Dropdown to all units (or empty) until item selected
+                $('#sub_unit').empty();
+                allUnits.forEach(u => {
+                    $('#sub_unit').append(new Option(u.name, u.id));
+                });
+
+                // Fix Flatpickr initialization
+                const fp = document.querySelector("#sub_valid_to")._flatpickr;
+                if(fp) fp.setDate("2038-01-19");
+
                 $('#addSubitemModal').removeClass('hidden');
             });
             $('#btnCloseSubitemModal').click(() => $('#addSubitemModal').addClass('hidden'));
@@ -260,6 +301,12 @@
             const id = $('#sub_id').val();
             const qty = $('#sub_qty').val();
             const subitemId = $('#edit_subitem_id').val();
+            const factor = $('#sub_factor').val();
+            const unitId = $('#sub_unit').val();
+            const validTo = $('#sub_valid_to').val();
+            const isOhApplicable = $('#sub_is_oh_applicable').is(':checked') ? 1 : 0;
+            const isOverhead = $('#sub_is_overhead').is(':checked') ? 1 : 0;
+            const remarks = $('#sub_remarks').val();
 
             if (!id || !qty) {
                 alert('Please fill all fields');
@@ -277,7 +324,13 @@
                 data: {
                     _token: '{{ csrf_token() }}',
                     sub_item_code: id,
-                    quantity: qty
+                    quantity: qty,
+                    factor: factor,
+                    unit_id: unitId,
+                    valid_to: validTo,
+                    is_oh_applicable: isOhApplicable,
+                    is_overhead: isOverhead,
+                    remarks: remarks
                 },
                 success: () => {
                     $('#addSubitemModal').addClass('hidden');
@@ -477,7 +530,19 @@
                     
                     return `
                         <tr>
-                            <td class="px-4 py-3 text-sm">${sub.item_number} - ${sub.name}</td>
+                            <td class="px-4 py-3 text-sm">
+                                ${sub.item_number} - ${sub.name}
+                                <div class="mt-1 text-xs text-gray-500 space-y-0.5">
+                                    <div class="${sub.is_oh_applicable ? 'text-green-600' : 'text-red-500'}">
+                                        Further Overhead: ${sub.is_oh_applicable ? 'Yes' : 'No'}
+                                    </div>
+                                    <div class="${sub.is_overhead ? 'text-green-600' : 'text-red-500'}">
+                                        With Overhead: ${sub.is_overhead ? 'Yes' : 'No'}
+                                    </div>
+                                    <div>Factor: ${sub.factor}</div>
+                                    ${sub.remarks ? `<div class="text-gray-600 italic">Remarks: ${sub.remarks}</div>` : ''}
+                                </div>
+                            </td>
                             <td class="px-4 py-3 text-sm">${sub.quantity} ${sub.unit}</td>
                             <td class="px-4 py-3 text-sm">₹${parseFloat(sub.rate).toFixed(2)}</td>
                             <td class="px-4 py-3 text-sm font-semibold">₹${parseFloat(sub.amount).toFixed(2)}</td>
@@ -610,11 +675,29 @@
             $('#edit_subitem_id').val(sub.id);
 
             // Pre-fill Sub-item Select2
-            // sub.sub_item_code is needed. sub object from renderTables has it.
             const option = new Option(`${sub.item_number} - ${sub.name}`, sub.sub_item_code, true, true);
             $('#sub_id').append(option).trigger('change');
 
             $('#sub_qty').val(sub.quantity);
+            $('#sub_factor').val(sub.factor || 1);
+            $('#sub_remarks').val(sub.remarks || '');
+            $('#sub_is_oh_applicable').prop('checked', sub.is_oh_applicable == 1);
+            $('#sub_is_overhead').prop('checked', sub.is_overhead == 1);
+
+            // Unit Logic for Edit
+            const unitSelect = $('#sub_unit');
+            unitSelect.empty();
+            // Populate all units for now to ensure the current unit can be selected
+            allUnits.forEach(u => {
+                unitSelect.append(new Option(u.name, u.id));
+            });
+
+            if(sub.unit_id) unitSelect.val(sub.unit_id);
+
+            // Valid To
+            const fp = document.querySelector("#sub_valid_to")._flatpickr;
+            if (sub.valid_to && fp) fp.setDate(sub.valid_to);
+            else if(fp) fp.setDate("2038-01-19");
 
             $('#addSubitemModal').removeClass('hidden');
         };

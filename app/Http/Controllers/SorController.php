@@ -492,6 +492,7 @@ class SorController extends Controller
                 $q->where('id', '!=', $excludeId);
             })
             ->limit(20)
+            ->with('unit')
             ->get();
 
         return response()->json($items);
