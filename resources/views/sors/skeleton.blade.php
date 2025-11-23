@@ -125,17 +125,37 @@
     </div>
 
     <!-- Charts Section -->
-    <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Resource Contribution Chart -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Resource Contribution</h3>
-            <div id="chart-resource-contribution" style="height: 400px;"></div>
-        </div>
+    <div class="mt-8 relative">
+        <!-- Decorative background elements for glass effect -->
+        <div class="absolute top-0 left-0 -mt-20 -ml-20 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-0 right-0 -mb-20 -mr-20 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
 
-        <!-- Cost Summary Chart -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Cost Breakdown</h3>
-            <div id="chart-cost-summary" style="height: 400px;"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-10">
+            <!-- Resource Contribution Chart -->
+            <div class="bg-white/60 dark:bg-gray-900/30 backdrop-blur-xl border border-gray-200/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:scale-[1.01] group">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
+                        Resource Contribution
+                    </h3>
+                    <div class="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform duration-300">
+                        {!! config('icons.chart-pie', '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>') !!}
+                    </div>
+                </div>
+                <div id="chart-resource-contribution" class="w-full h-[400px]"></div>
+            </div>
+
+            <!-- Cost Summary Chart -->
+            <div class="bg-white/60 dark:bg-gray-900/30 backdrop-blur-xl border border-gray-200/50 dark:border-white/10 shadow-lg dark:shadow-2xl rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:scale-[1.01] group">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400">
+                        Cost Breakdown
+                    </h3>
+                    <div class="p-2 rounded-lg bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform duration-300">
+                        {!! config('icons.chart-bar', '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>') !!}
+                    </div>
+                </div>
+                <div id="chart-cost-summary" class="w-full h-[400px]"></div>
+            </div>
         </div>
     </div>
 

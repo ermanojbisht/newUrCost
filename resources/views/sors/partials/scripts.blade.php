@@ -743,6 +743,90 @@
         let costChart = null;
 
         function renderCharts(data) {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#e5e7eb' : '#374151';
+            const backgroundColor = 'transparent';
+            
+            // Custom color palette matching Tailwind colors
+            const colors = [
+                '#3b82f6', // blue-500
+                '#8b5cf6', // violet-500
+                '#ec4899', // pink-500
+                '#f59e0b', // amber-500
+                '#10b981', // emerald-500
+                '#6366f1', // indigo-500
+                '#f43f5e', // rose-500
+                '#06b6d4', // cyan-500
+            ];
+
+            // Common chart options
+            const commonOptions = {
+                backgroundColor: backgroundColor,
+                textStyle: {
+                    fontFamily: 'Inter, sans-serif'
+                },
+                toolbox: {
+                    show: true,
+                    feature: {
+                        saveAsImage: {
+                            show: true,
+                            title: 'Save Image',
+                            iconStyle: { borderColor: textColor }
+                        },
+                        dataView: {
+                            show: true,
+                            title: 'Data View',
+                            lang: ['Data View', 'Close', 'Refresh'],
+                            buttonColor: '#3b82f6',
+                            optionToContent: function(opt) {
+                                var series = opt.series;
+                                var table = '<div style="width:100%;text-align:center;padding:10px;">' +
+                                            '<table style="width:100%;border-collapse:collapse;border:1px solid #ddd;">' +
+                                            '<thead><tr style="background:#f3f4f6;color:#374151;">' +
+                                            '<th style="padding:8px;border:1px solid #ddd;">Name</th>' +
+                                            '<th style="padding:8px;border:1px solid #ddd;">Value</th>' +
+                                            '</tr></thead><tbody>';
+                                for (var i = 0, l = series[0].data.length; i < l; i++) {
+                                    table += '<tr>' +
+                                             '<td style="padding:8px;border:1px solid #ddd;color:#374151;">' + series[0].data[i].name + '</td>' +
+                                             '<td style="padding:8px;border:1px solid #ddd;color:#374151;">₹' + series[0].data[i].value.toFixed(2) + '</td>' +
+                                             '</tr>';
+                                }
+                                table += '</tbody></table></div>';
+                                return table;
+                            }
+                        },
+                        restore: {
+                            show: true,
+                            title: 'Reset',
+                            iconStyle: { borderColor: textColor }
+                        }
+                    },
+                    iconStyle: {
+                        borderColor: textColor
+                    },
+                    right: 20,
+                    top: 0
+                },
+                tooltip: {
+                    trigger: 'item',
+                    backgroundColor: isDark ? 'rgba(17, 24, 39, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(229, 231, 235, 0.5)',
+                    borderWidth: 1,
+                    textStyle: {
+                        color: textColor
+                    },
+                    extraCssText: 'backdrop-filter: blur(8px); border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);',
+                    formatter: function(params) {
+                        return `<div class="font-medium">${params.name}</div>
+                                <div class="text-sm mt-1">
+                                    <span class="font-bold">₹${params.value.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                    <span class="text-xs opacity-75 ml-1">(${params.percent}%)</span>
+                                </div>`;
+                    }
+                }
+            };
+
             // Initialize charts if not already done
             if (!resourceChart) {
                 const chartDom = document.getElementById('chart-resource-contribution');
@@ -761,85 +845,73 @@
 
             if (!resourceChart || !costChart) return;
 
-            // 1. Resource Contribution Chart
-            // Combine resources and subitems
+            // 1. Resource Contribution Chart Data
             let chartItems = [];
-            
             data.resources.forEach(res => {
-                if (parseFloat(res.amount) > 0) {
-                    chartItems.push({ value: parseFloat(res.amount), name: res.name });
-                }
+                if (parseFloat(res.amount) > 0) chartItems.push({ value: parseFloat(res.amount), name: res.name });
             });
-            
             data.subitems.forEach(sub => {
-                if (parseFloat(sub.amount) > 0) {
-                    chartItems.push({ value: parseFloat(sub.amount), name: sub.name });
-                }
+                if (parseFloat(sub.amount) > 0) chartItems.push({ value: parseFloat(sub.amount), name: sub.name });
             });
 
-            // Sort by value desc
             chartItems.sort((a, b) => b.value - a.value);
 
-            // Group small items into "Others" if too many (e.g., > 10)
-            if (chartItems.length > 15) {
-                const topItems = chartItems.slice(0, 14);
-                const otherItems = chartItems.slice(14);
+            if (chartItems.length > 10) {
+                const topItems = chartItems.slice(0, 9);
+                const otherItems = chartItems.slice(9);
                 const otherTotal = otherItems.reduce((sum, item) => sum + item.value, 0);
-                if (otherTotal > 0) {
-                    topItems.push({ value: otherTotal, name: 'Others' });
-                }
+                if (otherTotal > 0) topItems.push({ value: otherTotal, name: 'Others' });
                 chartItems = topItems;
             }
 
-            const isDark = document.documentElement.classList.contains('dark');
-            const textColor = isDark ? '#e5e7eb' : '#374151';
-
             resourceChart.setOption({
-                tooltip: {
-                    trigger: 'item',
-                    formatter: '{b}: ₹{c} ({d}%)'
-                },
+                ...commonOptions,
+                color: colors,
                 legend: {
                     type: 'scroll',
                     orient: 'vertical',
-                    right: 10,
-                    top: 20,
+                    right: 0,
+                    top: 30,
                     bottom: 20,
-                    textStyle: { color: textColor }
+                    textStyle: { color: textColor },
+                    pageIconColor: textColor,
+                    pageTextStyle: { color: textColor }
                 },
-                series: [
-                    {
-                        name: 'Resource Cost',
-                        type: 'pie',
-                        radius: ['40%', '70%'],
-                        center: ['40%', '50%'],
-                        avoidLabelOverlap: false,
-                        itemStyle: {
-                            borderRadius: 10,
-                            borderColor: isDark ? '#1f2937' : '#fff',
-                            borderWidth: 2
-                        },
+                series: [{
+                    name: 'Resource Cost',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    center: ['35%', '55%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: {
+                        borderRadius: 8,
+                        borderColor: isDark ? '#1f2937' : '#fff',
+                        borderWidth: 2
+                    },
+                    label: {
+                        show: false,
+                        position: 'center'
+                    },
+                    emphasis: {
                         label: {
-                            show: false,
-                            position: 'center'
+                            show: true,
+                            fontSize: 14,
+                            fontWeight: 'bold',
+                            color: textColor,
+                            formatter: '{b}\n{d}%'
                         },
-                        emphasis: {
-                            label: {
-                                show: true,
-                                fontSize: 16,
-                                fontWeight: 'bold',
-                                color: textColor
-                            }
-                        },
-                        labelLine: {
-                            show: false
-                        },
-                        data: chartItems
-                    }
-                ]
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    },
+                    labelLine: { show: false },
+                    data: chartItems
+                }]
             });
 
-            // 2. Cost Breakdown Chart
+            // 2. Cost Breakdown Chart Data
             const totals = data.totals;
             const costData = [
                 { value: parseFloat(totals.total_labor), name: 'Labor' },
@@ -852,34 +924,49 @@
             ].filter(item => item.value > 0);
 
             costChart.setOption({
-                tooltip: {
-                    trigger: 'item',
-                    formatter: '{b}: ₹{c} ({d}%)'
-                },
+                ...commonOptions,
+                color: colors,
                 legend: {
                     orient: 'vertical',
                     left: 'left',
+                    top: 30,
                     textStyle: { color: textColor }
                 },
-                series: [
-                    {
-                        name: 'Cost Breakdown',
-                        type: 'pie',
-                        radius: '50%',
-                        data: costData,
-                        emphasis: {
-                            itemStyle: {
-                                shadowBlur: 10,
-                                shadowOffsetX: 0,
-                                shadowColor: 'rgba(0, 0, 0, 0.5)'
-                            }
-                        },
+                series: [{
+                    name: 'Cost Breakdown',
+                    type: 'pie',
+                    radius: '60%',
+                    center: ['60%', '55%'],
+                    roseType: 'radius',
+                    data: costData,
+                    emphasis: {
                         itemStyle: {
-                            borderColor: isDark ? '#1f2937' : '#fff',
-                            borderWidth: 2
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
                         }
+                    },
+                    itemStyle: {
+                        borderRadius: 5,
+                        borderColor: isDark ? '#1f2937' : '#fff',
+                        borderWidth: 1
+                    },
+                    label: {
+                        show: true,
+                        color: textColor,
+                        formatter: '{b}'
                     }
-                ]
+                }]
             });
         }
+
+        // Listen for theme changes to update charts
+        window.addEventListener('theme-changed', function() {
+            // Re-render charts if data is available (might need to store last data)
+            // For now, a simple reload or just letting the next update handle it is fine.
+            // Ideally, we'd trigger a re-render.
+            // Since we don't have the data here globally, we rely on the next update or resize.
+            if (resourceChart) resourceChart.resize();
+            if (costChart) costChart.resize();
+        });
     </script>
