@@ -33,5 +33,13 @@ class ManMuleCartRuleSeeder extends Seeder
 
             ]);
         }
+
+        $sql= "UPDATE man_mule_cart_rules SET calculation_method=1 WHERE calculation_method=1158;"
+        DB::statement($sql);
+        $sql= "UPDATE man_mule_cart_rules SET calculation_method=2 WHERE calculation_method=1159;"
+        DB::statement($sql);
+
     }
 }
+//
+//

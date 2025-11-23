@@ -10,10 +10,12 @@ use Illuminate\Support\Facades\Log;
 class ItemSkeletonService
 {
     protected $rateAnalysisService;
+    protected $overheadService;
 
-    public function __construct(RateAnalysisService $rateAnalysisService)
+    public function __construct(RateAnalysisService $rateAnalysisService, OverheadService $overheadService)
     {
         $this->rateAnalysisService = $rateAnalysisService;
+        $this->overheadService = $overheadService;
     }
 
     /**
@@ -46,13 +48,14 @@ class ItemSkeletonService
         $totalLabor = 0;
         $totalMaterial = 0;
         $totalMachine = 0;
+        $totalCartage = 0;
+        $totalMiscellaneous = 0;
 
         foreach ($resources as $res) {
             // Fetch Rate using RateAnalysisService
             $rateDetails = $this->rateAnalysisService->getResourceRateDetails($res->resource, $rateCard, $date);
 
             $rate = $rateDetails['total_rate'];
-            $amount = $res->quantity * $rate;
 
             // Unit Conversion Logic
             $baseUnit = $res->resource->unit;
@@ -69,15 +72,28 @@ class ItemSkeletonService
             $amount = $res->quantity * $conversionFactor * $rate;
 
             // Categorize cost based on Resource Group Name
-            $groupName = strtolower($res->resource->group->name ?? '');
-            if (str_contains($groupName, 'labour') || str_contains($groupName, 'labor')) {
-                $totalLabor += $amount;
-            } elseif (str_contains($groupName, 'machine') || str_contains($groupName, 'machinery')) {
-                $totalMachine += $amount;
-            } else {
-                // Default to Material for everything else (including 'material' group)
-                $totalMaterial += $amount;
+            $resource_group_id=$res->resource->resource_group_id;
+            $groupName = $res->resource->group->name ?? '';
+
+            switch ($resource_group_id) {
+                case 1: //Labour Group
+                    $totalLabor += $amount;
+                    break;
+                case 2: //Machine Group
+                    $totalMachine += $amount;
+                    break;
+                case 3: //Material Group
+                    $totalMaterial += $amount;
+                    break;
+                case 4: //Carriage Group
+                    $totalCartage += $amount;
+                    break;
+
+                default://Miscellaneous Group
+                    $totalMiscellaneous += $amount;
+                    break;
             }
+
 
             $resourceData[] = [
                 'id' => $res->id,
@@ -133,44 +149,47 @@ class ItemSkeletonService
         }
 
         // 3. Fetch Overheads
-        $oheads = $item->oheads()->with(['overhead'])->orderBy('sort_order')->get();
+        $overHeadRules = $item->overheads()->with(['overhead'])->get(); //already sorted in relation
         $overheadData = [];
         $totalOverheads = 0;
 
-        // Base amount for overheads usually includes resources + subitems
-        // But specific overheads might apply only to Labor, etc.
-        // For this implementation, I'll implement a simplified version:
-        // Apply percentage to the running total or specific base if defined.
-
         $runningTotal = array_sum(array_column($resourceData, 'amount')) + $totalSubitems;
+        $costMapOfResources = collect($resourceData)->pluck('amount', 'resource_id');
 
-        foreach ($oheads as $oh) {
-            $amount = 0;
-            // Logic from old system: switch($oh->overhead_id) ...
-            // Since we don't have the hardcoded IDs, we'll assume 'parameter' is a percentage
-            // and it applies to the current running total.
-            // In a real migration, we'd map the old logic precisely.
 
-            if ($oh->calculation_type == 'percentage') { // Assuming this field exists or similar
-                $amount = ($runningTotal * $oh->parameter) / 100;
-            } else {
-                // Fixed amount?
-                $amount = $oh->parameter;
+        foreach ($overHeadRules as $rule) {
+
+            $calculationResult = $this->overheadService->calculateOverheadAmount($rule, [
+                'totalLabor' => $totalLabor,
+                'totalMachine' => $totalMachine,
+                'totalMaterial' => $totalMaterial,
+                'totalCartage' => $totalCartage,
+                'subItemsWithOh' => $costs['sub_items_with_oh'] ?? 0,
+                'resourceCosts' => $costMapOfResources ?? [],
+                'runningTotal' => $runningTotal,
+                'totalOverhead' => $totalOverheads
+            ]);
+
+            $overheadAmount = $calculationResult['amount'];
+            $baseAmount = $calculationResult['base'];
+
+            // Only add to the running total for subsequent calculations if the flag is set
+            if ($rule->allow_further_overhead) {
+                $totalOverheads += $overheadAmount;
             }
 
-            // If it's additive, add to total.
-            $totalOverheads += $amount;
-            // Some overheads might update the running total for subsequent overheads (compound).
-            // $runningTotal += $amount; 
-
             $overheadData[] = [
-                'id' => $oh->id,
-                'overhead_id' => $oh->overhead_id,
-                'description' => $oh->overhead->name ?? $oh->description,
-                'parameter' => $oh->parameter,
-                'amount' => $amount,
+                'id' => $rule->id,
+                'overhead_id' => $rule->overhead_id,
+                'description' => $this->overheadService->formatOverheadDescription($rule, $baseAmount),
+                'parameter' => round($rule->parameter * 100, 2),
+                'amount' => $overheadAmount,
             ];
         }
+
+
+
+        $totalOverheads= array_sum(array_column($overheadData, 'amount'));
 
         $grandTotal = array_sum(array_column($resourceData, 'amount')) + $totalSubitems + $totalOverheads;
         $turnout = $item->turnout_quantity > 0 ? $item->turnout_quantity : 1;
@@ -185,6 +204,8 @@ class ItemSkeletonService
                 'total_labor' => $totalLabor,
                 'total_material' => $totalMaterial,
                 'total_machine' => $totalMachine,
+                'total_cartage' => $totalCartage,
+                'total_miscellaneous' => $totalMiscellaneous,
                 'subitem_cost' => $totalSubitems,
                 'overhead_cost' => $totalOverheads,
                 'grand_total' => $grandTotal,
@@ -193,4 +214,5 @@ class ItemSkeletonService
             ]
         ];
     }
+
 }

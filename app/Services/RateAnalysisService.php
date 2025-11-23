@@ -48,7 +48,7 @@ class RateAnalysisService
 
         $totalCost = $totalDirectCost + $totalOverheadCost;
 
-        $finalRate = ($item->turn_out_quantity > 0) ? $totalCost / $item->turn_out_quantity : 0;
+        $finalRate = ($item->turn_out_quantity > 0) ? $totalCost / $item->turn_out_quantity : $totalCost;
 
         $analysis = [
             'resources' => $directResources,

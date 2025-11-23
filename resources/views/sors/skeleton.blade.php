@@ -138,7 +138,7 @@
         <!-- Summary Sidebar (1/3 width) -->
         <div class="lg:col-span-1">
             <div class="card sticky top-4">
-                <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Cost Summary</h2>
+                <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Cost Summary mkb</h2>
                 <div class="space-y-3">
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-600 dark:text-gray-400 flex items-center">

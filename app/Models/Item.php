@@ -74,9 +74,9 @@ class Item extends Model
         return $this->hasMany(Subitem::class, 'item_id', 'item_code');
     }
 
-    public function oheads()
+    public function overheads()
     {
-        return $this->hasMany(Ohead::class);
+        return $this->hasMany(Ohead::class, 'item_id', 'item_code')->orderBy('sort_order', 'asc');
     }
 
     public function itemRates()

@@ -20,6 +20,8 @@ class ResourceVolumeWeightSeeder extends Seeder
                 $volumeOrWeight = 1;
             } elseif ($oldResource->byVolumeWeight == 1159) {
                 $volumeOrWeight = 2;
+            } elseif ($oldResource->byVolumeWeight == 3) {
+                $volumeOrWeight = 3;
             }
             if($volumeOrWeight == 0){
                 continue;

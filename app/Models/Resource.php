@@ -13,7 +13,7 @@ class Resource extends Model
 
     protected $fillable = [
         'name',
-        'group_id',
+        'resource_group_id',
         'secondary_code',
         'unit_group_id',
         'unit_id',

@@ -44,7 +44,8 @@ public function subItems()
 
 public function overheads()
 {
-    return $this->hasMany(Ohead::class, 'raitemid', 'itemcode');
+    // Ensure the rules are always processed in the correct sequence.
+    return $this->hasMany(Ohead::class, 'raitemid', 'itemcode')->orderBy('sorder', 'asc');
 }
 ```
 
@@ -74,27 +75,63 @@ class RateCalculationService
      */
     public function calculateItemRateAnalysis(Item $item, RateCard $rateCard, \DateTime $date)
     {
-        $totalCost = 0;
+        $costs = [
+            'labor' => 0,
+            'machine' => 0,
+            'material' => 0,
+            'carriage' => 0,
+            'sub_items_with_oh' => 0,
+            'sub_items_without_oh' => 0,
+            'specific_resource_costs' => [],
+        ];
+        $runningTotal = 0;
 
         // 1. Calculate cost of direct resources
         foreach ($item->skeletons as $skeleton) {
             $resource = $skeleton->resource;
             $resourceRate = $this->calculateResourceRate($resource, $rateCard, $date);
-            $totalCost += $resourceRate * $skeleton->quantity;
+            $cost = $resourceRate * $skeleton->quantity;
+            
+            $costs['specific_resource_costs'][$resource->code] = $cost;
+
+            switch ($resource->resgr) {
+                case 1: $costs['labor'] += $cost; break;
+                case 2: $costs['machine'] += $cost; break;
+                case 3: $costs['material'] += $cost; break;
+                case 4: $costs['carriage'] += $cost; break;
+            }
+            $runningTotal += $cost;
         }
 
         // 2. Recursively calculate cost of sub-items
         foreach ($item->subItems as $subItem) {
-            $subItemRate = $this->calculateItemRateAnalysis($subItem->childItem, $rateCard, $date);
-            $totalCost += $subItemRate * $subItem->dResQty;
+            // Assuming childItem relationship exists on SubItem model
+            $subItemAnalysis = $this->calculateItemRateAnalysis($subItem->childItem, $rateCard, $date);
+            $cost = $subItemAnalysis['final_rate'] * $subItem->dResQty;
+
+            $costs['specific_resource_costs'][$subItem->subraitem] = $cost;
+
+            if ($subItem->ohapplicability == 1) {
+                $costs['sub_items_with_oh'] += $cost;
+            } else {
+                $costs['sub_items_without_oh'] += $cost;
+            }
+            $runningTotal += $cost;
         }
 
         // 3. Calculate and add overheads
-        $overheadCost = $this->calculateOverheads($item, $totalCost);
-        $totalCost += $overheadCost;
+        $overheadCost = $this->calculateOverheads($item, $costs, $runningTotal);
+        $runningTotal += $overheadCost;
 
         // 4. Adjust for the item's turnout quantity
-        return $totalCost / $item->TurnOutQuantity;
+        $finalRate = $item->TurnOutQuantity > 0 ? $runningTotal / $item->TurnOutQuantity : $runningTotal;
+
+        return [
+            'final_rate' => $finalRate,
+            'costs' => $costs,
+            'overhead_cost' => $overheadCost,
+            'total_cost' => $runningTotal,
+        ];
     }
 
     /**
@@ -105,9 +142,9 @@ class RateCalculationService
     {
         // Get the base rate using Eloquent relationships
         $baseRate = $resource->rates()
-            ->where('rate_card_id', $rateCard->ratecardid)
-            ->where('valid_from', '<=', $date)
-            ->where('valid_to', '>=', $date)
+            ->where('ratecard', $rateCard->ratecardid)
+            ->where('predate', '<=', $date)
+            ->where('postdate', '>=', $date)
             ->first()->rate ?? 0;
 
         // Apply adjustments based on resource group
@@ -130,25 +167,85 @@ class RateCalculationService
     }
 
     /**
+     * Calculates total overhead cost for an item.
+     * Replaces the overhead loop from CodeIgniter's Ranamodel.
+     */
+    private function calculateOverheads(Item $item, array $costs, float $runningTotal): float
+    {
+        $totalOverhead = 0;
+        $rules = $item->overheads; // Fetches rules ordered by 'sorder'
+
+        foreach ($rules as $rule) {
+            $amount = 0;
+            switch ($rule->oon) {
+                case 0:  // Lumpsum
+                    $amount = $rule->paramtr;
+                    break;
+                case 11: // On Labor
+                    $amount = $rule->paramtr * $costs['labor'];
+                    break;
+                case 12: // On Machine
+                    $amount = $rule->paramtr * $costs['machine'];
+                    break;
+                case 13: // On Material
+                    $amount = $rule->paramtr * $costs['material'];
+                    break;
+                case 19: // On Sub-items (that allow further OH)
+                    $amount = $rule->paramtr * $costs['sub_items_with_oh'];
+                    break;
+                case 20: // On Carriage
+                    $amount = $rule->paramtr * $costs['carriage'];
+                    break;
+                case 4:  // On all resources + applicable sub-items
+                    $base = $costs['labor'] + $costs['machine'] + $costs['material'] + $costs['carriage'] + $costs['sub_items_with_oh'];
+                    $amount = $rule->paramtr * $base;
+                    break;
+                case 16: // On specific resources/items
+                    $specificBase = 0;
+                    $itemIds = explode(',', $rule->onitm);
+                    foreach ($itemIds as $id) {
+                        $specificBase += $costs['specific_resource_costs'][$id] ?? 0;
+                    }
+                    $amount = $rule->paramtr * $specificBase;
+                    break;
+                case 7:  // On sum of previous overheads
+                    $amount = $rule->paramtr * $totalOverhead;
+                    break;
+                case 18: // On cumulative total (all resources + previous overheads)
+                    $base = $runningTotal + $totalOverhead;
+                    $amount = $rule->paramtr * $base;
+                    break;
+            }
+            
+            // This logic seems to be what was intended by the original code,
+            // where $ocst is incremented and then used by rule '7'.
+            $totalOverhead += $amount;
+        }
+
+        return round($totalOverhead, 2);
+    }
+
+    /**
      * Calculates total lead cost for a material resource.
      * Replaces logic from Resratemodel->getlead()
      */
     private function getLeadCost(Resource $resource, RateCard $rateCard, \DateTime $date): float
     {
-        $totalLead = 0;
-        $leadDistances = $resource->leadDistances()
-            ->where('RateCardID', $rateCard->ratecardid)
-            // ... date conditions
-            ->get();
-
-        foreach($leadDistances as $lead) {
-            // ... Re-implement the complex logic from getlead() using Laravel models ...
-            // e.g., $totalLead += $this->calculateMechanicalLead(...);
-        }
-        return $totalLead;
+        // ... Re-implement the complex logic from getlead() using Laravel models ...
+        return 0.0; // placeholder
     }
-
-    // ... other private helper methods for labor/machine indexes, overheads, etc.
+    
+    private function getLaborIndex(Resource $resource, RateCard $rateCard, \DateTime $date): float
+    {
+        // ... Re-implement logic from Resratemodel->getLaborIndex() ...
+        return 0.0; // placeholder
+    }
+    
+    private function getMachineIndex(Resource $resource, RateCard $rateCard, \DateTime $date): float
+    {
+        // ... Re-implement logic from Resratemodel->getLaborIndex() for machines ...
+        return 0.0; // placeholder
+    }
 }
 ```
 
@@ -182,12 +279,12 @@ class ItemRateController extends Controller
         $rateCard = RateCard::find($request->input('rate_card_id', 1));
         $date = new \DateTime($request->input('date', 'today'));
 
-        $finalRate = $this->rateCalculator->calculateItemRateAnalysis($item, $rateCard, $date);
+        $analysis = $this->rateCalculator->calculateItemRateAnalysis($item, $rateCard, $date);
 
         return response()->json([
             'item_code' => $item->itemcode,
             'item_name' => $item->ItemShortDesc,
-            'final_rate' => $finalRate,
+            'analysis' => $analysis,
             'rate_card' => $rateCard->ratecardname,
             'date' => $date->format('Y-m-d'),
         ]);
