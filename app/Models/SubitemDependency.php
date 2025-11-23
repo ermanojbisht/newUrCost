@@ -12,8 +12,8 @@ class SubitemDependency extends Model
     protected $table = 'subitem_dependencies';
 
     protected $fillable = [
-        'item_id',
-        'sub_item_id',
+        'item_code',
+        'sub_item_code',
         'level',
         'position',
         'quantity',
@@ -34,12 +34,12 @@ class SubitemDependency extends Model
 
     public function item()
     {
-        return $this->belongsTo(Item::class, 'item_id');
+        return $this->belongsTo(Item::class, 'item_code');
     }
 
     public function subItem()
     {
-        return $this->belongsTo(Item::class, 'sub_item_id');
+        return $this->belongsTo(Item::class, 'sub_item_code');
     }
 
     public function unit()

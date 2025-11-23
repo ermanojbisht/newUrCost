@@ -34,6 +34,26 @@ class Subitem extends Model
         'valid_to' => 'date',
     ];
 
+    /**
+     * The "booted" method of the model.
+     *
+     * @return void
+     */
+    protected static function booted()
+    {
+        static::created(function ($subitem) {
+            self::generateSubitemDependency($subitem->item_code);
+        });
+
+        static::updated(function ($subitem) {
+            self::generateSubitemDependency($subitem->item_code);
+        });
+
+        static::deleted(function ($subitem) {
+            self::generateSubitemDependency($subitem->item_code);
+        });
+    }
+
     public function item()
     {
         return $this->belongsTo(Item::class, 'item_code', 'item_code');
@@ -63,34 +83,34 @@ class Subitem extends Model
      * Generate the subitem dependency tree for a given RA item.
      * This method replicates the functionality of the old system's subitemlvlFormation.
      *
-     * @param int $raitemid The item_code of the Rate Analysis item.
+     * @param int $item_code The item_code of the Rate Analysis item.
      * @return void
      */
-    public static function generateSubitemDependency(int $raitemid)
+    public static function generateSubitemDependency(int $item_code)
     {
-        Log::debug("Starting subitem dependency generation for raitemid (item_code): {$raitemid}");
+        Log::debug("Starting subitem dependency generation for raitemid (item_code): {$item_code}");
 
         try {
-            DB::transaction(function () use ($raitemid) {
+            DB::transaction(function () use ($item_code) {
                 // Step 1: Delete existing dependency records for the given main item code.
-                SubitemDependency::where('item_code', $raitemid)->delete();
-                Log::debug("Deleted existing dependencies for main item code: {$raitemid}");
+                SubitemDependency::where('item_code', $item_code)->delete();
+                Log::debug("Deleted existing dependencies for main item code: {$item_code}");
 
                 // Initialize position counter. In the old system, it started from 1000 and decremented.
                 $pos = 1000;
 
                 // Step 2: Recursively build the dependency tree.
-                self::buildDependencyTree($raitemid, $raitemid, $pos, 1);
+                self::buildDependencyTree($item_code, $item_code, $pos, 1);
 
                 // After building the tree, update the subitem count on the main item.
-                $subitemCount = SubitemDependency::where('item_code', $raitemid)->where('quantity', '<>', 0)->count();
-                Item::where('item_code', $raitemid)->update(['sub_item_count' => $subitemCount]);
-                Log::debug("Updated sub_item_count for main item code {$raitemid} to {$subitemCount}");
+                $subitemCount = SubitemDependency::where('item_code', $item_code)->where('quantity', '<>', 0)->count();
+                Item::where('item_code', $item_code)->update(['sub_item_count' => $subitemCount]);
+                Log::debug("Updated sub_item_count for main item code {$item_code} to {$subitemCount}");
 
             });
-            Log::info("Successfully generated subitem dependency for raitemid (item_code): {$raitemid}");
+            Log::info("Successfully generated subitem dependency for raitemid (item_code): {$item_code}");
         } catch (\Exception $e) {
-            Log::error("Error generating subitem dependency for raitemid (item_code): {$raitemid}. Error: " . $e->getMessage());
+            Log::error("Error generating subitem dependency for raitemid (item_code): {$item_code}. Error: " . $e->getMessage());
             // Optionally re-throw the exception if you want the caller to handle it.
             // throw $e;
         }

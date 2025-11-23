@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Subitem;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Kalnoy\Nestedset\NodeTrait;
@@ -134,4 +135,47 @@ class Item extends Model
             ->orderByDesc('valid_to')
             ->first();
     }
+
+
+
+    /**
+    * Get the total count of all nested sub-items.
+    * This method provides an efficient way to get the total count of all
+    * nested sub-items by querying the pre-calculated `subitem_dependencies` table.
+    **/
+    public function getTotalSubItemsCount()
+    {
+        return SubitemDependency::where('item_code', $this->item_code)->count();
+    }
+
+    public function getDynamicSubItemsCount()
+    {
+        $count = 0;
+
+        // The 'subitems' relationship gets the pivot model records.
+        // We loop through them to get to the actual child Item model.
+        foreach ($this->subitems as $subitem_pivot) {
+            $childItem = $subitem_pivot->subItem; // 'subItem' gets the related Item model
+
+            if ($childItem) {
+                // Count the direct child
+                $count++;
+                // Recursively add the count of its children
+                $count += $childItem->getDynamicSubItemsCount();
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * Trigger the generation of subitem dependencies for this item.
+     * This is a wrapper around Subitem::generateSubitemDependency.
+     * Already done when subitem added ,edited,deleted through process . it is only if you want to update mannualy
+     */
+    public function refreshSubitemDependencies()
+    {
+        Subitem::generateSubitemDependency($this->item_code);
+    }
+
 }
