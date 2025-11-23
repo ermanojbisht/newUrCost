@@ -204,4 +204,27 @@ The system provides complete functionality for:
 
 Both **Skeleton View (editable)** and **Analysis View (read-only)** collectively ensure accurate and transparent item rate composition in the SOR system.
 
+---
+
+## **11. Implementation Details & Learnings (Nov 2025)**
+
+### **11.1 Overhead Management Implementation**
+*   **Modal-Based Editing:** Implemented using a shared modal (`#modal-add-overhead`) for both adding and editing.
+*   **Data Handling:**
+    *   **Item ID vs Item Code:** The `oheads` table links to `items` via `item_id` column, but logically it stores the `item_code` (not the auto-increment `id`). This was a critical finding. All controller methods (`addOverhead`, `updateOverhead`, `removeOverhead`, `reorderOverheads`) must use `$item->item_code` for ownership checks and queries.
+    *   **Percentage Storage:** Overhead parameters for non-lumpsum types are stored as decimals (e.g., 0.10 for 10%). The controller automatically divides user input by 100 if the calculation type is not 0 (Lumpsum). The service layer returns both `parameter` (percentage, e.g., 10) and `raw_parameter` (decimal, e.g., 0.10) to handle display and editing correctly.
+    *   **Description Handling:** The service returns a formatted `description` (e.g., "10% on Labor") and a `raw_description` (user's custom text). The Edit Modal uses `raw_description` for the input field to avoid overwriting custom text with the auto-generated one.
+    *   **Dropdown Display:** The Edit Modal's "Overhead Type" dropdown needs the base overhead name. `ItemSkeletonService` was updated to include `overhead_name` (from `OverheadMaster`) to ensure the dropdown displays "Labor Cess" instead of "1% on Labor".
+
+### **11.2 Frontend-Backend Integration**
+*   **Select2 Quirks:** When using Select2 inside a modal, the `dropdownParent` option MUST be set to the modal's ID (e.g., `$('#modal-add-overhead')`). Failure to do so results in the dropdown not opening or closing immediately.
+*   **Route Definitions:** API-like routes for overhead management (`PUT`, `POST` for reorder) were defined in `web.php` to support the AJAX calls.
+*   **Single Source of Truth:** `ItemSkeletonService` is the central place for calculating rates and preparing data for the view. It returns a comprehensive JSON structure including resources, sub-items, overheads, and totals, minimizing the need for separate AJAX calls for each section.
+
+### **11.3 Current State (as of Nov 23, 2025)**
+*   **Resources:** Fully functional (Add, Edit, Delete, Reorder).
+*   **Overheads:** Fully functional (Add, Edit, Delete, Reorder).
+*   **Sub-items:** Basic Add/Remove functionality exists.
+*   **Rate Analysis:** The view correctly calculates and displays the final rate based on all components.
+
 

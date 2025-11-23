@@ -164,7 +164,7 @@ class ItemSkeletonService
                 'totalMachine' => $totalMachine,
                 'totalMaterial' => $totalMaterial,
                 'totalCartage' => $totalCartage,
-                'subItemsWithOh' => $costs['sub_items_with_oh'] ?? 0,
+                'subItemsWithOh' => $totalSubitems,
                 'resourceCosts' => $costMapOfResources ?? [],
                 'runningTotal' => $runningTotal,
                 'totalOverhead' => $totalOverheads
@@ -181,8 +181,14 @@ class ItemSkeletonService
             $overheadData[] = [
                 'id' => $rule->id,
                 'overhead_id' => $rule->overhead_id,
+                'overhead_name' => $rule->overhead->description ?? 'Unknown', // Pass master description
                 'description' => $this->overheadService->formatOverheadDescription($rule, $baseAmount),
+                'raw_description' => $rule->description, // Pass raw description for editing
                 'parameter' => round($rule->parameter * 100, 2),
+                'raw_parameter' => $rule->parameter, // Pass raw parameter for editing
+                'calculation_type' => $rule->calculation_type, // Pass calculation type for editing
+                'applicable_items' => $rule->applicable_items, // Pass applicable items for editing
+                'allow_further_overhead' => $rule->allow_further_overhead, // Pass flag for editing
                 'amount' => $overheadAmount,
             ];
         }

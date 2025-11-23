@@ -43,8 +43,9 @@ class ItemSkeletonController extends Controller
         $rateCards = \App\Models\RateCard::all();
         $units = \App\Models\Unit::all();
         $resourceGroups = \App\Models\ResourceGroup::all();
+        $overheadMasters = \App\Models\OverheadMaster::all();
 
-        return view('sors.skeleton', compact('sor', 'item', 'rateCards', 'units', 'rateCardId', 'effectiveDate', 'resourceGroups'));
+        return view('sors.skeleton', compact('sor', 'item', 'rateCards', 'units', 'rateCardId', 'effectiveDate', 'resourceGroups', 'overheadMasters'));
     }
 
     public function copySkeleton(Request $request, Sor $sor, Item $item)
@@ -118,7 +119,6 @@ class ItemSkeletonController extends Controller
             'resource_id' => $request->input('resource_id'),
             'quantity' => $request->input('quantity'),
             'unit_id' => $request->input('unit_id'),
-            'sort_order' => $maxOrder + 1,
             'sort_order' => $maxOrder + 1,
             'resource_description' => $request->input('resource_description'),
             'valid_from' => now(),
@@ -228,17 +228,35 @@ class ItemSkeletonController extends Controller
     {
         $request->validate([
             'overhead_id' => 'required|exists:overhead_masters,id',
-            'parameter' => 'required|numeric', // Percentage or amount
+            'calculation_type' => 'required|integer',
+            'parameter' => 'required|numeric',
+            'description' => 'nullable|string',
+            'applicable_items' => 'nullable|string',
+            'allow_further_overhead' => 'boolean',
         ]);
 
-        $maxOrder = $item->oheads()->max('sort_order') ?? 0;
+        $maxOrder = $item->overheads()->max('sort_order') ?? 0;
+
+        $parameter = $request->input('parameter');
+        if ($request->input('calculation_type') != 0) { // 0 is Lumpsum
+             // If not lumpsum, assume percentage and convert to decimal if > 1 (assuming user enters 10 for 10%)
+             // Or strictly follow user instruction: "if i m putting value 10 for percent then it's saving 10 instead of 0.1 should be saved"
+             // So we divide by 100.
+             $parameter = $parameter / 100;
+        }
 
         $ohead = new Ohead([
-            'item_id' => $item->id,
+            'item_id' => $item->item_code,
             'overhead_id' => $request->input('overhead_id'),
-            'parameter' => $request->input('parameter'),
+            'calculation_type' => $request->input('calculation_type'),
+            'parameter' => $parameter,
+            'description' => $request->input('description'),
+            'applicable_items' => $request->input('applicable_items'),
+            'allow_further_overhead' => $request->input('allow_further_overhead', 0),
             'sort_order' => $maxOrder + 1,
             'valid_from' => now(),
+            'created_by' => auth()->id(),
+            'updated_by' => auth()->id(),
         ]);
 
         $ohead->save();
@@ -246,9 +264,62 @@ class ItemSkeletonController extends Controller
         return response()->json(['message' => 'Overhead added successfully', 'id' => $ohead->id]);
     }
 
+    public function updateOverhead(Request $request, Sor $sor, Item $item, Ohead $ohead)
+    {
+        // Fix: Check against item_code, not id
+        if ($ohead->item_id !== $item->item_code) {
+            return response()->json(['message' => 'Overhead does not belong to this item'], 403);
+        }
+
+        $request->validate([
+            'overhead_id' => 'required|exists:overhead_masters,id',
+            'calculation_type' => 'required|integer',
+            'parameter' => 'required|numeric',
+            'description' => 'nullable|string',
+            'applicable_items' => 'nullable|string',
+            'allow_further_overhead' => 'boolean',
+        ]);
+
+        $parameter = $request->input('parameter');
+        if ($request->input('calculation_type') != 0) {
+             $parameter = $parameter / 100;
+        }
+
+        $ohead->update([
+            'overhead_id' => $request->input('overhead_id'),
+            'calculation_type' => $request->input('calculation_type'),
+            'parameter' => $parameter,
+            'description' => $request->input('description'),
+            'applicable_items' => $request->input('applicable_items'),
+            'allow_further_overhead' => $request->input('allow_further_overhead', 0),
+            'updated_by' => auth()->id(),
+        ]);
+
+        return response()->json(['message' => 'Overhead updated successfully']);
+    }
+
+    public function reorderOverheads(Request $request, Sor $sor, Item $item)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:oheads,id',
+        ]);
+
+        $ids = $request->input('ids');
+
+        foreach ($ids as $index => $id) {
+            Ohead::where('id', $id)
+                ->where('item_id', $item->item_code) // Fix: Use item_code
+                ->update(['sort_order' => $index + 1]);
+        }
+
+        return response()->json(['message' => 'Overheads reordered successfully']);
+    }
+
     public function removeOverhead(Sor $sor, Item $item, Ohead $ohead)
     {
-        if ($ohead->item_id !== $item->id) {
+        // Fix: Check against item_code, not id
+        if ($ohead->item_id !== $item->item_code) {
             return response()->json(['message' => 'Overhead does not belong to this item'], 403);
         }
         $ohead->delete();
