@@ -51,6 +51,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Skeleton/Rate Analysis Page View
+    Route::get('/sors/{sor}/items/{item}/ra', [App\Http\Controllers\ItemSkeletonController::class, 'showRaPage'])->name('sors.items.ra');
     Route::get('/sors/{sor}/items/{item}/skeleton', [App\Http\Controllers\ItemSkeletonController::class, 'showPage'])->name('sors.items.skeleton');
     Route::post('/sors/{sor}/items/{item}/skeleton/copy', [App\Http\Controllers\ItemSkeletonController::class, 'copySkeleton'])->name('sors.items.skeleton.copy');
     Route::post('/sors/{sor}/items/{item}/skeleton/resources/reorder', [ItemSkeletonController::class, 'reorderResources'])->name('sors.items.skeleton.resources.reorder');

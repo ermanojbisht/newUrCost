@@ -1,3 +1,4 @@
+@props(['readonly' => false])
             <!-- Sub-items Card -->
             <!--
                 This section displays the list of sub-items associated with the item.
@@ -13,10 +14,12 @@
                         </div>
                         <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100 tracking-wide">Sub-items</h2>
                     </div>
+                    @if(!$readonly)
                     <button id="btnAddSubitem" class="py-2 px-4 rounded-lg bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white text-sm font-semibold shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transform hover:-translate-y-0.5 transition-all duration-200 flex items-center space-x-2">
                         {!! config('icons.add') !!}
                         <span>Add Sub-item</span>
                     </button>
+                    @endif
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200/50 dark:divide-gray-700/50">
@@ -26,13 +29,16 @@
                                 <th class="px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quantity</th>
                                 <th class="px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Rate (₹)</th>
                                 <th class="px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount (₹)</th>
+                                @if(!$readonly)
                                 <th class="px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody id="subitems-table"
+                            data-readonly="{{ $readonly ? 'true' : 'false' }}"
                             class="divide-y divide-gray-200/50 dark:divide-gray-700/50 bg-transparent">
                             <tr>
-                                <td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400 animate-pulse">Loading sub-items...</td>
+                                <td colspan="{{ $readonly ? '4' : '5' }}" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400 animate-pulse">Loading sub-items...</td>
                             </tr>
                         </tbody>
                     </table>

@@ -1,3 +1,4 @@
+@props(['readonly' => false])
             <!-- Resources Card -->
             <!--
                 This section displays the list of resources associated with the item.
@@ -12,28 +13,35 @@
                         </div>
                         <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100 tracking-wide">Resources</h2>
                     </div>
+                    @if(!$readonly)
                     <button id="btnAddResource" class="py-2 px-4 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-semibold shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transform hover:-translate-y-0.5 transition-all duration-200 flex items-center space-x-2">
                         {!! config('icons.add') !!}
                         <span>Add Resource</span>
                     </button>
+                    @endif
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200/50 dark:divide-gray-700/50">
                         <thead class="bg-gray-50/50 dark:bg-gray-800/50 backdrop-blur-sm">
                             <tr>
+                                @if(!$readonly)
                                 <th class="w-8 px-4 py-3"></th>
+                                @endif
                                 <th class="w-10 px-4 py-3 text-center text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">#</th>
                                 <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
                                 <th class="w-24 px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Qty</th>
                                 <th class="w-24 px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Rate (₹)</th>
                                 <th class="w-24 px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount (₹)</th>
+                                @if(!$readonly)
                                 <th class="w-20 px-4 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody id="resources-body"
+                            data-readonly="{{ $readonly ? 'true' : 'false' }}"
                             class="divide-y divide-gray-200/50 dark:divide-gray-700/50 bg-transparent">
                             <tr>
-                                <td colspan="7" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400 animate-pulse">Loading resources...</td>
+                                <td colspan="{{ $readonly ? '6' : '7' }}" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400 animate-pulse">Loading resources...</td>
                             </tr>
                         </tbody>
                     </table>

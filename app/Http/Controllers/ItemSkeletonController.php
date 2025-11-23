@@ -48,6 +48,33 @@ class ItemSkeletonController extends Controller
         return view('sors.skeleton', compact('sor', 'item', 'rateCards', 'units', 'rateCardId', 'effectiveDate', 'resourceGroups', 'overheadMasters'));
     }
 
+    public function showRaPage(Request $request, Sor $sor, Item $item)
+    {
+        // Handle filters from request and store in session
+        // Retrieve from session or defaults
+        $filters = FilterHelper::getRateFilters($request, $sor);
+
+        $rateCardId = $filters['rate_card_id'];
+        $effectiveDate = $filters['effective_date'];
+
+        $rateCards = \App\Models\RateCard::all();
+        
+        // We don't need units, resourceGroups, overheadMasters for read-only view if they are only used for dropdowns in modals
+        // But if they are used for display names, we might need them. 
+        // Checking partials:
+        // resources.blade.php: uses $item->skeletons (loaded via JS)
+        // subitems.blade.php: uses $item->subitems (loaded via JS)
+        // overheads.blade.php: uses $item->overheads (loaded via JS)
+        // So mostly data is loaded via JS.
+        // However, let's pass them just in case to avoid undefined variable errors if partials expect them.
+        
+        $units = \App\Models\Unit::all();
+        $resourceGroups = \App\Models\ResourceGroup::all();
+        $overheadMasters = \App\Models\OverheadMaster::all();
+
+        return view('sors.ra', compact('sor', 'item', 'rateCards', 'units', 'rateCardId', 'effectiveDate', 'resourceGroups', 'overheadMasters'));
+    }
+
     public function copySkeleton(Request $request, Sor $sor, Item $item)
     {
         $request->validate([
