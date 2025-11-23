@@ -110,24 +110,18 @@
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th
-                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                    Description</th>
-                                <th
-                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                    Parameter</th>
-                                <th
-                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                    Amount</th>
-                                <th
-                                    class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
-                                    Action</th>
+                                <th class="w-8 px-2 py-2"></th>
+                                <th class="w-10 px-2 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">#</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Description</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Parameter</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Amount</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Action</th>
                             </tr>
                         </thead>
-                        <tbody id="overheads-table"
+                        <tbody id="overheads-body"
                             class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             <tr>
-                                <td colspan="4" class="px-4 py-8 text-center text-gray-500">Loading...</td>
+                                <td colspan="6" class="px-4 py-8 text-center text-gray-500">Loading...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -673,9 +667,9 @@
                     // Determine Icon
                     let iconHtml = icons.list; // Default
                     if (res.resource_group_name) {
-                        if (res.resource_group_name.includes('labour')) iconHtml = icons.labour;
-                        else if (res.resource_group_name.includes('machine')) iconHtml = icons.machinery;
-                        else if (res.resource_group_name.includes('material')) iconHtml = icons.material;
+                        if (res.resource_group_name.includes('Labour Group')) iconHtml = icons.labour;
+                        else if (res.resource_group_name.includes('Machine Group')) iconHtml = icons.machinery;
+                        else if (res.resource_group_name.includes('Material Group')) iconHtml = icons.material;
                     }
 
                     // Rate Tooltip
