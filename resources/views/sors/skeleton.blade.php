@@ -28,15 +28,12 @@
         </a>
     </div>
 </div>
-{{ $item->name }}
-@if($item->assumptions)
-{{ $item->assumptions }}
-@endif
-
-
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Main Content (2/3 width) -->
         <div class="lg:col-span-2 space-y-6">
+            <!-- Item Details Section -->
+            @include('sors.partials.item_details')
+
             <!-- Resources Section -->
             @include('sors.partials.resources')
 
