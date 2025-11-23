@@ -1,5 +1,6 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <script>
         /**
          * Item Skeleton View Scripts
@@ -240,6 +241,7 @@
                 success: function (data) {
                     renderTables(data);
                     updateSummary(data.totals);
+                    renderCharts(data);
                 },
                 error: function (xhr) {
                     console.error('Error loading data:', xhr);
@@ -735,4 +737,149 @@
                 error: () => alert('Failed to remove overhead')
             });
         };
+
+        // --- Charts ---
+        let resourceChart = null;
+        let costChart = null;
+
+        function renderCharts(data) {
+            // Initialize charts if not already done
+            if (!resourceChart) {
+                const chartDom = document.getElementById('chart-resource-contribution');
+                if (chartDom) {
+                    resourceChart = echarts.init(chartDom);
+                    window.addEventListener('resize', function() { resourceChart.resize(); });
+                }
+            }
+            if (!costChart) {
+                const chartDom = document.getElementById('chart-cost-summary');
+                if (chartDom) {
+                    costChart = echarts.init(chartDom);
+                    window.addEventListener('resize', function() { costChart.resize(); });
+                }
+            }
+
+            if (!resourceChart || !costChart) return;
+
+            // 1. Resource Contribution Chart
+            // Combine resources and subitems
+            let chartItems = [];
+            
+            data.resources.forEach(res => {
+                if (parseFloat(res.amount) > 0) {
+                    chartItems.push({ value: parseFloat(res.amount), name: res.name });
+                }
+            });
+            
+            data.subitems.forEach(sub => {
+                if (parseFloat(sub.amount) > 0) {
+                    chartItems.push({ value: parseFloat(sub.amount), name: sub.name });
+                }
+            });
+
+            // Sort by value desc
+            chartItems.sort((a, b) => b.value - a.value);
+
+            // Group small items into "Others" if too many (e.g., > 10)
+            if (chartItems.length > 15) {
+                const topItems = chartItems.slice(0, 14);
+                const otherItems = chartItems.slice(14);
+                const otherTotal = otherItems.reduce((sum, item) => sum + item.value, 0);
+                if (otherTotal > 0) {
+                    topItems.push({ value: otherTotal, name: 'Others' });
+                }
+                chartItems = topItems;
+            }
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#e5e7eb' : '#374151';
+
+            resourceChart.setOption({
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{b}: ₹{c} ({d}%)'
+                },
+                legend: {
+                    type: 'scroll',
+                    orient: 'vertical',
+                    right: 10,
+                    top: 20,
+                    bottom: 20,
+                    textStyle: { color: textColor }
+                },
+                series: [
+                    {
+                        name: 'Resource Cost',
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        center: ['40%', '50%'],
+                        avoidLabelOverlap: false,
+                        itemStyle: {
+                            borderRadius: 10,
+                            borderColor: isDark ? '#1f2937' : '#fff',
+                            borderWidth: 2
+                        },
+                        label: {
+                            show: false,
+                            position: 'center'
+                        },
+                        emphasis: {
+                            label: {
+                                show: true,
+                                fontSize: 16,
+                                fontWeight: 'bold',
+                                color: textColor
+                            }
+                        },
+                        labelLine: {
+                            show: false
+                        },
+                        data: chartItems
+                    }
+                ]
+            });
+
+            // 2. Cost Breakdown Chart
+            const totals = data.totals;
+            const costData = [
+                { value: parseFloat(totals.total_labor), name: 'Labor' },
+                { value: parseFloat(totals.total_material), name: 'Material' },
+                { value: parseFloat(totals.total_machine), name: 'Machine' },
+                { value: parseFloat(totals.subitem_cost), name: 'Sub-items' },
+                { value: parseFloat(totals.overhead_cost), name: 'Overheads' },
+                { value: parseFloat(totals.total_cartage), name: 'Cartage' },
+                { value: parseFloat(totals.total_miscellaneous), name: 'Miscellaneous' }
+            ].filter(item => item.value > 0);
+
+            costChart.setOption({
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{b}: ₹{c} ({d}%)'
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left',
+                    textStyle: { color: textColor }
+                },
+                series: [
+                    {
+                        name: 'Cost Breakdown',
+                        type: 'pie',
+                        radius: '50%',
+                        data: costData,
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        },
+                        itemStyle: {
+                            borderColor: isDark ? '#1f2937' : '#fff',
+                            borderWidth: 2
+                        }
+                    }
+                ]
+            });
+        }
     </script>

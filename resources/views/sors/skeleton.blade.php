@@ -109,19 +109,36 @@
                     <div class="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 p-4 text-white shadow-lg shadow-blue-500/30">
                         <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 rounded-full bg-white/10 blur-xl"></div>
                         <div class="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 rounded-full bg-black/10 blur-xl"></div>
-                        
                         <div class="relative flex justify-between items-end">
                             <div>
-                                <p class="text-blue-100 text-xs font-medium uppercase tracking-wider mb-1">Final Rate</p>
-                                <p class="text-blue-100 text-xs">per {{ $item->unit->name ?? 'unit' }}</p>
+                                <p class="text-blue-100 text-sm font-medium mb-1">Final Rate (Per Unit)</p>
+                                <p id="summary-final-rate" class="text-3xl font-bold tracking-tight">₹0.00</p>
                             </div>
-                            <span id="summary-final-rate" class="text-2xl font-bold tracking-tight">₹0.00</span>
+                            <div class="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                {!! config('icons.tag') !!}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Charts Section -->
+    <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Resource Contribution Chart -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Resource Contribution</h3>
+            <div id="chart-resource-contribution" style="height: 400px;"></div>
+        </div>
+
+        <!-- Cost Summary Chart -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Cost Breakdown</h3>
+            <div id="chart-cost-summary" style="height: 400px;"></div>
+        </div>
+    </div>
+
 
     <!-- Modals -->
     @include('sors.partials.modals')
