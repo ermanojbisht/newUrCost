@@ -8,9 +8,9 @@ use App\Models\RateCard;
 use App\Models\Resource;
 use App\Models\ResourceGroup;
 use App\Models\Sor;
-use Illuminate\Http\Request;
-
+use App\Models\Unit;
 use App\Services\RateAnalysisService;
+use Illuminate\Http\Request;
 
 class ResourceController extends Controller
 {
@@ -30,7 +30,7 @@ class ResourceController extends Controller
         $rateCardId = $filters['rate_card_id'];
         $effectiveDate = $filters['effective_date'];
 
-        $rateCards = RateCard::all();
+        $rateCards = RateCard::select('id','name')->get();
 
         $rateCard = RateCard::find($rateCardId);
         if (!$rateCard) {
@@ -40,6 +40,7 @@ class ResourceController extends Controller
         $rateDetails = $this->rateAnalysisService->getResourceRateDetails($resource, $rateCard, $effectiveDate);
         
         $rate = $rateDetails['total_rate'];
+        $unit = Unit::find($rateDetails['unit_id']);
         $rateComponents = $rateDetails['components'];
 
         // Get validity from base rate entry for display
@@ -82,7 +83,8 @@ class ResourceController extends Controller
             'rateComponents',
             'validFrom',
             'validTo',
-            'resourceGroups'
+            'resourceGroups',
+            'unit'
         ));
     }
 
