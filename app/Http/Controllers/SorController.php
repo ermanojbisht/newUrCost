@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Log;
 use Yajra\DataTables\DataTables;
+use App\Helpers\FilterHelper;
 
 class SorController extends Controller
 {
@@ -63,8 +64,12 @@ class SorController extends Controller
             abort(404);
         }
 
-        $rateCardId = $request->session()->get('rate_card_id', config('urcost.default_rate_cards.' . $sor->id, 1));
-        $effectiveDate = $request->session()->get('effective_date', now()->toDateString());
+        // Handle filters from request and store in session
+        // Retrieve from session or defaults
+        $filters = FilterHelper::getRateFilters($request, $sor);
+
+        $rateCardId = $filters['rate_card_id'];
+        $effectiveDate = $filters['effective_date'];
 
         $rateCard = RateCard::find($rateCardId);
 
@@ -410,21 +415,38 @@ class SorController extends Controller
                 ->addColumn('unit_name', function (Item $item) {
                     return $item->unit ? $item->unit->name : 'N/A';
                 })
-                ->addColumn('price', function (Item $item) use ($rateCard, $effectiveDate) {
+                ->addColumn('price', function (Item $item) use ($rateCard, $effectiveDate, $sor) {
+                    // Only add link for non-category items
                     if ($item->item_type != 1 && $item->item_type != 2) {
                         $rate = $item->getRateFor($rateCard, $effectiveDate)->rate ?? null;
-                        return $rate !== null ? number_format($rate, 2) : '';
+                        if ($rate !== null) {
+                            $formatted = number_format($rate, 2);
+                            // Return clickable RA link
+                            return '<a href="' . route('sors.items.ra', [$sor->id, $item->id]) . '"
+                                        class="text-gray-900 dark:text-white hover:underline" target="_blank">
+                                        ' . $formatted . '
+                                    </a>';
+                        }
                     }
+
                     return '';
                 })
+
                 ->rawColumns(['unit_name', 'price'])
                 ->make(true);
         }
     }
 
-    public function dataTable(Sor $sor)
+    public function dataTable(Sor $sor, Request $request)
     {
-        return view('sors.datatable', compact('sor'));
+        // Handle filters from request and store in session
+        // Retrieve from session or defaults
+        $filters = FilterHelper::getRateFilters($request, $sor);
+
+        $rateCardId = $filters['rate_card_id'];
+        $effectiveDate = $filters['effective_date'];
+        $rateCards = RateCard::all();
+        return view('sors.datatable', compact('sor','rateCards','rateCardId','effectiveDate'));
     }
 
     /**

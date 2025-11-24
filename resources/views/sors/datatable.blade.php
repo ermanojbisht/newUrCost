@@ -5,12 +5,14 @@
 @section('headstyles')
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.3/css/buttons.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
 @endsection
 
 @section('content')
 <div class="container mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">{{ $sor->name }} - Data Table View</h1>
-
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">{{ $sor->name }} - Table View</h1>
+@include('sors._filters', ['rateCards' => $rateCards, 'rateCardId' => $rateCardId, 'effectiveDate' => $effectiveDate])
     <div class="card">
         <table id="sor-items-datatable" class="display min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead>

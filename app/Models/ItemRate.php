@@ -11,9 +11,6 @@ class ItemRate extends Model
 
     protected $table = 'item_rates';
 
-    protected $primaryKey = ['item_id', 'rate_card_id', 'calculation_date'];
-    public $incrementing = false;
-
     protected $fillable = [
         'item_code',
         'rate',
@@ -32,6 +29,11 @@ class ItemRate extends Model
         'calculation_date' => 'date',
         'valid_from' => 'date',
         'valid_to' => 'date',
+        'rate' => 'decimal:2',
+        'labor_cost' => 'decimal:2',
+        'material_cost' => 'decimal:2',
+        'machine_cost' => 'decimal:2',
+        'overhead_cost' => 'decimal:2',
     ];
 
     public function item()

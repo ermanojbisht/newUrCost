@@ -149,7 +149,9 @@ class RateAnalysisService
      */
     public function getResourceRate(Resource $resource, Ratecard $ratecard, $date): float
     {
-        $baseRate = $this->getBaseRate($resource, $ratecard, $date);
+        $baseRateWithUnit = $this->getBaseRateWithUnit($resource, $ratecard, $date);
+        $baseRate=$baseRateWithUnit['rate'];
+        $unit_id=$baseRateWithUnit['unit_id'];
 
         // Material Resources
         if ($resource->resource_group_id == 3) {
@@ -176,12 +178,13 @@ class RateAnalysisService
      */
     public function getResourceRateDetails(Resource $resource, Ratecard $ratecard, $date): array
     {
-        $baseRate = $this->getBaseRate($resource, $ratecard, $date);
+        $baseRateWithUnit = $this->getBaseRateWithUnit($resource, $ratecard, $date);
         $details = [
-            'base_rate' => $baseRate,
+            'base_rate' => $baseRateWithUnit['rate'],
+            'unit_id' => $baseRateWithUnit['unit_id'],
             'lead_cost' => 0.0,
             'index_cost' => 0.0,
-            'total_rate' => $baseRate,
+            'total_rate' => $baseRateWithUnit['rate'],
             'components' => []
         ];
 
@@ -199,7 +202,7 @@ class RateAnalysisService
 
         $details['components'][] = [
             'name' => 'Base Rate',
-            'amount' => $baseRate,
+            'amount' => $baseRateWithUnit['rate'],
             'description' => $sourceDesc
         ];
 
@@ -248,7 +251,7 @@ class RateAnalysisService
 
         // Labor or Machine Resources
         if (in_array($resource->resource_group_id, [1, 2])) {
-            list($indexCost,$percentIndex) = $this->calculateIndexCost($resource, $ratecard, $baseRate);
+            list($indexCost,$percentIndex) = $this->calculateIndexCost($resource, $ratecard, $baseRateWithUnit['rate']);
             if ($indexCost != 0) {
                 $details['index_cost'] = $indexCost;
                 $details['total_rate'] += $indexCost;
@@ -266,9 +269,10 @@ class RateAnalysisService
     /**
      * Get the base rate for a resource, with fallback to the default rate card.
      */
-    public function getBaseRate(Resource $resource, Ratecard $ratecard, $date): float
+    public function getBaseRateWithUnit(Resource $resource, Ratecard $ratecard, $date)
     {
-        $rate = Rate::where('resource_id', $resource->id)
+        $fields=['resource_id','rate_card_id','valid_from','valid_to','unit_id','rate'];
+        $rate = Rate::select($fields)->where('resource_id', $resource->id)
             ->where('rate_card_id', $ratecard->id)
             ->where('valid_from', '<=', $date)
             ->where(function ($query) use ($date) {
@@ -278,7 +282,7 @@ class RateAnalysisService
             ->first();
 
         if ($rate) {
-            return $rate->rate;
+            return [ 'rate'=>$rate->rate, 'unit_id'=>$rate->unit_id ] ;
         }
 
         // Fallback to default rate card (id=1)
@@ -291,7 +295,11 @@ class RateAnalysisService
             })
             ->first();
 
-        return $rate ? $rate->rate : 0.0;
+       if ($rate) {
+            return [ 'rate'=>$rate->rate, 'unit_id'=>$rate->unit_id ] ;
+        }
+
+        return [ 'rate'=>0, 'unit_id'=>$resource->unit_id ] ;
     }
 
     /**
@@ -385,7 +393,7 @@ class RateAnalysisService
         $indexModel = $resource->resource_group_id == 1 ? new LaborIndex() : new MachineIndex();
 
         //Log::info("indexModel = ".print_r($indexModel,true));
-        Log::info("this = ".print_r(['resource_id'=>$resource->id,'rate_card_id'=>$ratecard->id],true));
+        //Log::info("this = ".print_r(['resource_id'=>$resource->id,'rate_card_id'=>$ratecard->id],true));
 
         // 1. Check for specific resource and rate card
         $index = $indexModel->where('resource_id', $resource->id)

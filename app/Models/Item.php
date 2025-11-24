@@ -127,13 +127,16 @@ class Item extends Model
 
     public function getRateFor($ratecard, $date)
     {
-        $itemToRate = $this->ref_from ? $this->refFrom : $this;
-
-        return $itemToRate->itemRates()
-            ->where('rate_card_id', $ratecard->id)
-            ->where('valid_to', '<=', $date)
-            ->orderByDesc('valid_to')
-            ->first();
+        //mkb checked and found correct
+        return $this->itemRates()
+                ->where('rate_card_id', $ratecard->id)
+                ->where('valid_from', '<=', $date)
+                ->where(function($q) use ($date) {
+                    $q->where('valid_to', '>=', $date)
+                      ->orWhereNull('valid_to');
+                })
+                ->orderByDesc('valid_to')
+                ->first();
     }
 
 

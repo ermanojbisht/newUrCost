@@ -937,7 +937,6 @@
                     type: 'pie',
                     radius: '60%',
                     center: ['60%', '55%'],
-                    roseType: 'radius',
                     data: costData,
                     emphasis: {
                         itemStyle: {

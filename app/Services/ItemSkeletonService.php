@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Item;
 use App\Models\ItemRate;
 use App\Models\RateCard;
+use App\Models\Unit;
 use Illuminate\Support\Facades\Log;
 
 class ItemSkeletonService
@@ -56,9 +57,10 @@ class ItemSkeletonService
             $rateDetails = $this->rateAnalysisService->getResourceRateDetails($res->resource, $rateCard, $date);
 
             $rate = $rateDetails['total_rate'];
+            $unit_id = $rateDetails['unit_id'];
 
             // Unit Conversion Logic
-            $baseUnit = $res->resource->unit;
+            $baseUnit = Unit::find($unit_id);//$res->resource->unit;
             $usageUnit = $res->unit;
             $conversionFactor = 1;
 

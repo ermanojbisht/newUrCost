@@ -8,6 +8,7 @@ use App\Models\SubitemDependency;
 use App\Models\RateCard;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class RateCalculationService
 {
@@ -89,6 +90,7 @@ class RateCalculationService
     public function calculateAndSaveItemRate(Item $item, int $rateCardId, string $validFrom)
     {
         $data = $this->itemSkeletonService->calculateRate($item, $rateCardId);
+        $validFrom=Carbon::parse($validFrom);
 
         // Extract totals
         $totals = $data['totals'];
@@ -103,25 +105,25 @@ class RateCalculationService
             })
             ->first();
 
+
         if ($activeRate) {
+
             // If active rate exists
             if ($activeRate->valid_from == $validFrom) {
                 // Same valid_from, update existing record
                 $activeRate->update([
-                    'rate' => $totals['final_rate'],
-                    'labor_cost' => $totals['total_labor'],
+                    'rate' => round($totals['final_rate'],2),
+                    'labor_cost' => round($totals['total_labor'],2),
                     'material_cost' => $totals['total_material'],
-                    'machine_cost' => $totals['total_machine'],
-                    'overhead_cost' => $totals['overhead_cost'],
+                    'machine_cost' => round($totals['total_machine'],2),
+                    'overhead_cost' => round($totals['overhead_cost'],2),
                     'calculation_date' => $calculationDate,
                 ]);
-                Log::info("ItemRate UPDATED (Same Date)", ['id' => $activeRate->item_code]);
                 return;
             } else {
                 // Different valid_from, close old record
-                $closeDate = \Carbon\Carbon::parse($validFrom)->subDay()->toDateString();
+                $closeDate = Carbon::parse($validFrom)->subDay()->toDateString();
                 $activeRate->update(['valid_to' => $closeDate]);
-                Log::info("ItemRate CLOSED", ['id' => $activeRate->item_code, 'closed_at' => $closeDate]);
             }
         }
 
@@ -152,16 +154,16 @@ class RateCalculationService
         // The PK is (item_id, rate_card_id, calculation_date). 
         // If we calculate twice today, we might clash.
         // Ideally we should update if (item_code, rate_card_id, calculation_date) exists.
-        
+        $itemCode = (int) $item->item_code;
         ItemRate::updateOrCreate(
             [
-                'item_code' => $item->item_code,
+                'item_code' => $itemCode,
                 'rate_card_id' => $rateCardId,
-                'calculation_date' => $calculationDate,
+                'valid_from' => $validFrom,
             ],
             $values
         );
-        
+
         Log::info("ItemRate CREATED/UPDATED", ['item_code' => $item->item_code]);
     }
 }
