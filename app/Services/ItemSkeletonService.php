@@ -127,7 +127,7 @@ class ItemSkeletonService
         foreach ($subitems as $sub) {
             //Log::info("sub = ".print_r($sub->toArray(),true));
             // Fetch Pre-calculated Rate for Sub-item
-            $subRateEntry = ItemRate::where('item_id', $sub->sub_item_id)
+            $subRateEntry = ItemRate::where('item_code', $sub->sub_item_code)
                 ->where('rate_card_id', $rateCardId)
                 ->where('valid_from', '<=', $date)
                 ->orderBy('valid_from', 'desc')

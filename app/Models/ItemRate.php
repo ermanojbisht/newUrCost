@@ -15,7 +15,7 @@ class ItemRate extends Model
     public $incrementing = false;
 
     protected $fillable = [
-        'item_id',
+        'item_code',
         'rate',
         'labor_cost',
         'material_cost',
@@ -47,5 +47,43 @@ class ItemRate extends Model
     public function unit()
     {
         return $this->belongsTo(Unit::class);
+    }
+
+
+    public function scopeActive($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('valid_to')
+              ->orWhere('valid_to', '2038-01-19');
+        });
+    }
+
+    public function isLocked()
+    {
+        return (bool) $this->is_locked;
+    }
+
+    public function closeAt(Carbon $date)
+    {
+        if ($this->isLocked()) {
+            throw new \Exception("Rate is locked. Only valid_to can be changed.");
+        }
+
+        $this->valid_to = $date->toDateString();
+        $this->save();
+    }
+
+    public function forceCloseAt(Carbon $date)
+    {
+        $this->valid_to = $date->toDateString();
+        $this->save();
+    }
+
+    public function overlaps(Carbon $date)
+    {
+        if (is_null($this->valid_from)) return false;
+
+        return $date->gte($this->valid_from) &&
+               (is_null($this->valid_to) || $date->lte($this->valid_to));
     }
 }

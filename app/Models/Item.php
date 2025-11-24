@@ -82,7 +82,7 @@ class Item extends Model
 
     public function itemRates()
     {
-        return $this->hasMany(ItemRate::class);
+        return $this->hasMany(ItemRate::class, 'item_code', 'item_code');
     }
 
     public function getLftName()

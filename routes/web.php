@@ -88,6 +88,12 @@ Route::middleware('auth')->group(function () {
     // Search APIs
     Route::get('api/sors/{sor}/items/search', [SorController::class, 'searchItems'])->name('api.sors.items.search');
     Route::get('api/sors/{sor}/overheads/search', [SorController::class, 'searchOverheads'])->name('api.sors.overheads.search');
+
+    // Rate Calculation Admin
+    Route::prefix('admin/rate-calculation')->name('admin.rate-calculation.')->group(function () {
+        Route::get('/', [App\Http\Controllers\RateCalculationController::class, 'index'])->name('index');
+        Route::post('/calculate', [App\Http\Controllers\RateCalculationController::class, 'calculate'])->name('calculate');
+    });
 });
 
 Route::get('/sorCards', [SorController::class, 'sorCards'])->name('sorCards');
