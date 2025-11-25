@@ -5,18 +5,18 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// DEBUG: Dump request info for root URL issues
-if (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/ukSor/') !== false && (strpos($_SERVER['REQUEST_URI'], 'index.php') === false || $_SERVER['REQUEST_URI'] == '/ukSor/')) {
-   // Only dump if it's the root path we are debugging
-   if ($_SERVER['REQUEST_URI'] == '/ukSor/' || $_SERVER['REQUEST_URI'] == '/ukSor') {
-       echo "<pre>";
-       echo "URI: " . $_SERVER['REQUEST_URI'] . "\n";
-       echo "Method: " . $_SERVER['REQUEST_METHOD'] . "\n";
-       echo "Script Name: " . $_SERVER['SCRIPT_NAME'] . "\n";
-       echo "Path Info: " . ($_SERVER['PATH_INFO'] ?? 'NOT SET') . "\n";
-       echo "</pre>";
-       // Don't exit, let it continue to see if it hits Laravel
-   }
+// DEBUG: Dump Laravel Request Path
+// Only run if we are debugging the root path issue
+if (isset($_SERVER['REQUEST_URI']) && ($_SERVER['REQUEST_URI'] == '/ukSor/' || $_SERVER['REQUEST_URI'] == '/ukSor')) {
+    $request = \Illuminate\Http\Request::capture();
+    echo "<pre>";
+    echo "Laravel Path: " . $request->path() . "\n";
+    echo "Laravel URL: " . $request->url() . "\n";
+    echo "Request URI: " . $request->getRequestUri() . "\n";
+    echo "Base URL: " . $request->getBaseUrl() . "\n";
+    echo "Base Path: " . $request->getBasePath() . "\n";
+    echo "</pre>";
+    // We don't exit here, we let it crash/405 so we can see the debug output at the top
 }
 
 // Determine if the application is in maintenance mode...
