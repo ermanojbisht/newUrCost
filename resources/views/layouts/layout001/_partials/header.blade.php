@@ -14,24 +14,44 @@
                 </a>
                 <a href="{{ route('sorCards') }}"
                    class="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors {{ request()->routeIs('sorCards') ? 'font-bold text-blue-500 dark:text-blue-400' : '' }}">
-                    SOR Cards
-                </a>
-                @can('sor-admin')
-                <a href="#"
-                   class="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors {{ request()->routeIs('sors.admin') ? 'font-bold text-blue-500 dark:text-blue-400' : '' }}">
-                    SOR Admin
-                </a>
-                @endcan
-
-                <a href="{{ route('items.index') }}"
-                   class="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors {{ request()->routeIs('items.*') ? 'font-bold text-blue-500 dark:text-blue-400' : '' }}">
-                    Items
-                </a>
-                <a href="{{ url('/demo') }}"
-                   class="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors {{ request()->is('demo') ? 'font-bold text-blue-500 dark:text-blue-400' : '' }}">
-                    Demo
+                    SOR List
                 </a>
 
+                @Auth
+                @if(auth()->user()->can('sor-admin'))
+                <div class="hidden sm:flex sm:items-center sm:ms-6">
+                    <x-dropdown align="right" width="48">
+                        <x-slot name="trigger">
+                            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
+                                <div>SOR Admin</div>
+
+                                <div class="ms-1">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                            </button>
+                        </x-slot>
+
+                        <x-slot name="content">
+                            @can('sor-admin')
+                                <x-dropdown-link :href="route('admin.rate-calculation.index')">
+                                    {{ __('Rate Calculation') }}
+                                </x-dropdown-link>
+                            @endcan
+                            <x-dropdown-link :href="url('/demo')">
+                                {{ __('demo') }}
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="url('/glass-demo')">
+                                {{ __('glass-demo') }}
+                            </x-dropdown-link>
+                        </x-slot>
+                    </x-dropdown>
+                </div>
+                @endif
+                @endAuth
+
+                @Auth
                 @if(auth()->user()->can('user-list') || auth()->user()->can('role-list') || auth()->user()->can('permission-list'))
                 <div class="hidden sm:flex sm:items-center sm:ms-6">
                     <x-dropdown align="right" width="48">
@@ -67,6 +87,7 @@
                     </x-dropdown>
                 </div>
                 @endif
+                @endAuth
 
                 <!-- Theme Toggle Button -->
                 <button @click="toggleTheme()"
@@ -109,6 +130,7 @@
                 </button>
 
                 <!-- Settings Dropdown -->
+                @Auth
                 <div class="hidden sm:flex sm:items-center sm:ms-6">
                     <x-dropdown align="right" width="48">
                         <x-slot name="trigger">
@@ -141,6 +163,7 @@
                         </x-slot>
                     </x-dropdown>
                 </div>
+                @endAuth
             </div>
 
             <!-- Mobile Menu Button -->
@@ -188,15 +211,11 @@
                     SOR Admin
                 </a>
                 @endcan
-
-                <a href="{{ route('items.index') }}"
-                   class="block px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors {{ request()->routeIs('items.*') ? 'bg-blue-50 dark:bg-blue-900 text-blue-500 dark:text-blue-400 font-bold' : '' }}">
-                    Items
-                </a>
                 <a href="{{ url('/demo') }}"
                    class="block px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors {{ request()->is('demo') ? 'bg-blue-50 dark:bg-blue-900 text-blue-500 dark:text-blue-400 font-bold' : '' }}">
                     Demo
                 </a>
+                @Auth
                 @if(auth()->user()->can('user-list') || auth()->user()->can('role-list') || auth()->user()->can('permission-list'))
                 <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
                     <div class="px-4">
@@ -221,9 +240,11 @@
                     </div>
                 </div>
                 @endif
+                @endAuth
             </div>
 
             <!-- Responsive Settings Options -->
+            @Auth
             <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
                 <div class="px-4">
                     <div class="font-medium text-base text-gray-800 dark:text-gray-200">{{ Auth::user()->name }}</div>
@@ -247,6 +268,7 @@
                     </form>
                 </div>
             </div>
+            @endAuth
         </div>
     </nav>
 </header>

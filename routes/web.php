@@ -24,8 +24,6 @@ Route::middleware('auth')->group(function () {
         return view("demo");
     });
     Route::resource("sors", SorController::class)->except(['show']);
-    Route::get('sors/{sor}/{item?}', [SorController::class, 'show'])->where('item', '[0-9]+')->name('sors.show');
-    Route::resource("items", ItemController::class);
     Route::resource("units", \App\Http\Controllers\UnitController::class);
     Route::resource("unit-groups", \App\Http\Controllers\UnitGroupController::class);
     Route::resource("resource-groups", \App\Http\Controllers\ResourceGroupController::class);
@@ -52,17 +50,17 @@ Route::middleware('auth')->group(function () {
     });
 
     // Skeleton/Rate Analysis Page View
-    Route::get('/sors/{sor}/items/{item}/ra', [App\Http\Controllers\ItemSkeletonController::class, 'showRaPage'])->name('sors.items.ra');
+
     Route::get('/sors/{sor}/items/{item}/skeleton', [App\Http\Controllers\ItemSkeletonController::class, 'showPage'])->name('sors.items.skeleton');
     Route::post('/sors/{sor}/items/{item}/skeleton/copy', [App\Http\Controllers\ItemSkeletonController::class, 'copySkeleton'])->name('sors.items.skeleton.copy');
     Route::post('/sors/{sor}/items/{item}/skeleton/resources/reorder', [ItemSkeletonController::class, 'reorderResources'])->name('sors.items.skeleton.resources.reorder');
 
     // Resource Details
     Route::get('/resources/search', [ResourceController::class, 'search'])->name('resources.search');
-    Route::get('/resources/{resource}', [ResourceController::class, 'show'])->name('resources.show');
+
 
     Route::prefix('api/sors/{sor}/items/{item}/skeleton')->name('api.sors.items.skeleton.')->group(function () {
-        Route::get('/', [App\Http\Controllers\ItemSkeletonController::class, 'show'])->name('show');
+
 
         //resources in skeleton
         Route::post('/resources', [App\Http\Controllers\ItemSkeletonController::class, 'addResource'])->name('resources.add');
@@ -84,7 +82,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('/sors/{sor}/admin', [SorController::class, 'admin'])->name('sors.admin');
-    Route::get('api/sors/{sor}/items-datatable', [SorController::class, 'getDataTableData'])->name('api.sors.items-datatable');
+
 
     // Search APIs
     Route::get('api/sors/{sor}/items/search', [SorController::class, 'searchItems'])->name('api.sors.items.search');
@@ -96,6 +94,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/calculate', [App\Http\Controllers\RateCalculationController::class, 'calculate'])->name('calculate');
     });
 });
+Route::get('sors/{sor}/{item?}', [SorController::class, 'show'])->where('item', '[0-9]+')->name('sors.show');
+Route::get('/resources/{resource}', [ResourceController::class, 'show'])->name('resources.show');
+
+Route::prefix('api/sors/{sor}/items/{item}/skeleton')->name('api.sors.items.skeleton.')->group(function () {
+    Route::get('/', [App\Http\Controllers\ItemSkeletonController::class, 'show'])->name('show');
+});
+
+Route::get('/sors/{sor}/items/{item}/ra', [App\Http\Controllers\ItemSkeletonController::class, 'showRaPage'])->name('sors.items.ra');
+Route::get('api/sors/{sor}/items-datatable', [SorController::class, 'getDataTableData'])->name('api.sors.items-datatable');
 
 Route::get('/sorCards', [SorController::class, 'sorCards'])->name('sorCards');
 Route::get('/sors/{sor}/items-datatable-view', [SorController::class, 'dataTable'])->name('sors.datatable');

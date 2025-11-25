@@ -28,9 +28,10 @@ class SorPolicy
      * @param  \App\Models\Sor  $sor
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function view(User $user, Sor $sor)
+    public function view(?User $user, Sor $sor)
     {
-        return $user->can('view sors');
+        //return $user->can('view sors');
+        return true;
     }
 
     /**
