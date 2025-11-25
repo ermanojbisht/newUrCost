@@ -160,8 +160,10 @@ For future updates, follow this procedure to avoid permissions and cache issues:
     ```bash
     php artisan optimize:clear
     php artisan view:cache
-    # Do NOT run route:cache if you have closure routes, but route:clear is safe
     php artisan route:clear
+    php artisan config:cache
+    php artisan event:cache
+    # Do NOT run route:cache if you have closure routes, but route:clear is safe
     ```
 6.  **Restore Permissions:**
     ```bash
