@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
-use App\Models\Ratecard;
+use App\Models\RateCard;
 use App\Services\RateAnalysisService;
 use Illuminate\Http\Request;
 
@@ -46,11 +46,11 @@ class ItemController extends Controller
     public function show(Request $request, Item $item)
     {
         $ratecardId = $request->input('ratecard', 1); // Default to ratecard 1 if not provided
-        $ratecard = Ratecard::find($ratecardId);
+        $ratecard = RateCard::find($ratecardId);
 
         if (!$ratecard) {
             // Handle case where ratecard is not found
-            abort(404, 'Ratecard not found.');
+            abort(404, 'RateCard not found.');
         }
 
         $analysis = $this->rateAnalysisService->calculateRate($item, $ratecard);

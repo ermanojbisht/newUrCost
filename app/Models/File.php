@@ -23,7 +23,7 @@ class File extends Model
 
     public function rateCard()
     {
-        return $this->belongsTo(Ratecard::class, 'rate_card_id');
+        return $this->belongsTo(RateCard::class, 'rate_card_id');
     }
 
     public function sor()

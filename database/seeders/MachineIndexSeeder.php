@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\MachineIndex;
 use App\Models\Resource;
-use App\Models\Ratecard;
+use App\Models\RateCard;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -26,11 +26,11 @@ class MachineIndexSeeder extends Seeder
         DB::table('machine_indices')->truncate();
         Schema::enableForeignKeyConstraints();
 
-        $seededRatecards = Ratecard::all()->pluck('id')->toArray();
+        $seededRateCards = RateCard::all()->pluck('id')->toArray();
 
         $legacyMachineIndices = DB::connection('legacy_mysql')
                                 ->table('machindex')
-                                ->whereIn('RateCardID', $seededRatecards)
+                                ->whereIn('RateCardID', $seededRateCards)
                                 ->get();
 
         foreach ($legacyMachineIndices as $legacyMachineIndex) {

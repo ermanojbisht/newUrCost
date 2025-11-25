@@ -23,12 +23,12 @@ class RateSeeder extends Seeder
         Model::unguard();
 
         $seededResources = Resource::all()->pluck('id')->toArray();
-        $seededRatecards = Ratecard::all()->pluck('id')->toArray();
+        $seededRateCards = RateCard::all()->pluck('id')->toArray();
 
         $legacyRates = DB::connection('legacy_mysql')
                         ->table('rate')
                         ->whereIn('resourceid', $seededResources)
-                        ->whereIn('ratecard', $seededRatecards)
+                        ->whereIn('ratecard', $seededRateCards)
                         ->get();
 
         foreach ($legacyRates as $legacyRate) {

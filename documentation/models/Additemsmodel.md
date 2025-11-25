@@ -12,8 +12,8 @@ This model provides the database operations needed by the `Additemscontroller`. 
     *   **Functionality:** These methods are used to retrieve lists of chapters and items. `getChapterList` returns a list of all chapters within a given SOR, while `getItemsList` can retrieve all items in the system or be filtered to show only the items within a specific chapter.
     *   **Dependencies:** None.
 
-*   **`insertRatecard($data)` and `updateRatecard($data, $ratecardgetid)`:**
-    *   **Functionality:** These methods are responsible for adding and updating rate cards in the database. `insertRatecard` adds a new rate card, while `updateRatecard` modifies an existing one.
+*   **`insertRateCard($data)` and `updateRateCard($data, $ratecardgetid)`:**
+    *   **Functionality:** These methods are responsible for adding and updating rate cards in the database. `insertRateCard` adds a new rate card, while `updateRateCard` modifies an existing one.
     *   **Dependencies:** None.
 
 *   **`saveresource($data)`:**

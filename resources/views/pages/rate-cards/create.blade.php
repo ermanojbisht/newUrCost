@@ -20,7 +20,7 @@
     <div class="card">
         <form action="{{ route('rate-cards.store') }}" method="POST">
             @csrf
-            @include('pages.rate-cards._form', ['rateCard' => new \App\Models\Ratecard()])
+            @include('pages.rate-cards._form', ['rateCard' => new \App\Models\RateCard()])
             <div class="flex justify-end space-x-2 mt-6">
                 <a href="{{ route('rate-cards.index') }}" class="btn-secondary">{{ __('Cancel') }}</a>
                 <button type="submit" class="btn-primary">{{ __('Save') }}</button>

@@ -2,14 +2,14 @@
 
 namespace Database\Seeders;
 
-use App\Models\Ratecard;
+use App\Models\RateCard;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Eloquent\Model;
 
-class RatecardSeeder extends Seeder
+class RateCardSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -22,12 +22,12 @@ class RatecardSeeder extends Seeder
         DB::table('ratecards')->truncate();
         Schema::enableForeignKeyConstraints();
 
-        $legacyRatecards = DB::connection('legacy_mysql')->table('ratecard')->get();
+        $legacyRateCards = DB::connection('legacy_mysql')->table('ratecard')->get();
 
-        foreach ($legacyRatecards as $legacyRatecard) {
-            Ratecard::create([
-                'id' => $legacyRatecard->ratecardid,
-                'ratecardname' => $legacyRatecard->ratecardname,
+        foreach ($legacyRateCards as $legacyRateCard) {
+            RateCard::create([
+                'id' => $legacyRateCard->ratecardid,
+                'ratecardname' => $legacyRateCard->ratecardname,
             ]);
         }
     }

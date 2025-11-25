@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Ratecard;
+use App\Models\RateCard;
 use Illuminate\Http\Request;
 
 class RateCardController extends Controller
 {
     public function __construct()
     {
-        $this->authorizeResource(Ratecard::class, 'ratecard');
+        $this->authorizeResource(RateCard::class, 'ratecard');
     }
 
     /**
@@ -17,7 +17,7 @@ class RateCardController extends Controller
      */
     public function index()
     {
-        $rateCards = Ratecard::paginate(10);
+        $rateCards = RateCard::paginate(10);
         return view('pages.rate-cards.index', compact('rateCards'));
     }
 
@@ -39,7 +39,7 @@ class RateCardController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        Ratecard::create($request->all());
+        RateCard::create($request->all());
 
         return redirect()->route('rate-cards.index')
             ->with('success', 'Rate card created successfully.');
@@ -48,7 +48,7 @@ class RateCardController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Ratecard $rateCard)
+    public function show(RateCard $rateCard)
     {
         return view('pages.rate-cards.show', compact('rateCard'));
     }
@@ -56,7 +56,7 @@ class RateCardController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Ratecard $rateCard)
+    public function edit(RateCard $rateCard)
     {
         return view('pages.rate-cards.edit', compact('rateCard'));
     }
@@ -64,7 +64,7 @@ class RateCardController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Ratecard $rateCard)
+    public function update(Request $request, RateCard $rateCard)
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:rate_cards,name,'.$rateCard->id,
@@ -80,7 +80,7 @@ class RateCardController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Ratecard $rateCard)
+    public function destroy(RateCard $rateCard)
     {
         $rateCard->delete();
 

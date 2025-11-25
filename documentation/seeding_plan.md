@@ -13,7 +13,7 @@ We will disable mass-assignment guarding on the models during the seeding proces
 To respect foreign key constraints, the seeders must be run in a specific order. The `DatabaseSeeder` class will be updated to call each seeder in this sequence:
 
 1.  **`SorSeeder`**: Populates the `sors` table.
-2.  **`RatecardSeeder`**: Populates the `ratecards` table.
+2.  **`RateCardSeeder`**: Populates the `ratecards` table.
 3.  **`ResourceSeeder`**: Populates the `resources` table.
 4.  **`ItemSeeder`**: Populates the `items` table (depends on `sors`).
 5.  **`RateSeeder`**: Populates the `rates` table (depends on `resources`, `ratecards`).

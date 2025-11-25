@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\LeadDistance;
 use App\Models\Resource;
-use App\Models\Ratecard;
+use App\Models\RateCard;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -27,12 +27,12 @@ class LeadDistanceSeeder extends Seeder
         Schema::enableForeignKeyConstraints();
 
         $seededResources = Resource::all()->pluck('id')->toArray();
-        $seededRatecards = Ratecard::all()->pluck('id')->toArray();
+        $seededRateCards = RateCard::all()->pluck('id')->toArray();
 
         $legacyLeadDistances = DB::connection('legacy_mysql')
                                 ->table('leadDistance')
                                 ->whereIn('ResID', $seededResources)
-                                ->whereIn('RateCardID', $seededRatecards)
+                                ->whereIn('RateCardID', $seededRateCards)
                                 ->get();
 
         foreach ($legacyLeadDistances as $legacyLeadDistance) {

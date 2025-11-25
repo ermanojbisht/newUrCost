@@ -10,7 +10,7 @@ use App\Models\ManMuleCartRule;
 use App\Models\PolRate;
 use App\Models\PolSkeleton;
 use App\Models\Rate;
-use App\Models\Ratecard;
+use App\Models\RateCard;
 use App\Models\Resource;
 use App\Models\TruckSpeed;
 use Log;
@@ -21,14 +21,14 @@ class RateAnalysisService
      * Calculate the rate analysis for a given item and rate card.
      *
      * @param Item $item
-     * @param Ratecard|null $ratecard
+     * @param RateCard|null $ratecard
      * @param string|null $date
      * @return array
      */
-    public function calculateRate(Item $item, ?Ratecard $ratecard = null, $date = null): array
+    public function calculateRate(Item $item, ?RateCard $ratecard = null, $date = null): array
     {
         if (!$ratecard) {
-            $ratecard = Ratecard::find(1); // Default to Basic Rate Card
+            $ratecard = RateCard::find(1); // Default to Basic Rate Card
         }
 
         if (!$date) {
@@ -90,7 +90,7 @@ class RateAnalysisService
         return $calculated;
     }
 
-    public function getSubItems(Item $item, Ratecard $ratecard, $date): array
+    public function getSubItems(Item $item, RateCard $ratecard, $date): array
     {
         $subItemData = [];
 
@@ -116,11 +116,11 @@ class RateAnalysisService
      * Get the direct resources for a given item.
      *
      * @param Item $item
-     * @param Ratecard $ratecard
+     * @param RateCard $ratecard
      * @param string $date
      * @return array
      */
-    public function getDirectResources(Item $item, Ratecard $ratecard, $date): array
+    public function getDirectResources(Item $item, RateCard $ratecard, $date): array
     {
         $resources = [];
 
@@ -143,11 +143,11 @@ class RateAnalysisService
      * Get the rate for a given resource and rate card.
      *
      * @param Resource $resource
-     * @param Ratecard $ratecard
+     * @param RateCard $ratecard
      * @param string $date
      * @return float
      */
-    public function getResourceRate(Resource $resource, Ratecard $ratecard, $date): float
+    public function getResourceRate(Resource $resource, RateCard $ratecard, $date): float
     {
         $baseRateWithUnit = $this->getBaseRateWithUnit($resource, $ratecard, $date);
         $baseRate=$baseRateWithUnit['rate'];
@@ -172,11 +172,11 @@ class RateAnalysisService
      * Get detailed rate breakdown for a resource.
      *
      * @param Resource $resource
-     * @param Ratecard $ratecard
+     * @param RateCard $ratecard
      * @param string $date
      * @return array
      */
-    public function getResourceRateDetails(Resource $resource, Ratecard $ratecard, $date): array
+    public function getResourceRateDetails(Resource $resource, RateCard $ratecard, $date): array
     {
         $baseRateWithUnit = $this->getBaseRateWithUnit($resource, $ratecard, $date);
         $details = [
@@ -269,7 +269,7 @@ class RateAnalysisService
     /**
      * Get the base rate for a resource, with fallback to the default rate card.
      */
-    public function getBaseRateWithUnit(Resource $resource, Ratecard $ratecard, $date)
+    public function getBaseRateWithUnit(Resource $resource, RateCard $ratecard, $date)
     {
         $fields=['resource_id','rate_card_id','valid_from','valid_to','unit_id','rate'];
         $rate = Rate::select($fields)->where('resource_id', $resource->id)
@@ -305,7 +305,7 @@ class RateAnalysisService
     /**
      * Calculate the lead cost for a material resource.
      */
-    public function calculateLeadCost(Resource $resource, Ratecard $ratecard ,$date): array
+    public function calculateLeadCost(Resource $resource, RateCard $ratecard ,$date): array
     {
         $leadDetail = ['totalLeadCost'=>0,'mechLeadCost'=>0,'muleLeadCost'=>0,'manualLeadCost'=>0];
         $leadDistances = LeadDistance::where('resource_id', $resource->id)
@@ -388,7 +388,7 @@ class RateAnalysisService
     /**
      * Calculate the index cost for a labor or machine resource.
      */
-    public function calculateIndexCost(Resource $resource, Ratecard $ratecard, float $baseRate)
+    public function calculateIndexCost(Resource $resource, RateCard $ratecard, float $baseRate)
     {
         $indexModel = $resource->resource_group_id == 1 ? new LaborIndex() : new MachineIndex();
 
