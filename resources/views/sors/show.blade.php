@@ -40,7 +40,7 @@
                         @foreach ($items as $key => $item)
                             <tr class="hover:bg-gray-100/50 dark:hover:bg-gray-700/50">
                                 <td class="px-2 py-1 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{{ $key + 1 }}</td>
-                                <td class="px-2 py-1 text-sm text-gray-500 dark:text-gray-300">{{ $item->item_number }}</td>
+                                <td class="px-2 py-1 text-sm text-gray-500 dark:text-gray-300">{{ $item->item_number }}</br><span class="text-gray-400 dark:text-gray-500">{{ $item->item_code }}</span></td>
                                 <td class="px-2 py-1 text-sm break-words max-w-xs whitespace-pre-wrap">
                                     @if($item->item_type == 1 || $item->item_type == 2)
                                         <a href="{{ route('sors.show', [$sor, $item]) }}" class="hover:underline font-medium
@@ -55,7 +55,7 @@
                                 </td>
                                 <td class="px-2 py-1 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                                     @if($item->item_type != 1 && $item->item_type != 2 && $item->rate !== null)
-                                        {{ number_format($item->rate, 2) }} / {{ $item->unit->name ?? '' }}
+                                        <a href="{{ route('sors.items.ra', [$sor->id, $item->id]) }}"  class="text-gray-900 dark:text-white hover:underline" target="_blank">{{ number_format($item->rate, 2) }}</a> / {{ $item->unit->name ?? '' }}
                                     @endif
                                 </td>
                             </tr>

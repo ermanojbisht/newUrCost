@@ -249,7 +249,7 @@
                                 'action': function (obj) {
                                     const sorId = {{ $sor->id }};
                                     const itemId = $node.id;
-                                    window.location.href = `/sors/${sorId}/items/${itemId}/skeleton`;
+                                    window.location.href = "{{ route('sors.items.skeleton', ['sor' => $sor->id, 'item' => 'ITEM_ID']) }}".replace('ITEM_ID', itemId);
                                 }
                             },
                             'Create': {
