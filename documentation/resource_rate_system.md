@@ -15,47 +15,36 @@ The new implementation will live in the `/var/www/newUrCost` project.
 
 ### 1. Eloquent Models (The Data Layer)
 
-The existing Laravel project already has a comprehensive set of Eloquent models that correspond to the old database structure. We will use these as the foundation. Key models include:
+Eloquent relationships are key to this design.
 
--   `app/Models/Item.php`
--   `app/Models/Skeleton.php`
--   `app/Models/Resource.php`
--   `app/Models/Rate.php`
--   `app/Models/RateCard.php`
--   `app/Models/LeadDistance.php`
--   `app/Models/LaborIndex.php`
--   `app/Models/MachineIndex.php`
--   `app/Models/Ohead.php`
--   `app/Models/SubItem.php`
-
-We will ensure that the relationships between these models (`hasMany`, `belongsTo`, etc.) are correctly defined to simplify data retrieval. For example:
-
+**`app/Models/Item.php`**
 ```php
-// In app/Models/Item.php
-public function skeletons()
-{
+public function skeletons() {
     return $this->hasMany(Skeleton::class, 'raitemid', 'itemcode');
 }
-
-public function subItems()
-{
+public function subItems() {
     return $this->hasMany(SubItem::class, 'raitemid', 'itemcode');
 }
-
-public function overheads()
-{
-    // Ensure the rules are always processed in the correct sequence.
+public function overheads() {
     return $this->hasMany(Ohead::class, 'raitemid', 'itemcode')->orderBy('sorder', 'asc');
+}
+```
+
+**`app/Models/SubItem.php`**
+```php
+public function parentItem() {
+    return $this->belongsTo(Item::class, 'raitemid', 'itemcode');
+}
+public function childItem() {
+    return $this->belongsTo(Item::class, 'subraitem', 'itemcode');
 }
 ```
 
 ### 2. RateCalculationService (The Business Logic Layer)
 
-All the calculation logic currently found in `Ranamodel.php` and `Resratemodel.php` will be migrated into a new service class.
+All calculation logic will be consolidated into this service.
 
 **File Location:** `app/Services/RateCalculationService.php`
-
-This service will contain the public and private methods necessary to perform the analysis.
 
 ```php
 // app/Services/RateCalculationService.php
@@ -65,23 +54,27 @@ namespace App\Services;
 use App\Models\Item;
 use App\Models\Resource;
 use App\Models\RateCard;
-// ... other necessary model imports
+use App\Models\SubItemRate;
+use App\Models\ItemRate;
 
 class RateCalculationService
 {
+    /** @var array Cache to prevent re-calculating the same item. */
+    private $analysisCache = [];
+
     /**
-     * Main orchestration method to calculate the full rate analysis for an item.
-     * Replaces logic from CodeIgniter's Ranamodel->getanalysiswithoh()
+     * Main orchestration method.
      */
     public function calculateItemRateAnalysis(Item $item, RateCard $rateCard, \DateTime $date)
     {
+        $cacheKey = "{$item->itemcode}-{$rateCard->ratecardid}-{$date->format('Y-m-d')}";
+        if (isset($this->analysisCache[$cacheKey])) {
+            return $this->analysisCache[$cacheKey];
+        }
+
         $costs = [
-            'labor' => 0,
-            'machine' => 0,
-            'material' => 0,
-            'carriage' => 0,
-            'sub_items_with_oh' => 0,
-            'sub_items_without_oh' => 0,
+            'labor' => 0, 'machine' => 0, 'material' => 0, 'carriage' => 0,
+            'sub_items_with_oh' => 0, 'sub_items_without_oh' => 0,
             'specific_resource_costs' => [],
         ];
         $runningTotal = 0;
@@ -93,25 +86,22 @@ class RateCalculationService
             $cost = $resourceRate * $skeleton->quantity;
             
             $costs['specific_resource_costs'][$resource->code] = $cost;
-
             switch ($resource->resgr) {
                 case 1: $costs['labor'] += $cost; break;
-                case 2: $costs['machine'] += $cost; break;
-                case 3: $costs['material'] += $cost; break;
-                case 4: $costs['carriage'] += $cost; break;
+                // ... other resource groups
             }
             $runningTotal += $cost;
         }
 
         // 2. Recursively calculate cost of sub-items
-        foreach ($item->subItems as $subItem) {
-            // Assuming childItem relationship exists on SubItem model
-            $subItemAnalysis = $this->calculateItemRateAnalysis($subItem->childItem, $rateCard, $date);
-            $cost = $subItemAnalysis['final_rate'] * $subItem->dResQty;
+        $subItemRelations = $item->subItems()->where('predate', '<=', $date)->where('postdate', '>=', $date)->get();
+        foreach ($subItemRelations as $subItemRelation) {
+            $childItem = $subItemRelation->childItem;
+            $subItemRate = $this->getSubItemRate($childItem, $rateCard, $date);
+            $cost = $subItemRate * $subItemRelation->dResQty;
 
-            $costs['specific_resource_costs'][$subItem->subraitem] = $cost;
-
-            if ($subItem->ohapplicability == 1) {
+            $costs['specific_resource_costs'][$subItemRelation->subraitem] = $cost;
+            if ($subItemRelation->ohapplicability == 1) {
                 $costs['sub_items_with_oh'] += $cost;
             } else {
                 $costs['sub_items_without_oh'] += $cost;
@@ -123,173 +113,71 @@ class RateCalculationService
         $overheadCost = $this->calculateOverheads($item, $costs, $runningTotal);
         $runningTotal += $overheadCost;
 
-        // 4. Adjust for the item's turnout quantity
+        // 4. Adjust for turnout quantity
         $finalRate = $item->TurnOutQuantity > 0 ? $runningTotal / $item->TurnOutQuantity : $runningTotal;
 
-        return [
+        $result = [
             'final_rate' => $finalRate,
             'costs' => $costs,
             'overhead_cost' => $overheadCost,
             'total_cost' => $runningTotal,
         ];
+        
+        $this->analysisCache[$cacheKey] = $result;
+        return $result;
     }
 
     /**
+     * Determines the correct rate for a sub-item based on the analysis date.
+     */
+    private function getSubItemRate(Item $item, RateCard $rateCard, \DateTime $date): float
+    {
+        if ($date < new \DateTime('today')) {
+            $historicalRate = SubItemRate::where('racode', $item->itemcode)
+                ->where('ratecard', $rateCard->ratecardid)
+                ->where('predate', '<=', $date)->where('postdate', '>=', $date)
+                ->first();
+            if ($historicalRate) return $historicalRate->rate;
+        }
+        $liveRate = ItemRate::where('racode', $item->itemcode)->where('ratecard', $rateCard->ratecardid)->first();
+        return $liveRate->rate ?? 0;
+    }
+    
+    /**
      * Calculates the final rate for a single resource.
-     * Replaces logic from CodeIgniter's Resratemodel->getrate()
      */
     private function calculateResourceRate(Resource $resource, RateCard $rateCard, \DateTime $date): float
     {
-        // Get the base rate using Eloquent relationships
-        $baseRate = $resource->rates()
-            ->where('ratecard', $rateCard->ratecardid)
-            ->where('predate', '<=', $date)
-            ->where('postdate', '>=', $date)
-            ->first()->rate ?? 0;
-
-        // Apply adjustments based on resource group
-        switch ($resource->resgr) {
-            case 1: // Labor
-                $index = $this->getLaborIndex($resource, $rateCard, $date);
-                return $baseRate + ($baseRate * $index);
-
-            case 2: // Machine
-                $index = $this->getMachineIndex($resource, $rateCard, $date);
-                return $baseRate + ($baseRate * $index);
-
-            case 3: // Material
-                $leadCost = $this->getLeadCost($resource, $rateCard, $date);
-                return $baseRate + $leadCost;
-
-            default:
-                return $baseRate;
-        }
+        // ... (Implementation from previous documentation)
+        return 0.0;
     }
 
     /**
      * Calculates total overhead cost for an item.
-     * Replaces the overhead loop from CodeIgniter's Ranamodel.
      */
     private function calculateOverheads(Item $item, array $costs, float $runningTotal): float
     {
-        $totalOverhead = 0;
-        $rules = $item->overheads; // Fetches rules ordered by 'sorder'
-
-        foreach ($rules as $rule) {
-            $amount = 0;
-            switch ($rule->oon) {
-                case 0:  // Lumpsum
-                    $amount = $rule->paramtr;
-                    break;
-                case 11: // On Labor
-                    $amount = $rule->paramtr * $costs['labor'];
-                    break;
-                case 12: // On Machine
-                    $amount = $rule->paramtr * $costs['machine'];
-                    break;
-                case 13: // On Material
-                    $amount = $rule->paramtr * $costs['material'];
-                    break;
-                case 19: // On Sub-items (that allow further OH)
-                    $amount = $rule->paramtr * $costs['sub_items_with_oh'];
-                    break;
-                case 20: // On Carriage
-                    $amount = $rule->paramtr * $costs['carriage'];
-                    break;
-                case 4:  // On all resources + applicable sub-items
-                    $base = $costs['labor'] + $costs['machine'] + $costs['material'] + $costs['carriage'] + $costs['sub_items_with_oh'];
-                    $amount = $rule->paramtr * $base;
-                    break;
-                case 16: // On specific resources/items
-                    $specificBase = 0;
-                    $itemIds = explode(',', $rule->onitm);
-                    foreach ($itemIds as $id) {
-                        $specificBase += $costs['specific_resource_costs'][$id] ?? 0;
-                    }
-                    $amount = $rule->paramtr * $specificBase;
-                    break;
-                case 7:  // On sum of previous overheads
-                    $amount = $rule->paramtr * $totalOverhead;
-                    break;
-                case 18: // On cumulative total (all resources + previous overheads)
-                    $base = $runningTotal + $totalOverhead;
-                    $amount = $rule->paramtr * $base;
-                    break;
-            }
-            
-            // This logic seems to be what was intended by the original code,
-            // where $ocst is incremented and then used by rule '7'.
-            $totalOverhead += $amount;
-        }
-
-        return round($totalOverhead, 2);
+        // ... (Implementation from previous documentation)
+        return 0.0;
     }
 
-    /**
-     * Calculates total lead cost for a material resource.
-     * Replaces logic from Resratemodel->getlead()
-     */
-    private function getLeadCost(Resource $resource, RateCard $rateCard, \DateTime $date): float
-    {
-        // ... Re-implement the complex logic from getlead() using Laravel models ...
-        return 0.0; // placeholder
-    }
-    
-    private function getLaborIndex(Resource $resource, RateCard $rateCard, \DateTime $date): float
-    {
-        // ... Re-implement logic from Resratemodel->getLaborIndex() ...
-        return 0.0; // placeholder
-    }
-    
-    private function getMachineIndex(Resource $resource, RateCard $rateCard, \DateTime $date): float
-    {
-        // ... Re-implement logic from Resratemodel->getLaborIndex() for machines ...
-        return 0.0; // placeholder
-    }
+    // ... other private helpers for lead, indexes etc.
 }
 ```
 
 ### 3. Controller (The HTTP Layer)
 
-A controller will be responsible for handling the incoming HTTP request, calling the service, and returning a response.
+The controller injects the service and uses it to respond to HTTP requests.
 
 **File Location:** `app/Http/Controllers/ItemRateController.php`
-
 ```php
 // app/Http/Controllers/ItemRateController.php
-
-namespace App\Http\Controllers;
-
-use App\Models\Item;
-use App\Models\RateCard;
 use App\Services\RateCalculationService;
-use Illuminate\Http\Request;
-
+// ...
 class ItemRateController extends Controller
 {
-    protected $rateCalculator;
-
-    public function __construct(RateCalculationService $rateCalculator)
-    {
-        $this->rateCalculator = $rateCalculator;
-    }
-
-    public function show(Request $request, Item $item)
-    {
-        $rateCard = RateCard::find($request->input('rate_card_id', 1));
-        $date = new \DateTime($request->input('date', 'today'));
-
-        $analysis = $this->rateCalculator->calculateItemRateAnalysis($item, $rateCard, $date);
-
-        return response()->json([
-            'item_code' => $item->itemcode,
-            'item_name' => $item->ItemShortDesc,
-            'analysis' => $analysis,
-            'rate_card' => $rateCard->ratecardname,
-            'date' => $date->format('Y-m-d'),
-        ]);
-    }
+    // ... (Implementation from previous documentation)
 }
 ```
 
-By following this strategy, we will create a clean, decoupled, and modern implementation of the rate calculation logic that is easy to understand, extend, and test.
+This consolidated service provides a single point of entry for all rate analysis, making the system clean, testable, and easy to maintain.
