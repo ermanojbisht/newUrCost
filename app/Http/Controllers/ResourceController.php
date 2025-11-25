@@ -51,11 +51,14 @@ class ResourceController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('action', function($row){
+                    $rateUrl = route('resources.rates.index', $row->id);
                     $editUrl = route('resources.edit', $row->id);
+                    $rateIcon = config('icons.calculator');
                     $editIcon = config('icons.edit');
                     $deleteIcon = config('icons.delete');
                     
-                    $btn = '<a href="'.$editUrl.'" class="text-blue-600 hover:text-blue-900 mr-2" title="Edit">'.$editIcon.'</a>';
+                    $btn = '<a href="'.$rateUrl.'" class="text-green-600 hover:text-green-900 mr-2" title="Manage Rates">'.$rateIcon.'</a>';
+                    $btn .= '<a href="'.$editUrl.'" class="text-blue-600 hover:text-blue-900 mr-2" title="Edit">'.$editIcon.'</a>';
                     $btn .= '<button type="button" onclick="deleteResource('.$row->id.')" class="text-red-600 hover:text-red-900" title="Delete">'.$deleteIcon.'</button>';
                     return '<div class="flex items-center">'.$btn.'</div>';
                 })
@@ -109,15 +112,7 @@ class ResourceController extends Controller
         $resourceGroups = ResourceGroup::all();
         $unitGroups = UnitGroup::all();
         $units = Unit::all();
-        $rateCards = RateCard::all();
-        
-        // Load existing rates for this resource
-        $rates = Rate::where('resource_id', $resource->id)
-                    ->with(['rateCard', 'unit'])
-                    ->orderBy('applicable_date', 'desc')
-                    ->get();
-
-        return view('resources.edit', compact('resource', 'resourceGroups', 'unitGroups', 'units', 'rateCards', 'rates'));
+        return view('resources.edit', compact('resource', 'resourceGroups', 'unitGroups', 'units'));
     }
 
     public function update(Request $request, Resource $resource)

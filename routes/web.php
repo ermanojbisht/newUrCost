@@ -59,8 +59,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/resources/search', [ResourceController::class, 'search'])->name('resources.search');
     Route::resource('resources', ResourceController::class);
     Route::prefix('resources/{resource}/rates')->name('resources.rates.')->group(function () {
+        Route::get('/manage', [App\Http\Controllers\ResourceRateController::class, 'index'])->name('index');
         Route::post('/', [App\Http\Controllers\ResourceRateController::class, 'store'])->name('store');
         Route::put('/{rate}', [App\Http\Controllers\ResourceRateController::class, 'update'])->name('update');
+        Route::post('/{rate}/lock', [App\Http\Controllers\ResourceRateController::class, 'lock'])->name('lock');
         Route::delete('/{rate}', [App\Http\Controllers\ResourceRateController::class, 'destroy'])->name('destroy');
     });
 

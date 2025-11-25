@@ -32,7 +32,7 @@ class Rate extends Model
         'valid_from' => 'date',
         'valid_to' => 'date',
         'published_at' => 'datetime',
-        'is_locked' => 'boolean',
+        //'is_locked' => 'boolean',
     ];
 
     public function resource()
