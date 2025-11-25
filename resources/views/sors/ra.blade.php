@@ -23,7 +23,11 @@
             {{ $item->item_number }} , Code: {{ $item->item_code }},  ID:{{ $item->id }}
         </p>
     </div>
-    <div class="mt-4 md:mt-0">
+    <div class="mt-4 md:mt-0 flex space-x-2">
+        <a href="{{ route('sors.items.consumption', ['sor' => $sor->id, 'item' => $item->id]) }}" class="btn-secondary flex items-center">
+            {!! config('icons.chart-pie') !!}
+            <span class="ml-2">Consumption Report</span>
+        </a>
         <a href="{{ route('sors.admin', $sor->id) }}" class="btn-secondary flex items-center">
             {!! config('icons.arrow-left') !!}
             <span class="ml-2">Back to Tree</span>

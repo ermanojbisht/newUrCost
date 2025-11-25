@@ -18,130 +18,8 @@ use Log;
 class RateAnalysisService
 {
     /**
-     * Calculate the rate analysis for a given item and rate card.
-     *
-     * @param Item $item
-     * @param RateCard|null $ratecard
-     * @param string|null $date
-     * @return array
-     */
-    public function calculateRate(Item $item, ?RateCard $ratecard = null, $date = null): array
-    {
-        if (!$ratecard) {
-            $ratecard = RateCard::find(1); // Default to Basic Rate Card
-        }
-
-        if (!$date) {
-            $date = now()->toDateString();
-        }
-
-        $directResources = $this->getDirectResources($item, $ratecard, $date);
-        $subItems = $this->getSubItems($item, $ratecard, $date);
-
-        $resourceCost = collect($directResources)->sum('amount');
-        $subItemCost = collect($subItems)->sum('amount');
-
-        $totalDirectCost = $resourceCost + $subItemCost;
-
-        $overheads = $this->getOverheads($item);
-        $calculatedOverheads = $this->calculateOverheadCosts($overheads, $directResources, $subItems, $totalDirectCost);
-        $totalOverheadCost = collect($calculatedOverheads)->sum('amount');
-
-        $totalCost = $totalDirectCost + $totalOverheadCost;
-
-        $finalRate = ($item->turn_out_quantity > 0) ? $totalCost / $item->turn_out_quantity : $totalCost;
-
-        $analysis = [
-            'resources' => $directResources,
-            'sub_items' => $subItems,
-            'overheads' => $calculatedOverheads,
-            'total_direct_cost' => $totalDirectCost,
-            'total_overhead_cost' => $totalOverheadCost,
-            'total_cost' => $totalCost,
-            'rate' => $finalRate,
-        ];
-
-        return $analysis;
-    }
-
-    public function getOverheads(Item $item): \Illuminate\Database\Eloquent\Collection
-    {
-        return $item->oheads()->orderBy('sorder')->get();
-    }
-
-    public function calculateOverheadCosts($overheads, array $resources, array $subItems, float $totalDirectCost): array
-    {
-        $calculated = [];
-        $cumulativeOverhead = 0;
-
-        // Placeholder logic - this needs to be a careful translation of the legacy 'oon' switch statement
-        foreach ($overheads as $overhead) {
-            $amount = 0;
-            // Simple placeholder: 5% of total direct cost for all overheads
-            $amount = $totalDirectCost * 0.05;
-
-            $calculated[] = [
-                'name' => $overhead->ohdesc,
-                'amount' => $amount,
-            ];
-            $cumulativeOverhead += $amount;
-        }
-
-        return $calculated;
-    }
-
-    public function getSubItems(Item $item, RateCard $ratecard, $date): array
-    {
-        $subItemData = [];
-
-        foreach ($item->subitems as $subitem) {
-            // Recursive call to calculate the rate for the sub-item
-            $subItemAnalysis = $this->calculateRate($subitem->subItem, $ratecard, $date);
-
-            $rate = $subItemAnalysis['rate'];
-            $amount = $subitem->quantity * $rate;
-
-            $subItemData[] = [
-                'name' => $subitem->subItem->item_no . ' ' . $subitem->subItem->item_short_desc,
-                'quantity' => $subitem->quantity,
-                'rate' => $rate,
-                'amount' => $amount,
-            ];
-        }
-
-        return $subItemData;
-    }
-
-    /**
-     * Get the direct resources for a given item.
-     *
-     * @param Item $item
-     * @param RateCard $ratecard
-     * @param string $date
-     * @return array
-     */
-    public function getDirectResources(Item $item, RateCard $ratecard, $date): array
-    {
-        $resources = [];
-
-        foreach ($item->skeletons as $skeleton) {
-            $rate = $this->getResourceRate($skeleton->resource, $ratecard, $date);
-            $amount = $skeleton->quantity * $rate;
-
-            $resources[] = [
-                'name' => $skeleton->resource->name,
-                'quantity' => $skeleton->quantity,
-                'rate' => $rate,
-                'amount' => $amount,
-            ];
-        }
-
-        return $resources;
-    }
-
-    /**
      * Get the rate for a given resource and rate card.
-     *
+     *MKB USED
      * @param Resource $resource
      * @param RateCard $ratecard
      * @param string $date
@@ -170,7 +48,7 @@ class RateAnalysisService
 
     /**
      * Get detailed rate breakdown for a resource.
-     *
+     * MKB USED
      * @param Resource $resource
      * @param RateCard $ratecard
      * @param string $date
@@ -557,4 +435,82 @@ class RateAnalysisService
     }
 
 
+    /**
+     * Get a flattened and aggregated list of all resources for an item.
+     *
+     * @param Item $item
+     * @param RateCard $rateCard
+     * @param string $date
+     * @return array
+     */
+    public function getFlatResourceList(Item $item, RateCard $rateCard, $date): array
+    {
+        $resourceList = [];
+        $t=1/$item->turnout_quantity;
+        $this->buildFlatResourceList($item, $t, $rateCard, $date, $resourceList);
+
+        //Log::info("resourceList = ".print_r($resourceList,true));
+
+        // Aggregate the results
+        $aggregatedList = [];
+        foreach ($resourceList as $resource) {
+            $id = $resource['resource_id'];
+            if (!isset($aggregatedList[$id])) {
+                $aggregatedList[$id] = $resource;
+                // Calculate amount for the initial entry
+                $rate = $this->getResourceRate($resource['resource_object'], $rateCard, $date);
+                $aggregatedList[$id]['rate'] = $rate;
+                $aggregatedList[$id]['amount'] = $rate * $aggregatedList[$id]['quantity'];
+            } else {
+                $aggregatedList[$id]['quantity'] += $resource['quantity'];
+                // Recalculate amount with new total quantity
+                $rate = $this->getResourceRate($resource['resource_object'], $rateCard, $date);
+                $aggregatedList[$id]['rate'] = $rate;
+                $aggregatedList[$id]['amount'] = $rate * $aggregatedList[$id]['quantity'];
+            }
+        }
+
+        return array_values($aggregatedList);
+    }
+
+    /**
+     * Recursive helper to build the flat resource list.
+     *
+     * @param Item $item
+     * @param float $factor
+     * @param RateCard $rateCard
+     * @param string $date
+     * @param array $resourceList
+     */
+    private function buildFlatResourceList(Item $item, float $factor, RateCard $rateCard, $date, array &$resourceList)
+    {
+        // 1. Add direct resources
+        foreach ($item->skeletons as $skeleton) {
+            $resourceList[] = [
+                'resource_id' => $skeleton->resource_id,
+                'resource_object' => $skeleton->resource,
+                'group' => $skeleton->resource->group->name ?? 'Unknown',
+                'name' => $skeleton->resource->name,
+                'unit' => $skeleton->resource->unit->name ?? '',
+                'quantity' => $skeleton->quantity * $factor,
+            ];
+        }
+
+        //Log::info("resourceList = ".print_r($resourceList,true));
+
+        // 2. Recursively process sub-items
+        foreach ($item->subitems as $subItemRelation) {
+            $childItem = $subItemRelation->subItem;
+            if ($childItem) {
+                $turnout = $childItem->turnout_quantity > 0 ? $childItem->turnout_quantity : 1;
+                // The quantity of subitem needed per unit of parent item
+                $subItemQty = $subItemRelation->quantity;
+
+                // New factor = Current Factor * (SubItem Qty / Turnout)
+                $newFactor = $factor * ($subItemQty / $turnout);
+
+                $this->buildFlatResourceList($childItem, $newFactor, $rateCard, $date, $resourceList);
+            }
+        }
+    }
 }
