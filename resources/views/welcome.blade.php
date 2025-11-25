@@ -111,7 +111,7 @@
                         x-transition:enter="transition ease-out duration-500 transform"
                         x-transition:enter-start="opacity-0 translate-y-10"
                         x-transition:enter-end="opacity-100 translate-y-0">
-                        Streamline Your Cost Analysis with <span class="text-blue-600 dark:text-blue-400">urCost</span>
+                        Streamline Your Cost Analysis with <span class="text-blue-600 dark:text-blue-400">UK SOR</span>
                     </h1>
                     <p class="text-lg md:text-xl text-gray-700 dark:text-gray-300 mb-8"
                        x-data="{ show: false }" x-init="setTimeout(() => show = true, 300)"
@@ -127,7 +127,7 @@
                          x-transition:enter="transition ease-out duration-500 transform"
                          x-transition:enter-start="opacity-0 translate-y-10"
                          x-transition:enter-end="opacity-100 translate-y-0">
-                        <a href="{{ route('register') }}" class="btn-primary btn-lg transition-all duration-300 hover:scale-105">Get Started</a>
+                        <a href="{{ route('sorCards') }}" class="btn-primary btn-lg transition-all duration-300 hover:scale-105">View SOR</a>
                         <a href="#features" class="btn-secondary btn-lg transition-all duration-300 hover:scale-105">Learn More</a>
                     </div>
                 </div>
