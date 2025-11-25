@@ -5,20 +5,6 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// DEBUG: Dump Laravel Request Path
-// Only run if we are debugging the root path issue
-if (isset($_SERVER['REQUEST_URI']) && ($_SERVER['REQUEST_URI'] == '/ukSor/' || $_SERVER['REQUEST_URI'] == '/ukSor')) {
-    $request = \Illuminate\Http\Request::capture();
-    echo "<pre>";
-    echo "Laravel Path: " . $request->path() . "\n";
-    echo "Laravel URL: " . $request->url() . "\n";
-    echo "Request URI: " . $request->getRequestUri() . "\n";
-    echo "Base URL: " . $request->getBaseUrl() . "\n";
-    echo "Base Path: " . $request->getBasePath() . "\n";
-    echo "</pre>";
-    // We don't exit here, we let it crash/405 so we can see the debug output at the top
-}
-
 // Determine if the application is in maintenance mode...
 if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
     require $maintenance;
@@ -31,4 +17,17 @@ require __DIR__.'/../vendor/autoload.php';
 /** @var Application $app */
 $app = require_once __DIR__.'/../bootstrap/app.php';
 
-$app->handleRequest(Request::capture());
+$request = Request::capture();
+
+// DEBUG: Dump Laravel Request Path
+if (isset($_SERVER['REQUEST_URI']) && ($_SERVER['REQUEST_URI'] == '/ukSor/' || $_SERVER['REQUEST_URI'] == '/ukSor')) {
+    echo "<pre>";
+    echo "Laravel Path: " . $request->path() . "\n";
+    echo "Laravel URL: " . $request->url() . "\n";
+    echo "Request URI: " . $request->getRequestUri() . "\n";
+    echo "Base URL: " . $request->getBaseUrl() . "\n";
+    echo "Base Path: " . $request->getBasePath() . "\n";
+    echo "</pre>";
+}
+
+$app->handleRequest($request);
