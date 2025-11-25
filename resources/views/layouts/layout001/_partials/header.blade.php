@@ -2,8 +2,8 @@
     <nav x-data="{ open: false }" class="container mx-auto px-4">
         <div class="flex justify-between h-16 items-center">
             <!-- Logo -->
-            <a href="/" class="text-xl font-bold text-gray-800 dark:text-white hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
-                urCost
+            <a href="{{ url('/') }}" class="text-xl font-bold text-gray-800 dark:text-white hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
+                {{ config('app.name', 'Laravel') }}
             </a>
 
             <!-- Desktop Navigation -->
@@ -27,7 +27,7 @@
                    class="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors {{ request()->routeIs('items.*') ? 'font-bold text-blue-500 dark:text-blue-400' : '' }}">
                     Items
                 </a>
-                <a href="/demo"
+                <a href="{{ url('/demo') }}"
                    class="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors {{ request()->is('demo') ? 'font-bold text-blue-500 dark:text-blue-400' : '' }}">
                     Demo
                 </a>
@@ -193,7 +193,7 @@
                    class="block px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors {{ request()->routeIs('items.*') ? 'bg-blue-50 dark:bg-blue-900 text-blue-500 dark:text-blue-400 font-bold' : '' }}">
                     Items
                 </a>
-                <a href="/demo"
+                <a href="{{ url('/demo') }}"
                    class="block px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors {{ request()->is('demo') ? 'bg-blue-50 dark:bg-blue-900 text-blue-500 dark:text-blue-400 font-bold' : '' }}">
                     Demo
                 </a>

@@ -509,13 +509,14 @@
                     }
 
                     // Name Column Content
+                    const resourceUrl = "{{ route('resources.show', ['resource' => 'RESOURCE_ID']) }}".replace('RESOURCE_ID', res.resource_id);
                     let nameContent = `
                         <div class="flex items-start">
                             <span class="mr-2 text-gray-500 mt-1" title="${res.resource_group_name}">
                                 ${iconHtml}
                             </span>
                             <div class="flex-1 min-w-0">
-                                <a href="/resources/${res.resource_id}" target="_blank" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline whitespace-normal break-words block">
+                                <a href="${resourceUrl}" target="_blank" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline whitespace-normal break-words block">
                                     [${res.secondary_code || 'N/A'}] ${res.name}
                                 </a>
                                 ${res.resource_description ? `<div class="text-xs text-gray-500 mt-0.5 whitespace-normal">${res.resource_description}</div>` : ''}

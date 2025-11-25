@@ -31,6 +31,10 @@ To serve the app from a subdirectory without exposing the entire project:
 ```bash
 sudo ln -s /var/www/newUrCost/public /var/www/html/ukSor
 ```
+
+ls -l /var/www/html/ukSor
+It should now look like: ukSor -> /var/www/newUrCost/public
+
 *Correction:* Initially, the symlink pointed to the project root. It **MUST** point to the `public` directory.
 
 ### Step 3: Permissions
