@@ -239,6 +239,11 @@
                 type: 'GET',
                 data: { rate_card_id: rateCardId, date: effectiveDate },
                 success: function (data) {
+                    if (data.error) {
+                        console.error('API Error:', data.error);
+                        alert(data.error);
+                        return;
+                    }
                     renderTables(data);
                     updateSummary(data.totals);
                     renderCharts(data);
@@ -433,11 +438,13 @@
             const resBody = document.getElementById('resources-body');
             resBody.innerHTML = '';
 
-            if (data.resources.length === 0) {
+            const resources = data.resources || [];
+
+            if (resources.length === 0) {
                 const colspan = window.isReadonly ? 6 : 7;
                 resBody.innerHTML = `<tr><td colspan="${colspan}" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No resources added yet.</td></tr>`;
             } else {
-                data.resources.forEach((res, index) => {
+                resources.forEach((res, index) => {
                     const row = document.createElement('tr');
                     row.className = 'bg-white dark:bg-gray-800 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150';
                     row.dataset.id = res.id; // For SortableJS
