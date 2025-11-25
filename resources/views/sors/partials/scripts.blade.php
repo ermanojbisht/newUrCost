@@ -434,6 +434,48 @@
         }
 
         function renderTables(data) {
+            // Overheads Table
+            const ohBody = document.getElementById('overheads-body');
+            ohBody.innerHTML = '';
+
+            const overheads = data.overheads || [];
+
+            if (overheads.length === 0) {
+                const colspan = window.isReadonly ? 5 : 6;
+                ohBody.innerHTML = `<tr><td colspan="${colspan}" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No overheads added yet.</td></tr>`;
+            } else {
+                overheads.forEach((oh, index) => {
+                    const row = document.createElement('tr');
+                    row.className = 'bg-white dark:bg-gray-800 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150';
+                    row.dataset.id = oh.id; // For SortableJS
+
+                    const dragHandle = window.isReadonly ? '' : `
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 drag-handle cursor-move align-top">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path></svg>
+                        </td>`;
+
+                    const actionButtons = window.isReadonly ? '' : `
+                        <td class="px-2 py-2 whitespace-nowrap text-right text-sm font-medium align-top">
+                            <button onclick='editOverhead(${JSON.stringify(oh)})' class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-2" title="Edit">
+                                <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                            <button onclick="deleteOverhead(${oh.id})" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Delete">
+                                <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </td>`;
+
+                    row.innerHTML = `
+                        ${dragHandle}
+                        <td class="px-2 py-2 whitespace-nowrap text-center text-sm text-gray-500 dark:text-gray-400 align-top">${index + 1}</td>
+                        <td class="px-2 py-2 text-sm text-gray-900 dark:text-white align-top whitespace-pre-wrap">${oh.description}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right align-top">${parseFloat(oh.calculation_type == 0 ? oh.raw_parameter : oh.parameter).toFixed(2)}${oh.calculation_type == 1 ? '%' : ''}</td>
+                        <td class="px-2 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right align-top">₹${parseFloat(oh.amount).toFixed(2)}</td>
+                        ${actionButtons}
+                    `;
+                    ohBody.appendChild(row);
+                });
+            }
+
             // Resources Table
             const resBody = document.getElementById('resources-body');
             resBody.innerHTML = '';
@@ -520,13 +562,17 @@
                 });
             }
             
-            // Sub-items
+            // Sub-items Table
+            const subBody = document.getElementById('subitems-body');
+            
+            const subitems = data.subitems || [];
             let subHtml = '';
-            if (data.subitems.length === 0) {
+
+            if (subitems.length === 0) {
                 const colspan = window.isReadonly ? 4 : 5;
                 subHtml = `<tr><td colspan="${colspan}" class="px-4 py-8 text-center text-gray-500">No sub-items added yet</td></tr>`;
             } else {
-                subHtml = data.subitems.map(sub => {
+                subHtml = subitems.map((sub, index) => {
                     const actionCell = window.isReadonly ? '' : `
                         <td class="px-4 py-3 text-right text-sm">
                             <button onclick='editSubitem(${JSON.stringify(sub)})' class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-2" title="Edit">
@@ -538,7 +584,7 @@
                         </td>`;
                     
                     return `
-                        <tr>
+                        <tr class="bg-white dark:bg-gray-800 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150" data-id="${sub.id}">
                             <td class="px-4 py-3 text-sm">
                                 ${sub.item_number} - ${sub.name}
                                 <div class="mt-1 text-xs text-gray-500 space-y-0.5">
@@ -560,10 +606,10 @@
                     `;
                 }).join('');
             }
-            $('#subitems-table').html(subHtml);
+            subBody.innerHTML = subHtml;
 
             // Overheads Table
-            const ohBody = document.getElementById('overheads-body');
+            // ohBody is already defined at the top of the function
             if (ohBody) {
                 ohBody.innerHTML = '';
                 if (data.overheads && data.overheads.length > 0) {

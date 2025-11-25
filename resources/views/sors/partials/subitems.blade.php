@@ -34,7 +34,7 @@
                                 @endif
                             </tr>
                         </thead>
-                        <tbody id="subitems-table"
+                        <tbody id="subitems-body"
                             data-readonly="{{ $readonly ? 'true' : 'false' }}"
                             class="divide-y divide-gray-200/50 dark:divide-gray-700/50 bg-transparent">
                             <tr>
