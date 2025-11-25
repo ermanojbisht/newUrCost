@@ -145,7 +145,7 @@
                 dropdownParent: $('#modal-add-overhead'),
                 width: '100%',
                 ajax: {
-                    url: `/api/sors/${sorId}/overheads/search`,
+                url: "{{ route('api.sors.overheads.search', ['sor' => $sor->id]) }}",
                     dataType: 'json',
                     delay: 250,
                     data: function (params) {
@@ -235,7 +235,7 @@
 
         function loadSkeletonData() {
             $.ajax({
-                url: `/api/sors/${sorId}/items/${itemId}/skeleton`,
+                url: "{{ route('api.sors.items.skeleton.show', ['sor' => $sor->id, 'item' => $item->id]) }}",
                 type: 'GET',
                 data: { rate_card_id: rateCardId, date: effectiveDate },
                 success: function (data) {
@@ -276,8 +276,8 @@
             }
 
             const url = skeletonId
-                ? `/api/sors/${sorId}/items/${itemId}/skeleton/resources/${skeletonId}`
-                : `/api/sors/${sorId}/items/${itemId}/skeleton/resources`;
+                ? "{{ route('api.sors.items.skeleton.resources.update', ['sor' => $sor->id, 'item' => $item->id, 'skeleton' => 'ID_PLACEHOLDER']) }}".replace('ID_PLACEHOLDER', skeletonId)
+                : "{{ route('api.sors.items.skeleton.resources.add', ['sor' => $sor->id, 'item' => $item->id]) }}";
 
             const method = skeletonId ? 'PUT' : 'POST';
 
@@ -321,8 +321,8 @@
             }
 
             const url = subitemId
-                ? `/api/sors/${sorId}/items/${itemId}/skeleton/subitems/${subitemId}`
-                : `/api/sors/${sorId}/items/${itemId}/skeleton/subitems`;
+                ? "{{ route('api.sors.items.skeleton.subitems.update', ['sor' => $sor->id, 'item' => $item->id, 'subitem' => 'ID_PLACEHOLDER']) }}".replace('ID_PLACEHOLDER', subitemId)
+                : "{{ route('api.sors.items.skeleton.subitems.add', ['sor' => $sor->id, 'item' => $item->id]) }}";
             const method = subitemId ? 'PUT' : 'POST';
 
             $.ajax({
@@ -363,7 +363,9 @@
 
         function saveOverhead() {
             const id = $('#edit_overhead_id').val();
-            const url = id ? `/api/sors/${sorId}/items/${itemId}/skeleton/overheads/${id}` : `/api/sors/${sorId}/items/${itemId}/skeleton/overheads`;
+            const url = id
+                ? "{{ route('api.sors.items.skeleton.overheads.update', ['sor' => $sor->id, 'item' => $item->id, 'ohead' => 'ID_PLACEHOLDER']) }}".replace('ID_PLACEHOLDER', id)
+                : "{{ route('api.sors.items.skeleton.overheads.add', ['sor' => $sor->id, 'item' => $item->id]) }}";
             const method = id ? 'PUT' : 'POST';
 
             const data = {
@@ -421,7 +423,7 @@
         window.deleteOverhead = function(id) { // Made global for onclick
             if(!confirm('Are you sure?')) return;
             $.ajax({
-                url: `/api/sors/${sorId}/items/${itemId}/skeleton/overheads/${id}`,
+                url: "{{ route('api.sors.items.skeleton.overheads.remove', ['sor' => $sor->id, 'item' => $item->id, 'ohead' => 'ID_PLACEHOLDER']) }}".replace('ID_PLACEHOLDER', id),
                 method: 'DELETE',
                 data: { _token: '{{ csrf_token() }}' },
                 success: function() {
@@ -758,38 +760,48 @@
         };
 
         // Remove functions
-        window.deleteResource = function (id) {
-            if (!confirm('Remove this resource?')) return;
+        window.deleteResource = function(id) {
+            if(!confirm('Are you sure you want to remove this resource?')) return;
             $.ajax({
-                url: `/api/sors/${sorId}/items/${itemId}/skeleton/resources/${id}`,
+                url: "{{ route('api.sors.items.skeleton.resources.remove', ['sor' => $sor->id, 'item' => $item->id, 'skeleton' => 'ID_PLACEHOLDER']) }}".replace('ID_PLACEHOLDER', id),
                 type: 'DELETE',
                 data: { _token: '{{ csrf_token() }}' },
-                success: () => loadSkeletonData(),
-                error: () => alert('Failed to remove resource')
+                success: function() {
+                    loadSkeletonData();
+                },
+                error: function() {
+                    alert('Error removing resource');
+                }
             });
-        };
-
-        window.removeSubitem = function (id) {
-            if (!confirm('Remove this sub-item?')) return;
+        }
+        window.removeSubitem = function(id) {
+            if(!confirm('Are you sure you want to remove this sub-item?')) return;
             $.ajax({
-                url: `/api/sors/${sorId}/items/${itemId}/skeleton/subitems/${id}`,
+                url: "{{ route('api.sors.items.skeleton.subitems.remove', ['sor' => $sor->id, 'item' => $item->id, 'subitem' => 'ID_PLACEHOLDER']) }}".replace('ID_PLACEHOLDER', id),
                 type: 'DELETE',
                 data: { _token: '{{ csrf_token() }}' },
-                success: () => loadSkeletonData(),
-                error: () => alert('Failed to remove sub-item')
+                success: function() {
+                    loadSkeletonData();
+                },
+                error: function() {
+                    alert('Error removing sub-item');
+                }
             });
-        };
-
-        window.deleteOverhead = function (id) {
-            if (!confirm('Remove this overhead?')) return;
+        }
+        window.removeOverhead = function(id) {
+            if(!confirm('Are you sure you want to remove this overhead?')) return;
             $.ajax({
-                url: `/api/sors/${sorId}/items/${itemId}/skeleton/overheads/${id}`,
+                url: "{{ route('api.sors.items.skeleton.overheads.remove', ['sor' => $sor->id, 'item' => $item->id, 'ohead' => 'ID_PLACEHOLDER']) }}".replace('ID_PLACEHOLDER', id),
                 type: 'DELETE',
                 data: { _token: '{{ csrf_token() }}' },
-                success: () => loadSkeletonData(),
-                error: () => alert('Failed to remove overhead')
+                success: function() {
+                    loadSkeletonData();
+                },
+                error: function() {
+                    alert('Error removing overhead');
+                }
             });
-        };
+        }
 
         // --- Charts ---
         let resourceChart = null;
