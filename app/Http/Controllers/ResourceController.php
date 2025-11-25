@@ -9,8 +9,11 @@ use App\Models\Resource;
 use App\Models\ResourceGroup;
 use App\Models\Sor;
 use App\Models\Unit;
+use App\Models\UnitGroup;
 use App\Services\RateAnalysisService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Yajra\DataTables\DataTables;
 
 class ResourceController extends Controller
 {
@@ -19,6 +22,134 @@ class ResourceController extends Controller
     public function __construct(RateAnalysisService $rateAnalysisService)
     {
         $this->rateAnalysisService = $rateAnalysisService;
+    }
+
+    public function index(Request $request)
+    {
+        if ($request->ajax()) {
+            $query = Resource::with(['group', 'unit', 'resourceCapacityRule']);
+
+            if ($request->filled('resource_group_id')) {
+                $query->where('resource_group_id', $request->resource_group_id);
+            }
+            if ($request->filled('unit_group_id')) {
+                $query->where('unit_group_id', $request->unit_group_id);
+            }
+            if ($request->filled('unit_id')) {
+                $query->where('unit_id', $request->unit_id);
+            }
+            if ($request->filled('volume_or_weight')) {
+                $query->where('volume_or_weight', $request->volume_or_weight);
+            }
+            if ($request->filled('resource_capacity_rule_id')) {
+                $query->where('resource_capacity_rule_id', $request->resource_capacity_rule_id);
+            }
+            if ($request->filled('resource_capacity_group_id')) {
+                $query->where('resource_capacity_group_id', $request->resource_capacity_group_id);
+            }
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('action', function($row){
+                    $editUrl = route('resources.edit', $row->id);
+                    $editIcon = config('icons.edit');
+                    $deleteIcon = config('icons.delete');
+                    
+                    $btn = '<a href="'.$editUrl.'" class="text-blue-600 hover:text-blue-900 mr-2" title="Edit">'.$editIcon.'</a>';
+                    $btn .= '<button type="button" onclick="deleteResource('.$row->id.')" class="text-red-600 hover:text-red-900" title="Delete">'.$deleteIcon.'</button>';
+                    return '<div class="flex items-center">'.$btn.'</div>';
+                })
+                ->editColumn('volume_or_weight', function($row) {
+                    if ($row->volume_or_weight == 1) return 'Volume';
+                    if ($row->volume_or_weight == 2) return 'Weight';
+                    return 'N/A';
+                })
+                ->rawColumns(['action'])
+                ->make(true);
+        }
+
+        $resourceGroups = ResourceGroup::all();
+        $unitGroups = UnitGroup::all();
+        $units = Unit::all();
+        $capacityRules = \App\Models\ResourceCapacityRule::all();
+        $capacityGroups = \App\Models\ResourceCapacityGroup::all();
+
+        return view('resources.index', compact('resourceGroups', 'unitGroups', 'units', 'capacityRules', 'capacityGroups'));
+    }
+
+    public function create()
+    {
+        $resourceGroups = ResourceGroup::all();
+        $unitGroups = UnitGroup::all();
+        $units = Unit::all();
+        return view('resources.create', compact('resourceGroups', 'unitGroups', 'units'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'secondary_code' => 'nullable|string|max:255',
+            'resource_group_id' => 'nullable|exists:resource_groups,id',
+            'unit_group_id' => 'nullable|exists:unit_groups,id',
+            'unit_id' => 'nullable|exists:units,id',
+            'description' => 'nullable|string',
+            'volume_or_weight' => 'nullable|in:0,1,2',
+        ]);
+
+        $validated['created_by'] = Auth::id();
+
+        Resource::create($validated);
+
+        return redirect()->route('resources.index')->with('success', 'Resource created successfully.');
+    }
+
+    public function edit(Resource $resource)
+    {
+        $resourceGroups = ResourceGroup::all();
+        $unitGroups = UnitGroup::all();
+        $units = Unit::all();
+        $rateCards = RateCard::all();
+        
+        // Load existing rates for this resource
+        $rates = Rate::where('resource_id', $resource->id)
+                    ->with(['rateCard', 'unit'])
+                    ->orderBy('applicable_date', 'desc')
+                    ->get();
+
+        return view('resources.edit', compact('resource', 'resourceGroups', 'unitGroups', 'units', 'rateCards', 'rates'));
+    }
+
+    public function update(Request $request, Resource $resource)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'secondary_code' => 'nullable|string|max:255',
+            'resource_group_id' => 'nullable|exists:resource_groups,id',
+            'unit_group_id' => 'nullable|exists:unit_groups,id',
+            'unit_id' => 'nullable|exists:units,id',
+            'description' => 'nullable|string',
+            'volume_or_weight' => 'nullable|in:0,1,2',
+        ]);
+
+        $validated['updated_by'] = Auth::id();
+
+        $resource->update($validated);
+
+        return redirect()->route('resources.index')->with('success', 'Resource updated successfully.');
+    }
+
+    public function destroy(Resource $resource)
+    {
+        // Check for dependencies (e.g., used in ItemRates, SubitemRates)
+        // For now, we'll just check items_using_count
+        if ($resource->items_using_count > 0) {
+             return response()->json(['success' => false, 'message' => 'Cannot delete resource. It is used by ' . $resource->items_using_count . ' items.']);
+        }
+
+        $resource->delete();
+
+        return response()->json(['success' => true, 'message' => 'Resource deleted successfully.']);
     }
 
     public function show(Request $request, Resource $resource)

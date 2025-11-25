@@ -57,6 +57,12 @@ Route::middleware('auth')->group(function () {
 
     // Resource Details
     Route::get('/resources/search', [ResourceController::class, 'search'])->name('resources.search');
+    Route::resource('resources', ResourceController::class);
+    Route::prefix('resources/{resource}/rates')->name('resources.rates.')->group(function () {
+        Route::post('/', [App\Http\Controllers\ResourceRateController::class, 'store'])->name('store');
+        Route::put('/{rate}', [App\Http\Controllers\ResourceRateController::class, 'update'])->name('update');
+        Route::delete('/{rate}', [App\Http\Controllers\ResourceRateController::class, 'destroy'])->name('destroy');
+    });
 
 
     Route::prefix('api/sors/{sor}/items/{item}/skeleton')->name('api.sors.items.skeleton.')->group(function () {
