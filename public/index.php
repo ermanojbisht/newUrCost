@@ -17,17 +17,4 @@ require __DIR__.'/../vendor/autoload.php';
 /** @var Application $app */
 $app = require_once __DIR__.'/../bootstrap/app.php';
 
-$request = Request::capture();
-
-// DEBUG: Dump Laravel Request Path
-if (isset($_SERVER['REQUEST_URI']) && ($_SERVER['REQUEST_URI'] == '/ukSor/' || $_SERVER['REQUEST_URI'] == '/ukSor')) {
-    echo "<pre>";
-    echo "Laravel Path: " . $request->path() . "\n";
-    echo "Laravel URL: " . $request->url() . "\n";
-    echo "Request URI: " . $request->getRequestUri() . "\n";
-    echo "Base URL: " . $request->getBaseUrl() . "\n";
-    echo "Base Path: " . $request->getBasePath() . "\n";
-    echo "</pre>";
-}
-
-$app->handleRequest($request);
+$app->handleRequest(Request::capture());
