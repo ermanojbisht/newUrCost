@@ -6,17 +6,20 @@ use App\Models\Item;
 use App\Models\ItemRate;
 use App\Models\RateCard;
 use App\Models\Unit;
+use App\Services\UnitService;
 use Illuminate\Support\Facades\Log;
 
 class ItemSkeletonService
 {
     protected $rateAnalysisService;
     protected $overheadService;
+    protected $unitService;
 
-    public function __construct(RateAnalysisService $rateAnalysisService, OverheadService $overheadService)
+    public function __construct(RateAnalysisService $rateAnalysisService, OverheadService $overheadService, UnitService $unitService)
     {
         $this->rateAnalysisService = $rateAnalysisService;
         $this->overheadService = $overheadService;
+        $this->unitService = $unitService;
     }
 
     /**
@@ -60,15 +63,10 @@ class ItemSkeletonService
             $unit_id = $rateDetails['unit_id'];
 
             // Unit Conversion Logic
-            $baseUnit = Unit::find($unit_id);//$res->resource->unit;
-            $usageUnit = $res->unit;
-            $conversionFactor = 1;
+            $rateUnit = Unit::find($unit_id);//$res->resource->unit;
+            $qtyUnit = $res->unit;
 
-            if ($baseUnit && $usageUnit && $baseUnit->id != $usageUnit->id) {
-                $baseFactor = $baseUnit->conversion_factor > 0 ? $baseUnit->conversion_factor : 1;
-                $usageFactor = $usageUnit->conversion_factor > 0 ? $usageUnit->conversion_factor : 1;
-                $conversionFactor = $baseFactor/$usageFactor;
-            }
+            $conversionFactor = $this->unitService->getConversionFactor( $qtyUnit, $rateUnit );//now qty can be coverted to rate unit
 
             // Amount = Quantity * Conversion * Rate
             $amount = $res->quantity * $conversionFactor * $rate;
@@ -106,7 +104,7 @@ class ItemSkeletonService
                 'unit' => $res->unit ? $res->unit->name : '',
                 'unit_id' => $res->unit_id, // Pass unit_id
                 'rate' => $rate,
-                'rate_unit' => $baseUnit ? $baseUnit->name : '', // Pass rate unit
+                'rate_unit' => $rateUnit ? $rateUnit->name : '', // Pass rate unit
                 'amount' => $amount,
                 'resource_group_id' => $res->resource->group_id, // Pass resource_group_id
                 'resource_group_name' => $groupName, // Pass resource_group_name
