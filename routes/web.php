@@ -111,6 +111,7 @@ Route::prefix('api/sors/{sor}/items/{item}/skeleton')->name('api.sors.items.skel
 
 Route::get('/sors/{sor}/items/{item}/ra', [App\Http\Controllers\ItemSkeletonController::class, 'showRaPage'])->name('sors.items.ra');
 Route::get('/sors/{sor}/items/{item}/consumption', [App\Http\Controllers\ItemRateController::class, 'consumption'])->name('sors.items.consumption');
+Route::get('/sors/{sor}/items/{item}/consumptionWithoutOh', [App\Http\Controllers\ItemRateController::class, 'consumptionWithoutOh'])->name('sors.items.consumptionWithoutOh');
 Route::get('api/sors/{sor}/items-datatable', [SorController::class, 'getDataTableData'])->name('api.sors.items-datatable');
 
 Route::get('/sorCards', [SorController::class, 'sorCards'])->name('sorCards');

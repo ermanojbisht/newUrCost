@@ -65,14 +65,9 @@
                 </tr>
             </thead>
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                @php
-                    $totalResourceCost = 0;
-                    $totalOverheadCost = 0;
-                @endphp
-
-                {{-- Resources --}}
+                @php $grandTotal = 0; @endphp
                 @forelse($consumptionList as $resource)
-                    @php $totalResourceCost += $resource['amount']; @endphp
+                    @php $grandTotal += $resource['amount']; @endphp
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ $loop->iteration }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ $resource['group'] }}</td>
@@ -91,39 +86,11 @@
                         <td colspan="7" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-center">No resources found for this item.</td>
                     </tr>
                 @endforelse
-
-                {{-- Subtotal Resources --}}
-                <tr class="bg-gray-50 dark:bg-gray-900 font-semibold">
-                    <td colspan="6" class="px-6 py-3 text-right text-sm text-gray-700 dark:text-gray-300">Total Resources Cost</td>
-                    <td class="px-6 py-3 text-right text-sm text-gray-900 dark:text-white font-mono">{{ number_format($totalResourceCost, 2) }}</td>
-                </tr>
-
-                {{-- Overheads Header --}}
-                @if(count($overheadList) > 0)
-                    <tr class="bg-gray-100 dark:bg-gray-700">
-                        <td colspan="7" class="px-6 py-2 text-left text-xs font-bold text-gray-500 dark:text-gray-300 uppercase tracking-wider">Overheads</td>
-                    </tr>
-                @endif
-
-                {{-- Overheads --}}
-                @foreach($overheadList as $overhead)
-                    @php $totalOverheadCost += $overhead['amount']; @endphp
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">-</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">Overhead</td>
-                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-white" colspan="3">
-                            {{ $overhead['name'] }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white text-right font-mono">-</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white text-right font-bold font-mono">{{ number_format($overhead['amount'], 2) }}</td>
-                    </tr>
-                @endforeach
-
             </tbody>
-            <tfoot class="bg-gray-50 dark:bg-gray-800 font-bold border-t-2 border-gray-200 dark:border-gray-600">
+            <tfoot class="bg-gray-50 dark:bg-gray-800 font-bold">
                 <tr>
-                    <td colspan="6" class="px-6 py-4 text-right text-base text-gray-900 dark:text-white uppercase tracking-wider">Grand Total</td>
-                    <td class="px-6 py-4 text-right text-base text-gray-900 dark:text-white font-mono">{{ number_format($totalResourceCost + $totalOverheadCost, 2) }}</td>
+                    <td colspan="6" class="px-6 py-4 text-right text-sm text-gray-900 dark:text-white uppercase tracking-wider">Grand Total</td>
+                    <td class="px-6 py-4 text-right text-sm text-gray-900 dark:text-white font-mono">{{ number_format($grandTotal, 2) }}</td>
                 </tr>
             </tfoot>
         </table>

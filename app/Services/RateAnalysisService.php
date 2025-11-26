@@ -13,37 +13,49 @@ use App\Models\Rate;
 use App\Models\RateCard;
 use App\Models\Resource;
 use App\Models\TruckSpeed;
+use App\Services\OverheadService;
+use App\Services\UnitService;
 use Log;
 
 class RateAnalysisService
 {
+    protected $overheadService;
+    protected $unitService;
+
+    public function __construct(OverheadService $overheadService, UnitService $unitService)
+    {
+        $this->overheadService = $overheadService;
+        $this->unitService = $unitService;
+    }
     /**
      * Get the rate for a given resource and rate card.
+     * getResourceRate => getResourceRateWithUnit
      *MKB USED
      * @param Resource $resource
      * @param RateCard $ratecard
      * @param string $date
      * @return float
      */
-    public function getResourceRate(Resource $resource, RateCard $ratecard, $date): float
+    public function getResourceRateWithUnit(Resource $resource, RateCard $ratecard, $date): array
     {
         $baseRateWithUnit = $this->getBaseRateWithUnit($resource, $ratecard, $date);
         $baseRate=$baseRateWithUnit['rate'];
         $unit_id=$baseRateWithUnit['unit_id'];
 
         // Material Resources
+        // it is assumend that unit_id of base rate and  lead distance calculation like capacity all are same
         if ($resource->resource_group_id == 3) {
             $leadDetails = $this->calculateLeadCost($resource, $ratecard, $date);
-            return $baseRate + $leadDetails['totalLeadCost'];
+            return ['total_rate'=> $baseRate + $leadDetails['totalLeadCost'],'unit_id'=>$unit_id];
         }
 
         // Labor or Machine Resources
         if (in_array($resource->resource_group_id, [1, 2])) {
             list($indexCost,$percentIndex) = $this->calculateIndexCost($resource, $ratecard, $baseRate);
-            return $baseRate + $indexCost;
+            return ['total_rate'=>$baseRate + $indexCost,'unit_id'=>$unit_id];
         }
 
-        return $baseRate;
+        return ['total_rate'=>$baseRate,'unit_id'=>$unit_id];
     }
 
     /**
@@ -436,7 +448,7 @@ class RateAnalysisService
 
 
     /**
-     * Get a flattened and aggregated list of all resources for an item.
+     * Get a flattened and aggregated list of all resources and overheads for an item.
      *
      * @param Item $item
      * @param RateCard $rateCard
@@ -444,6 +456,263 @@ class RateAnalysisService
      * @return array
      */
     public function getFlatResourceList(Item $item, RateCard $rateCard, $date): array
+    {
+        $resourceList = [];
+        $overheadList = [];
+        $t = $item->turnout_quantity > 0 ? 1 / $item->turnout_quantity : 1;
+
+        $this->buildConsumptionData($item, $t, $rateCard, $date, $resourceList, $overheadList);
+
+        // Aggregate Resources
+        $aggregatedResources = [];
+        foreach ($resourceList as $resource) {
+            //Log::info("resource = ".print_r($resource,true));
+            $id = $resource['resource_id'];
+            if (!isset($aggregatedResources[$id])) {
+                //Log::info("in first resource ");
+                $aggregatedResources[$id] = $resource;
+                // Calculate amount for the initial entry
+                $aggregatedResources[$id]['quantity']=$resource['quantity'];
+                $getResourceRateWithUnit = $this->getResourceRateWithUnit($resource['resource_object'], $rateCard, $date);
+                $aggregatedResources[$id]['rate'] = $getResourceRateWithUnit['total_rate'];
+                $aggregatedList[$id]['runit'] = $getResourceRateWithUnit['unit_id'];
+                $aggregatedResources[$id]['amount'] = $getResourceRateWithUnit['total_rate'] * $resource['quantity']* $this->unitService->getConversionFactor($resource['qtyUnit'] , $aggregatedList[$id]['runit']);
+            } else {
+                //Log::info("in another time resource ");
+
+                $aggregatedResources[$id]['quantity'] += $resource['quantity'];
+                // Recalculate amount with new total quantity
+                $getResourceRateWithUnit = $this->getResourceRateWithUnit($resource['resource_object'], $rateCard, $date);
+                $aggregatedList[$id]['rate'] = $getResourceRateWithUnit['total_rate'];
+                $aggregatedList[$id]['runit'] = $getResourceRateWithUnit['unit_id'];
+                $aggregatedResources[$id]['amount'] = $getResourceRateWithUnit['total_rate'] * $aggregatedResources[$id]['quantity']*$this->unitService->getConversionFactor($resource['qtyUnit'] , $aggregatedList[$id]['runit']);
+            }
+        }
+
+
+        // Aggregate Overheads
+        $aggregatedOverheads = [];
+        foreach ($overheadList as $overhead) {
+            $id = $overhead['overhead_id']; // Group by Overhead ID (Master ID)
+            if (!isset($aggregatedOverheads[$id])) {
+                $aggregatedOverheads[$id] = $overhead;
+            } else {
+                $aggregatedOverheads[$id]['amount'] += $overhead['amount'];
+            }
+        }
+        //Log::info("resources = ".print_r(array_values($aggregatedResources),true));
+        //Log::info("aggregatedOverheads = ".print_r(array_values($aggregatedOverheads),true));
+
+        return [
+            'resources' => array_values($aggregatedResources),
+            'overheads' => array_values($aggregatedOverheads)
+        ];
+    }
+
+    /**
+     * Recursive helper to build the flat resource and overhead list.
+     * Returns the total cost of the item (per unit of item).
+     *
+     * @param Item $item
+     * @param float $factor
+     * @param RateCard $rateCard
+     * @param string $date
+     * @param array $resourceList
+     * @param array $overheadList
+     * @return float
+     */
+    private function buildConsumptionData(Item $item, float $factor, RateCard $rateCard, $date, array &$resourceList, array &$overheadList): float
+    {
+        $localCosts = [
+            'totalLabor' => 0,
+            'totalMachine' => 0,
+            'totalMaterial' => 0,
+            'totalCartage' => 0,
+            'totalMisc' => 0,
+            'subItemsWithOh' => 0,
+            'resourceCosts' => [],
+            'runningTotal' => 0,
+            'totalOverhead' => 0
+        ];
+
+        // 1. Direct Resources
+        foreach ($item->skeletons as $skeleton) {
+            $getResourceRateWithUnit = $this->getResourceRateWithUnit($skeleton->resource, $rateCard, $date);
+            $rate = $getResourceRateWithUnit['total_rate'];
+            $rateUnit = $getResourceRateWithUnit['unit_id'];
+            $amount = $skeleton->quantity * $rate*  $this->unitService->getConversionFactor($skeleton->unit_id , $rateUnit);
+
+            // Add to Global List (Scaled)
+            $resourceList[] = [
+                'resource_id' => $skeleton->resource_id,
+                'resource_object' => $skeleton->resource,
+                'group' => $skeleton->resource->group->name ?? 'Unknown',
+                'name' => $skeleton->resource->name,
+                'unit' => $skeleton->unit->name ?? '',
+                'quantity' => $skeleton->quantity * $factor,
+                'qtyUnit' => $skeleton->unit_id,
+            ];
+
+            // Add to Local Costs (Unscaled)
+            $localCosts['resourceCosts'][$skeleton->resource_id] = $amount;
+
+            $groupId = $skeleton->resource->resource_group_id; // Assuming column name
+            // Map group IDs to cost categories
+            if ($groupId == 1) $localCosts['totalLabor'] += $amount;
+            elseif ($groupId == 2) $localCosts['totalMachine'] += $amount;
+            elseif ($groupId == 3) $localCosts['totalMaterial'] += $amount;
+            elseif ($groupId == 4) $localCosts['totalCartage'] += $amount;
+            elseif ($groupId == 5) $localCosts['totalMisc'] += $amount;
+
+            $localCosts['runningTotal'] += $amount;
+        }
+
+        // 2. Sub-items
+        foreach ($item->subitems as $subItemRelation) {
+            $childItem = $subItemRelation->subItem;
+            if ($childItem) {
+                $turnout = $childItem->turnout_quantity > 0 ? $childItem->turnout_quantity : 1;
+                $subItemQty = $subItemRelation->quantity;
+
+                // New factor for global list = Current Factor * (SubItem Qty / Turnout)
+                $newFactor = $factor * ($subItemQty / $turnout);
+
+                // Recurse to get cost of 1 unit of subitem
+                $subUnitCost = $this->buildConsumptionData($childItem, $newFactor, $rateCard, $date, $resourceList, $overheadList);
+
+                // Calculate cost contribution to this item (Batch)
+                // Cost = SubUnitCost * SubItemQty
+                // Wait, SubItemQty is for the batch (turnout) of this item.
+                $subCost = $subUnitCost * $subItemQty;
+
+                if ($subItemRelation->is_oh_applicable) {
+                    $localCosts['subItemsWithOh'] += $subCost;
+                }
+                $localCosts['runningTotal'] += $subCost;
+            }
+        }
+
+        // 3. Overheads
+        // Need to fetch overheads for this item
+        // Assuming $item->overheads() relationship exists and is loaded or we load it
+        $overheads = $item->overheads()->orderBy('sort_order')->get(); // Or use existing relation if eager loaded
+
+        foreach ($overheads as $rule) {
+            $res = $this->overheadService->calculateOverheadAmount($rule, $localCosts);
+            $amount = $res['amount'];
+
+            // Add to Global List (Scaled)
+            // Amount is for the Batch (Turnout).
+            // We need Amount per Unit of Item -> Amount / Turnout
+            // Then Scale by Factor (Units of Item needed for Root)
+            // GlobalAmount = (Amount / Turnout) * Factor
+            // Or Amount * (Factor / Turnout)
+
+            $turnout = $item->turnout_quantity > 0 ? $item->turnout_quantity : 1;
+            $scaledAmount = $amount * ($factor / $turnout); // Wait, $factor is 1/Turnout for root.
+            // Let's trace:
+            // Root (T=1). Factor = 1/1 = 1.
+            // OH Amount = 100. Scaled = 100 * (1/1) = 100. Correct.
+
+            // Sub (T=10). Needed 5.
+            // Factor = 1 * (5/10) = 0.5.
+            // OH Amount (for batch of 10) = 50.
+            // Per Unit = 5.
+            // Needed 5 units -> Total OH = 25.
+            // Formula: 50 * (0.5 / 10) = 50 * 0.05 = 2.5. INCORRECT.
+
+            // Let's re-evaluate Factor.
+            // Root (T=1). Factor = 1/1 = 1.
+            // Sub (T=10). Needed 5 for Root Batch (1).
+            // Factor passed to Sub = 1 * (5/10) = 0.5.
+            // This Factor (0.5) means "0.5 units of Sub needed for 1 unit of Root".
+            // Wait, my initial Factor logic for Resources was:
+            // Qty * Factor.
+            // Resource Qty is for Batch (10).
+            // So Resource Qty per Unit = Qty / 10.
+            // Total Resource needed = (Qty/10) * 0.5? No.
+            // If I need 0.5 units of Sub.
+            // And Sub (Batch 10) has 50 Res.
+            // Res per unit = 5.
+            // Total Res = 5 * 0.5 = 2.5.
+
+            // My Resource Logic:
+            // $resourceList[] = Qty * Factor.
+            // 50 * 0.5 = 25.
+            // But 25 is wrong. It should be 2.5.
+            // Why?
+            // Because Qty (50) is for Batch (10).
+            // Factor (0.5) is "Units of Sub needed".
+            // So we need (Qty / Turnout) * Factor.
+            // My previous logic `quantity * factor` assumed `factor` accounts for turnout?
+            // Let's check `buildFlatResourceList` logic again.
+            // `newFactor = factor * ($subItemQty / $turnout)`.
+            // Initial factor = 1.0 (User changed it to `1/$item->turnout_quantity`).
+            // If User changed initial factor to `1/Turnout`, then initial factor is "Per Unit".
+            // Let's trace User's change: `$t=1/$item->turnout_quantity; $this->buildFlatResourceList(..., $t, ...);`
+
+            // Root (T=1). Factor = 1.
+            // Res Qty (for T=1) = 10.
+            // Added: 10 * 1 = 10. Correct.
+
+            // Sub (T=10). Needed 5 for Root Batch (1).
+            // newFactor = 1 * (5/10) = 0.5.
+            // Res Qty (for T=10) = 50.
+            // Added: 50 * 0.5 = 25.
+            // Wait.
+            // Root needs 5 Sub.
+            // Sub (Batch 10) has 50 Res.
+            // 1 Sub has 5 Res.
+            // 5 Sub has 25 Res.
+            // So 25 is CORRECT.
+
+            // So `Qty * Factor` is correct for Resources.
+
+            // Now Overheads.
+            // OH Amount (for Batch 10) = 50.
+            // Added: 50 * Factor (0.5) = 25.
+            // 1 Sub has 5 OH.
+            // 5 Sub has 25 OH.
+            // So `Amount * Factor` is CORRECT.
+
+            $overheadList[] = [
+                'overhead_id' => $rule->overhead_id,
+                'name' => $rule->overhead->description ?? 'Unknown',
+                'amount' => $amount * $factor,
+                'group' => 'Overhead', // For consistency
+            ];
+
+            if ($rule->allow_further_overhead) {
+                $localCosts['totalOverhead'] += $amount;
+            }
+        }
+
+        return $localCosts['runningTotal'] + $localCosts['totalOverhead'];
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /**
+     * Get a flattened and aggregated list of all resources for an item.
+     * getFlatResourceListWithoutOh may be removed
+     * @param Item $item
+     * @param RateCard $rateCard
+     * @param string $date
+     * @return array
+     */
+    public function getFlatResourceListWithoutOh(Item $item, RateCard $rateCard, $date): array
     {
         $resourceList = [];
         $t=1/$item->turnout_quantity;
@@ -458,15 +727,18 @@ class RateAnalysisService
             if (!isset($aggregatedList[$id])) {
                 $aggregatedList[$id] = $resource;
                 // Calculate amount for the initial entry
-                $rate = $this->getResourceRate($resource['resource_object'], $rateCard, $date);
-                $aggregatedList[$id]['rate'] = $rate;
-                $aggregatedList[$id]['amount'] = $rate * $aggregatedList[$id]['quantity'];
+                $aggregatedList[$id]['quantity'] = $resource['quantity'];
+                $getResourceRateWithUnit = $this->getResourceRateWithUnit($resource['resource_object'], $rateCard, $date);
+                $aggregatedList[$id]['rate'] = $getResourceRateWithUnit['total_rate'];
+                $aggregatedList[$id]['runit'] = $getResourceRateWithUnit['unit_id'];
+                $aggregatedList[$id]['amount'] = $getResourceRateWithUnit['total_rate'] * $resource['quantity']* $this->unitService->getConversionFactor($resource['qtyUnit'] , $getResourceRateWithUnit['unit_id']);
             } else {
                 $aggregatedList[$id]['quantity'] += $resource['quantity'];
                 // Recalculate amount with new total quantity
-                $rate = $this->getResourceRate($resource['resource_object'], $rateCard, $date);
-                $aggregatedList[$id]['rate'] = $rate;
-                $aggregatedList[$id]['amount'] = $rate * $aggregatedList[$id]['quantity'];
+                $getResourceRateWithUnit = $this->getResourceRateWithUnit($resource['resource_object'], $rateCard, $date);
+                $aggregatedList[$id]['rate'] = $getResourceRateWithUnit['total_rate'];
+                $aggregatedList[$id]['runit'] = $getResourceRateWithUnit['unit_id'];
+                $aggregatedList[$id]['amount'] = $getResourceRateWithUnit['total_rate'] * $aggregatedList[$id]['quantity']*$this->unitService->getConversionFactor($resource['qtyUnit'] , $getResourceRateWithUnit['unit_id']);
             }
         }
 
@@ -491,12 +763,13 @@ class RateAnalysisService
                 'resource_object' => $skeleton->resource,
                 'group' => $skeleton->resource->group->name ?? 'Unknown',
                 'name' => $skeleton->resource->name,
-                'unit' => $skeleton->resource->unit->name ?? '',
+                'unit' => $skeleton->unit->name ?? '',
+                'qtyUnit' => $skeleton->unit_id ?? '',
                 'quantity' => $skeleton->quantity * $factor,
             ];
         }
 
-        //Log::info("resourceList = ".print_r($resourceList,true));
+        Log::info("resourceList = ".print_r($resourceList,true));
 
         // 2. Recursively process sub-items
         foreach ($item->subitems as $subItemRelation) {
