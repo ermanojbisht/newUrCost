@@ -6,16 +6,21 @@ use App\Models\Item;
 use App\Models\RateCard;
 use App\Models\Sor;
 use App\Services\RateAnalysisService;
+use App\Services\RateCalculationService;
+use App\Exports\RateAnalysisExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use Log;
 
 class ItemRateController extends Controller
 {
     protected $rateAnalysisService;
+    protected $rateCalculationService;
 
-    public function __construct(RateAnalysisService $rateAnalysisService)
+    public function __construct(RateAnalysisService $rateAnalysisService, RateCalculationService $rateCalculationService)
     {
         $this->rateAnalysisService = $rateAnalysisService;
+        $this->rateCalculationService = $rateCalculationService;
     }
 
     /**
@@ -58,5 +63,26 @@ class ItemRateController extends Controller
         $rateCards = RateCard::all();
 
         return view('sors.items.consumption', compact('sor', 'item', 'rateCard', 'date', 'consumptionList', 'overheadList', 'rateCards'));
+    }
+
+    public function export(Request $request, Sor $sor, Item $item)
+    {
+        $rateCardId = $request->input('rate_card_id', 1);
+        $rateCard = RateCard::find($rateCardId);
+        $date = $request->input('date', now()->toDateString());
+
+        // 1. Get the correctly ordered list of items to analyze
+        $orderedItems = $this->rateCalculationService->getAnalysisOrder($item);
+        
+        // 2. Get the unique list of all resources involved
+        $uniqueResources = $this->rateCalculationService->getUniqueResourcesForItems($orderedItems);
+
+        $fileName = 'RA_Export_' . $item->item_code . '.xlsx';
+
+        // 3. Pass all prepared data to the main export class
+        return Excel::download(
+            new RateAnalysisExport($orderedItems, $uniqueResources, $rateCard, $date),
+            $fileName
+        );
     }
 }

@@ -166,4 +166,61 @@ class RateCalculationService
 
         Log::info("ItemRate CREATED/UPDATED", ['item_code' => $item->item_code]);
     }
+
+    /**
+     * Returns a flattened array of all Items required for a top-level analysis,
+     * ordered from the deepest child to the top-level parent.
+     */
+    public function getAnalysisOrder(Item $item): array
+    {
+        $orderedList = [];
+        $this->buildAnalysisOrder($item, $orderedList);
+        return $orderedList;
+    }
+
+    /**
+     * Recursive helper to perform a post-order traversal of the item dependency tree.
+     */
+    private function buildAnalysisOrder(Item $item, array &$list)
+    {
+        // First, recurse through all children
+        foreach ($item->subitems as $subItemRelation) {
+            $this->buildAnalysisOrder($subItemRelation->subItem, $list);
+        }
+
+        // Then, add the parent item to the list if it's not already there.
+        // This ensures children are always in the list before their parents.
+        // We check by ID to avoid duplication
+        $exists = false;
+        foreach ($list as $existingItem) {
+            if ($existingItem->id === $item->id) {
+                $exists = true;
+                break;
+            }
+        }
+        
+        if (!$exists) {
+            $list[] = $item;
+        }
+    }
+    
+    /**
+     * Gathers all unique resources from a list of items.
+     */
+    public function getUniqueResourcesForItems(array $items): array
+    {
+        $resources = [];
+        $resourceIds = [];
+
+        foreach ($items as $item) {
+            foreach ($item->skeletons as $skeleton) {
+                if (!in_array($skeleton->resource_id, $resourceIds)) {
+                    $resourceIds[] = $skeleton->resource_id;
+                    $resources[] = $skeleton->resource;
+                }
+            }
+        }
+        
+        return $resources;
+    }
 }

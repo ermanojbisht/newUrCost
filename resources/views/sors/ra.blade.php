@@ -28,6 +28,10 @@
             {!! config('icons.chart-pie') !!}
             <span class="ml-2">Consumption Report</span>
         </a>
+        <a href="{{ route('sors.items.export', ['sor' => $sor->id, 'item' => $item->id, 'rate_card_id' => $rateCardId, 'date' => $effectiveDate]) }}" class="btn-secondary flex items-center">
+            {!! config('icons.download') !!}
+            <span class="ml-2">Export to Excel</span>
+        </a>
         <a href="{{ route('sors.admin', $sor->id) }}" class="btn-secondary flex items-center">
             {!! config('icons.arrow-left') !!}
             <span class="ml-2">Back to Tree</span>
