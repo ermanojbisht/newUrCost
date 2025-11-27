@@ -56,8 +56,16 @@ class ResourceController extends Controller
                     $rateIcon = config('icons.calculator');
                     $editIcon = config('icons.edit');
                     $deleteIcon = config('icons.delete');
+                    $chartIcon = config('icons.chart');
                     
                     $btn = '<a href="'.$rateUrl.'" class="text-green-600 hover:text-green-900 mr-2" title="Manage Rates">'.$rateIcon.'</a>';
+                    
+                    // Add Manage Index button for Labor (1) group only
+                    if ($row->resource_group_id == 1) {
+                        $indexUrl = route('resources.labor-indices.index', $row->id);
+                        $btn .= '<a href="'.$indexUrl.'" class="text-purple-600 hover:text-purple-900 mr-2" title="Manage Labor Indices">'.$chartIcon.'</a>';
+                    }
+
                     $btn .= '<a href="'.$editUrl.'" class="text-blue-600 hover:text-blue-900 mr-2" title="Edit">'.$editIcon.'</a>';
                     $btn .= '<button type="button" onclick="deleteResource('.$row->id.')" class="text-red-600 hover:text-red-900" title="Delete">'.$deleteIcon.'</button>';
                     return '<div class="flex items-center">'.$btn.'</div>';

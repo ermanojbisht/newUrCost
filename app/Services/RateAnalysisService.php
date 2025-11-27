@@ -51,7 +51,7 @@ class RateAnalysisService
 
         // Labor or Machine Resources
         if (in_array($resource->resource_group_id, [1, 2])) {
-            list($indexCost,$percentIndex) = $this->calculateIndexCost($resource, $ratecard, $baseRate);
+            list($indexCost,$percentIndex) = $this->calculateIndexCost($resource, $ratecard, $baseRate, $date);
             return ['total_rate'=>$baseRate + $indexCost,'unit_id'=>$unit_id];
         }
 
@@ -141,7 +141,7 @@ class RateAnalysisService
 
         // Labor or Machine Resources
         if (in_array($resource->resource_group_id, [1, 2])) {
-            list($indexCost,$percentIndex) = $this->calculateIndexCost($resource, $ratecard, $baseRateWithUnit['rate']);
+            list($indexCost,$percentIndex) = $this->calculateIndexCost($resource, $ratecard, $baseRateWithUnit['rate'], $date);
             if ($indexCost != 0) {
                 $details['index_cost'] = $indexCost;
                 $details['total_rate'] += $indexCost;
@@ -278,37 +278,48 @@ class RateAnalysisService
     /**
      * Calculate the index cost for a labor or machine resource.
      */
-    public function calculateIndexCost(Resource $resource, RateCard $ratecard, float $baseRate)
+    public function calculateIndexCost(Resource $resource, RateCard $ratecard, float $baseRate, $date)
     {
         $indexModel = $resource->resource_group_id == 1 ? new LaborIndex() : new MachineIndex();
 
-        //Log::info("indexModel = ".print_r($indexModel,true));
-        //Log::info("this = ".print_r(['resource_id'=>$resource->id,'rate_card_id'=>$ratecard->id],true));
+        // Helper closure to add date constraints
+        $addDateConstraints = function($query) use ($date) {
+            $query->where('valid_from', '<=', $date)
+                  ->where(function ($q) use ($date) {
+                      $q->where('valid_to', '>=', $date)
+                        ->orWhereNull('valid_to');
+                  })
+                  ->where('is_canceled', 0);
+        };
 
         // 1. Check for specific resource and rate card
-        $index = $indexModel->where('resource_id', $resource->id)
-            ->where('rate_card_id', $ratecard->id)
-            ->first();
+        $query = $indexModel->where('resource_id', $resource->id)
+            ->where('rate_card_id', $ratecard->id);
+        $addDateConstraints($query);
+        $index = $query->orderBy('valid_from', 'desc')->first();
 
         // 2. Fallback to general rule for the rate card
         if (!$index) {
-            $index = $indexModel->where('resource_id', 1) // General rule
-                ->where('rate_card_id', $ratecard->id)
-                ->first();
+            $query = $indexModel->where('resource_id', 1) // General rule
+                ->where('rate_card_id', $ratecard->id);
+            $addDateConstraints($query);
+            $index = $query->orderBy('valid_from', 'desc')->first();
         }
 
         // 3. Fallback to specific resource in default rate card
         if (!$index) {
-            $index = $indexModel->where('resource_id', $resource->id)
-                ->where('rate_card_id', 1) // Default rate card
-                ->first();
+            $query = $indexModel->where('resource_id', $resource->id)
+                ->where('rate_card_id', 1); // Default rate card
+            $addDateConstraints($query);
+            $index = $query->orderBy('valid_from', 'desc')->first();
         }
 
         // 4. Fallback to general rule in default rate card
         if (!$index) {
-            $index = $indexModel->where('resource_id', 1)
-                ->where('rate_card_id', 1)
-                ->first();
+            $query = $indexModel->where('resource_id', 1)
+                ->where('rate_card_id', 1);
+            $addDateConstraints($query);
+            $index = $query->orderBy('valid_from', 'desc')->first();
         }
 
         $percentIndex = $index ? $index->index_value : 0.0;
