@@ -6,6 +6,7 @@ use App\Http\Controllers\ItemController;
 use App\Http\Controllers\SorController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\ItemSkeletonController;
+use App\Http\Controllers\LaborIndexController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -58,6 +59,10 @@ Route::middleware('auth')->group(function () {
     // Resource Details
     Route::get('/resources/search', [ResourceController::class, 'search'])->name('resources.search');
     Route::resource('resources', ResourceController::class);
+    Route::get('labor-indices/global', [LaborIndexController::class, 'globalIndex'])->name('labor-indices.global.index');
+    Route::post('labor-indices/global', [LaborIndexController::class, 'globalStore'])->name('labor-indices.global.store');
+    Route::post('labor-indices/{id}/lock', [LaborIndexController::class, 'lock'])->name('labor-indices.lock');
+    Route::resource('resources.labor-indices', LaborIndexController::class)->shallow();
     Route::prefix('resources/{resource}/rates')->name('resources.rates.')->group(function () {
         Route::get('/manage', [App\Http\Controllers\ResourceRateController::class, 'index'])->name('index');
         Route::post('/', [App\Http\Controllers\ResourceRateController::class, 'store'])->name('store');
