@@ -25,7 +25,7 @@ class LaborIndex extends Model
     protected $casts = [
         'valid_from' => 'date',
         'valid_to' => 'date',
-        'is_locked' => 'boolean',
+        'is_locked' => 'integer',
         'is_canceled' => 'boolean',
     ];
 

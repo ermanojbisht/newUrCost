@@ -204,8 +204,8 @@ class LaborIndexController extends Controller
             return response()->json(['success' => false, 'message' => 'Cannot delete locked index.'], 403);
         }
 
-        $index->is_canceled = 1;
-        $index->save();
+
+        $index->delete();
 
         return response()->json(['success' => true, 'message' => 'Index deleted successfully.']);
     }

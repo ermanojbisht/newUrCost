@@ -22,17 +22,7 @@
             <a href="{{ route('resources.index') }}" class="btn-secondary flex items-center">
                 {!! config('icons.arrow-left') !!}
                 <span class="ml-2">Back to Resources</span>
-            @if($resource->id != 1)
-            <a href="{{ route('resources.index') }}" class="btn-secondary flex items-center">
-                {!! config('icons.arrow-left') !!}
-                <span class="ml-2">Back to Resources</span>
             </a>
-            @else
-            <a href="{{ route('resources.index') }}" class="btn-secondary flex items-center">
-                {!! config('icons.arrow-left') !!}
-                <span class="ml-2">Back to Resources</span>
-            </a>
-            @endif
         </div>
     </div>
 
@@ -210,7 +200,7 @@
     function deleteIndex(id) {
         if(confirm('Are you sure you want to delete this index?')) {
             $.ajax({
-                url: "/resources/labor-indices/" + id, // Shallow route for delete
+                url: "/labor-indices/" + id, // Shallow route for delete
                 type: 'DELETE',
                 data: {
                     "_token": "{{ csrf_token() }}"
@@ -259,7 +249,7 @@
             var method;
 
             if (id) {
-                url = "/resources/labor-indices/" + id; // Shallow route for update
+                url = "/labor-indices/" + id; // Shallow route for update
                 method = 'PUT';
             } else {
                 url = isGlobal ? "{{ route('labor-indices.global.store') }}" : "{{ route('resources.labor-indices.store', $resource->id) }}";
@@ -313,7 +303,7 @@
         $('#indices-table').on('click', '.edit-btn', function() {
             var id = $(this).data('id');
             // Use shallow route for show/edit
-            $.get("/resources/labor-indices/" + id, function(data) {
+            $.get("/labor-indices/" + id, function(data) {
                 $('#index_id').val(data.id);
                 $('#rate_card_id').val(data.rate_card_id);
                 $('#index_value').val(data.index_value);
