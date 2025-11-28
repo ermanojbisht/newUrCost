@@ -60,10 +60,13 @@ class ResourceController extends Controller
                     
                     $btn = '<a href="'.$rateUrl.'" class="text-green-600 hover:text-green-900 mr-2" title="Manage Rates">'.$rateIcon.'</a>';
                     
-                    // Add Manage Index button for Labor (1) group only
+                    // Add Manage Index button for Labor (1) and Machine (2) groups
                     if ($row->resource_group_id == 1) {
                         $indexUrl = route('resources.labor-indices.index', $row->id);
                         $btn .= '<a href="'.$indexUrl.'" class="text-purple-600 hover:text-purple-900 mr-2" title="Manage Labor Indices">'.$chartIcon.'</a>';
+                    } elseif ($row->resource_group_id == 2) {
+                        $indexUrl = route('resources.machine-indices.index', $row->id);
+                        $btn .= '<a href="'.$indexUrl.'" class="text-orange-600 hover:text-orange-900 mr-2" title="Manage Machine Indices">'.$chartIcon.'</a>';
                     }
 
                     $btn .= '<a href="'.$editUrl.'" class="text-blue-600 hover:text-blue-900 mr-2" title="Edit">'.$editIcon.'</a>';
