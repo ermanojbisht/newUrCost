@@ -14,6 +14,7 @@ class LeadDistance extends Model
     protected $fillable = [
         'resource_id',
         'rate_card_id',
+        'station_id',
         'distance',
         'type',
         'applicable_date',
@@ -27,7 +28,7 @@ class LeadDistance extends Model
         'applicable_date' => 'date',
         'valid_from' => 'date',
         'valid_to' => 'date',
-        'is_locked' => 'boolean',
+        'is_locked' => 'integer',
         'is_canceled' => 'boolean',
     ];
 
@@ -39,5 +40,9 @@ class LeadDistance extends Model
     public function rateCard()
     {
         return $this->belongsTo(RateCard::class, 'rate_card_id');
+    }
+    public function station()
+    {
+        return $this->belongsTo(Station::class);
     }
 }

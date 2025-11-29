@@ -37,5 +37,11 @@
         <li>
             <a href="{{ route('machine-indices.all') }}" class="block py-2 px-4 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">Machine Indices</a>
         </li>
+        <li>
+            <a href="{{ route('stations.index') }}" class="block py-2 px-4 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">Stations</a>
+        </li>
+        <li>
+            <a href="{{ route('lead-distances.all') }}" class="block py-2 px-4 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">Lead Distances</a>
+        </li>
     </ul>
 </div>

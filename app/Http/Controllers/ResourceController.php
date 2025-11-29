@@ -57,6 +57,7 @@ class ResourceController extends Controller
                     $editIcon = config('icons.edit');
                     $deleteIcon = config('icons.delete');
                     $chartIcon = config('icons.chart');
+                    $truckIcon = config('icons.truck');
                     
                     $btn = '<a href="'.$rateUrl.'" class="text-green-600 hover:text-green-900 mr-2" title="Manage Rates">'.$rateIcon.'</a>';
                     
@@ -67,6 +68,9 @@ class ResourceController extends Controller
                     } elseif ($row->resource_group_id == 2) {
                         $indexUrl = route('resources.machine-indices.index', $row->id);
                         $btn .= '<a href="'.$indexUrl.'" class="text-orange-600 hover:text-orange-900 mr-2" title="Manage Machine Indices">'.$chartIcon.'</a>';
+                    } elseif ($row->resource_group_id == 3) {
+                        $indexUrl = route('resources.lead-distances.index', $row->id);
+                        $btn .= '<a href="'.$indexUrl.'" class="text-teal-600 hover:text-teal-900 mr-2" title="Manage Lead Distances">'.$truckIcon.'</a>';
                     }
 
                     $btn .= '<a href="'.$editUrl.'" class="text-blue-600 hover:text-blue-900 mr-2" title="Edit">'.$editIcon.'</a>';

@@ -73,6 +73,16 @@ Route::middleware('auth')->group(function () {
     Route::post('machine-indices/global', [MachineIndexController::class, 'globalStore'])->name('machine-indices.global.store');
     Route::post('machine-indices/{id}/lock', [MachineIndexController::class, 'lock'])->name('machine-indices.lock');
     Route::resource('resources.machine-indices', MachineIndexController::class)->shallow();
+    
+    // Stations
+    Route::post('stations/{id}/sync', [\App\Http\Controllers\StationController::class, 'sync'])->name('stations.sync');
+    Route::resource('stations', \App\Http\Controllers\StationController::class);
+
+    // Lead Distances
+    Route::get('lead-distances/all', [\App\Http\Controllers\LeadDistanceController::class, 'allIndices'])->name('lead-distances.all');
+    Route::post('lead-distances/{id}/lock', [\App\Http\Controllers\LeadDistanceController::class, 'lock'])->name('lead-distances.lock');
+    Route::resource('resources.lead-distances', \App\Http\Controllers\LeadDistanceController::class)->shallow();
+
     Route::prefix('resources/{resource}/rates')->name('resources.rates.')->group(function () {
         Route::get('/manage', [App\Http\Controllers\ResourceRateController::class, 'index'])->name('index');
         Route::post('/', [App\Http\Controllers\ResourceRateController::class, 'store'])->name('store');
