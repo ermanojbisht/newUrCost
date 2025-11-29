@@ -85,6 +85,7 @@ Route::middleware('auth')->group(function () {
 
     // Item Technical Specs
     Route::post('items/{item}/generate-specs', [\App\Http\Controllers\ItemTechnicalSpecController::class, 'generate'])->name('items.generate-specs');
+    Route::get('items/{item}/specs/edit', [\App\Http\Controllers\ItemTechnicalSpecController::class, 'edit'])->name('items.edit-specs');
     Route::put('items/{item}/specs', [\App\Http\Controllers\ItemTechnicalSpecController::class, 'update'])->name('items.update-specs');
 
     Route::prefix('resources/{resource}/rates')->name('resources.rates.')->group(function () {

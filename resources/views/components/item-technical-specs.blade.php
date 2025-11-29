@@ -8,9 +8,9 @@
         @if($editable)
         <div class="flex space-x-2">
             @if($item->technicalSpec)
-                <button @click="$dispatch('open-specs-editor')" class="btn-secondary text-sm flex items-center">
+                <a href="{{ route('items.edit-specs', $item->id) }}" class="btn-secondary text-sm flex items-center">
                     <span class="mr-2">{!! config('icons.edit') !!}</span> Edit
-                </button>
+                </a>
             @endif
             @if(!$item->technicalSpec)
                 <button id="generate-specs-btn" class="btn-primary text-sm flex items-center">
@@ -21,9 +21,7 @@
         @endif
     </div>
 
-    @if($editable)
-    <x-item-technical-specs-edit-modal :item="$item" />
-    @endif
+
 
     @if($item->technicalSpec)
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -127,9 +125,9 @@
                 <button id="generate-specs-btn-empty" class="btn-primary">
                     <span class="mr-2">✨</span> Generate with AI
                 </button>
-                <button @click="$dispatch('open-specs-editor')" class="btn-secondary">
+                <a href="{{ route('items.edit-specs', $item->id) }}" class="btn-secondary">
                     <span class="mr-2">{!! config('icons.plus') !!}</span> Create Manually
-                </button>
+                </a>
             </div>
             @endif
         </div>

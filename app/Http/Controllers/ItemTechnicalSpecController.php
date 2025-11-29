@@ -26,6 +26,11 @@ class ItemTechnicalSpecController extends Controller
         }
     }
 
+    public function edit(Item $item)
+    {
+        return view('items.technical-specs.edit', compact('item'));
+    }
+
     public function update(Request $request, Item $item)
     {
         $validated = $request->validate([
