@@ -123,9 +123,14 @@
         <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 text-center">
             <p class="text-gray-500 dark:text-gray-400 mb-4">No technical specifications available for this item.</p>
             @if($editable)
-            <button id="generate-specs-btn-empty" class="btn-primary">
-                Generate with AI
-            </button>
+            <div class="flex justify-center space-x-4">
+                <button id="generate-specs-btn-empty" class="btn-primary">
+                    <span class="mr-2">✨</span> Generate with AI
+                </button>
+                <button @click="$dispatch('open-specs-editor')" class="btn-secondary">
+                    <span class="mr-2">{!! config('icons.plus') !!}</span> Create Manually
+                </button>
+            </div>
             @endif
         </div>
     @endif
