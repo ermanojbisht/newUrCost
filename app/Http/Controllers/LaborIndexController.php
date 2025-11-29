@@ -252,4 +252,53 @@ class LaborIndexController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Index locked and promoted to Current successfully.']);
     }
+
+    public function allIndices(Request $request)
+    {
+        if ($request->ajax()) {
+            $query = LaborIndex::with(['resource', 'rateCard', 'createdBy'])
+                ->where('is_canceled', 0);
+
+            if ($request->has('resource_id') && $request->resource_id) {
+                $query->where('resource_id', $request->resource_id);
+            }
+            if ($request->has('rate_card_id') && $request->rate_card_id) {
+                $query->where('rate_card_id', $request->rate_card_id);
+            }
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->editColumn('valid_from', function($row) {
+                    return $row->valid_from ? $row->valid_from->format('d-M-Y') : '-';
+                })
+                ->editColumn('valid_to', function($row) {
+                    return $row->valid_to ? $row->valid_to->format('d-M-Y') : 'Until Changed';
+                })
+                ->editColumn('is_locked', function($row) {
+                    // 0: Experimental, 1: Current, 2: Old
+                    return $row->is_locked;
+                })
+                ->addColumn('resource_name', function($row) {
+                    return $row->resource ? $row->resource->name : 'Global';
+                })
+                ->addColumn('action', function($row) {
+                    $btn = '';
+                    if ($row->is_locked == 0) {
+                        $btn .= '<button type="button" onclick="openLockModal('.$row->id.', \''.($row->valid_from ? $row->valid_from->format('Y-m-d') : '').'\')" class="text-indigo-600 hover:text-indigo-900 mr-2" title="Lock & Promote">'.config('icons.lock').'</button>';
+                        $btn .= '<button type="button" data-id="'.$row->id.'" class="edit-btn text-blue-600 hover:text-blue-900 mr-2" title="Edit">'.config('icons.edit').'</button>';
+                        $btn .= '<button type="button" onclick="deleteIndex('.$row->id.')" class="text-red-600 hover:text-red-900" title="Delete">'.config('icons.delete').'</button>';
+                    } else {
+                        $btn .= '<span class="text-gray-400 cursor-not-allowed mr-2" title="Locked">'.config('icons.lock').'</span>';
+                    }
+                    return '<div class="flex items-center">'.$btn.'</div>';
+                })
+                ->rawColumns(['action'])
+                ->make(true);
+        }
+
+        $rateCards = RateCard::all();
+        $resources = Resource::where('resource_group_id', 1)->get(); // Labor resources
+
+        return view('resources.labor_indices.all', compact('rateCards', 'resources'));
+    }
 }

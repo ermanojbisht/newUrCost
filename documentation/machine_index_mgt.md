@@ -73,3 +73,9 @@ To ensure historical data integrity, indices follow a strict lifecycle managed b
 *   Accessed via a dedicated "Manage Global Indices" page (or via the link on any Resource Index page).
 *   Functionality is identical to Resource-Specific management but applies to Resource ID 1.
 *   Global indices appear as a footnote on Resource-Specific pages to inform users of the fallback values currently in effect.
+
+## Bulk Management
+For managing indices across multiple resources efficiently, use the **Bulk Index Editor**.
+*   **Access**: Sidebar > SOR Administration > Machine Indices
+*   **Features**: Filter by Resource/Rate Card, add new indices for any resource, and manage experimental rates in a centralized view.
+*   See [Bulk Index Editor Documentation](indices_bulk_editor.md) for more details.

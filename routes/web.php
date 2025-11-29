@@ -61,12 +61,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/resources/search', [ResourceController::class, 'search'])->name('resources.search');
     Route::resource('resources', ResourceController::class);
     // Labor Indices
+    Route::get('labor-indices/all', [LaborIndexController::class, 'allIndices'])->name('labor-indices.all');
     Route::get('labor-indices/global', [LaborIndexController::class, 'globalIndex'])->name('labor-indices.global.index');
     Route::post('labor-indices/global', [LaborIndexController::class, 'globalStore'])->name('labor-indices.global.store');
     Route::post('labor-indices/{id}/lock', [LaborIndexController::class, 'lock'])->name('labor-indices.lock');
     Route::resource('resources.labor-indices', LaborIndexController::class)->shallow();
 
     // Machine Indices
+    Route::get('machine-indices/all', [MachineIndexController::class, 'allIndices'])->name('machine-indices.all');
     Route::get('machine-indices/global', [MachineIndexController::class, 'globalIndex'])->name('machine-indices.global.index');
     Route::post('machine-indices/global', [MachineIndexController::class, 'globalStore'])->name('machine-indices.global.store');
     Route::post('machine-indices/{id}/lock', [MachineIndexController::class, 'lock'])->name('machine-indices.lock');

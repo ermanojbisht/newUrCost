@@ -31,5 +31,11 @@
         <li>
             <a href="{{ route('resources.index') }}" class="block py-2 px-4 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">Resources</a>
         </li>
+        <li>
+            <a href="{{ route('labor-indices.all') }}" class="block py-2 px-4 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">Labor Indices</a>
+        </li>
+        <li>
+            <a href="{{ route('machine-indices.all') }}" class="block py-2 px-4 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">Machine Indices</a>
+        </li>
     </ul>
 </div>
