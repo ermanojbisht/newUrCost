@@ -133,6 +133,9 @@
         </div>
     </div>
 
+    <!-- Technical Specifications Section -->
+    <x-item-technical-specs :item="$item" :editable="true" />
+
     <!-- Charts Section -->
     <div class="mt-2 relative">
         <!-- Decorative background elements for glass effect -->

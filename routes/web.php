@@ -83,6 +83,10 @@ Route::middleware('auth')->group(function () {
     Route::post('lead-distances/{id}/lock', [\App\Http\Controllers\LeadDistanceController::class, 'lock'])->name('lead-distances.lock');
     Route::resource('resources.lead-distances', \App\Http\Controllers\LeadDistanceController::class)->shallow();
 
+    // Item Technical Specs
+    Route::post('items/{item}/generate-specs', [\App\Http\Controllers\ItemTechnicalSpecController::class, 'generate'])->name('items.generate-specs');
+    Route::put('items/{item}/specs', [\App\Http\Controllers\ItemTechnicalSpecController::class, 'update'])->name('items.update-specs');
+
     Route::prefix('resources/{resource}/rates')->name('resources.rates.')->group(function () {
         Route::get('/manage', [App\Http\Controllers\ResourceRateController::class, 'index'])->name('index');
         Route::post('/', [App\Http\Controllers\ResourceRateController::class, 'store'])->name('store');

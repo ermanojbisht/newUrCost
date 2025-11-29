@@ -181,4 +181,9 @@ class Item extends Model
         Subitem::generateSubitemDependency($this->item_code);
     }
 
+    public function technicalSpec()
+    {
+        return $this->hasOne(ItemTechnicalSpec::class);
+    }
+
 }
