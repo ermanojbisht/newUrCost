@@ -76,6 +76,12 @@ class ItemSkeletonController extends Controller
         return view('sors.ra', compact('sor', 'item', 'rateCards', 'units', 'rateCardId', 'effectiveDate', 'resourceGroups', 'overheadMasters'));
     }
 
+    public function redirectToRa($item_code)
+    {
+        $item = Item::where('item_code', $item_code)->firstOrFail();
+        return redirect()->route('sors.items.ra', ['sor' => $item->sor_id, 'item' => $item->id]);
+    }
+
     public function copySkeleton(Request $request, Sor $sor, Item $item)
     {
         $request->validate([

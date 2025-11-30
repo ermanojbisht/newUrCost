@@ -139,6 +139,7 @@ Route::prefix('api/sors/{sor}/items/{item}/skeleton')->name('api.sors.items.skel
     Route::get('/', [App\Http\Controllers\ItemSkeletonController::class, 'show'])->name('show');
 });
 
+Route::get('/ra/{item_code}', [App\Http\Controllers\ItemSkeletonController::class, 'redirectToRa'])->name('ra.redirect');
 Route::get('/sors/{sor}/items/{item}/ra', [App\Http\Controllers\ItemSkeletonController::class, 'showRaPage'])->name('sors.items.ra');
 Route::get('/sors/{sor}/items/{item}/consumption', [App\Http\Controllers\ItemRateController::class, 'consumption'])->name('sors.items.consumption');
 Route::get('/sors/{sor}/items/{item}/consumptionWithoutOh', [App\Http\Controllers\ItemRateController::class, 'consumptionWithoutOh'])->name('sors.items.consumptionWithoutOh');
