@@ -145,6 +145,23 @@
                     </button>
                 </div>
 
+                <!-- Reference Links -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Reference Links</label>
+                    <template x-for="(link, index) in formData.reference_links" :key="index">
+                        <div class="flex gap-2 mb-2">
+                            <input type="text" x-model="formData.reference_links[index].title" placeholder="Title" class="flex-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <input type="text" x-model="formData.reference_links[index].url" placeholder="URL" class="flex-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            <button type="button" @click="removeReferenceLink(index)" class="text-red-600 hover:text-red-800">
+                                {!! config('icons.delete') !!}
+                            </button>
+                        </div>
+                    </template>
+                    <button type="button" @click="addReferenceLink" class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                        {!! config('icons.plus') !!} Add Link
+                    </button>
+                </div>
+
                 <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
                     <a href="{{ route('sors.items.skeleton', [$item->sor_id, $item->id]) }}" class="px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Cancel
@@ -187,8 +204,7 @@
             },
 
             copyAiPrompt() {
-                const description = @js($item->description);
-                const prompt = `Generate technical specifications for the construction item described as: "${description}". \n\nThe output must be a valid JSON object with the following structure:\n{\n  "introduction": "string",\n  "specifications": ["string"],\n  "tests_frequency": [{ "test": "string", "frequency": "string" }],\n  "dos_donts": { "dos": ["string"], "donts": ["string"] },\n  "execution_sequence": ["string"],\n  "precautionary_measures": ["string"],\n  "reference_links": ["string"]\n}`;
+                const prompt = @js($aiPrompt);
                 
                 navigator.clipboard.writeText(prompt).then(() => {
                     alert('AI Prompt copied to clipboard!');
@@ -240,6 +256,9 @@
 
             addPrecautionaryMeasure() { this.formData.precautionary_measures.push(''); },
             removePrecautionaryMeasure(index) { this.formData.precautionary_measures.splice(index, 1); },
+
+            addReferenceLink() { this.formData.reference_links.push({ title: '', url: '' }); },
+            removeReferenceLink(index) { this.formData.reference_links.splice(index, 1); },
 
             save() {
                 fetch("{{ route('items.update-specs', $item->id) }}", {

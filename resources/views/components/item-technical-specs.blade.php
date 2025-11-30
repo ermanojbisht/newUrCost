@@ -116,6 +116,24 @@
                     @endforeach
                 </ul>
             </div>
+
+            <!-- Reference Links -->
+            @if(!empty($item->technicalSpec->reference_links))
+            <div class="col-span-1 md:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-white flex items-center">
+                    <span class="mr-2">🔗</span> Reference Links
+                </h3>
+                <ul class="list-disc list-inside space-y-1 text-gray-700 dark:text-gray-300">
+                    @foreach($item->technicalSpec->reference_links as $link)
+                        <li>
+                            <a href="{{ $link['url'] }}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline">
+                                {{ $link['title'] }}
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+            @endif
         </div>
     @else
         <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 text-center">

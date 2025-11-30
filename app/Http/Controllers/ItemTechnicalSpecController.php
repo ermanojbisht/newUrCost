@@ -28,7 +28,8 @@ class ItemTechnicalSpecController extends Controller
 
     public function edit(Item $item)
     {
-        return view('items.technical-specs.edit', compact('item'));
+        $aiPrompt = \App\Services\ItemTechnicalSpecService::getPrompt($item->name);
+        return view('items.technical-specs.edit', compact('item', 'aiPrompt'));
     }
 
     public function update(Request $request, Item $item)

@@ -20,10 +20,15 @@ class ItemTechnicalSpecService
         $this->groq = new Groq($apiKey);
     }
 
-    public function generateSpecs(Item $item)
+    public static function getPrompt(string $itemName): string
     {
-        $name = $item->name;
-        $prompt = "Create a detailed technical specification document for the **$name** in simple language.
+        return "Create a detailed technical specification document for the **$itemName** in simple language.
+
+        Important rules:
+        1. Only include reference_links from these domains: youtube.com, bis.gov.in, mordindia.gov.in (or pmgsy.nic.in), cpwd.gov.in, iitk.ac.in, scribd , or official state PWD domains. At most 10 links.
+        2. Do not invent or guess URLs. If a valid authoritative source cannot be found, return reference_links: [] and set reference_note to 'No verified authoritative links found'.
+        3. For each reference, include title and exact URL. Also ensure the URL is to a page/document relevant to subject.
+        4. Return only JSON — no extra commentary or markdown.
         
         Return the output strictly as a valid JSON object with the following keys:
         - introduction (string): A brief overview.
@@ -36,6 +41,11 @@ class ItemTechnicalSpecService
 
         Ensure the content is accurate, relevant to civil engineering, and suitable for field engineers.
         Do not include any markdown formatting in the JSON values, just plain text.";
+    }
+
+    public function generateSpecs(Item $item)
+    {
+        $prompt = self::getPrompt($item->name);
 
         try {
             $response = $this->groq->chat()->completions()->create([
