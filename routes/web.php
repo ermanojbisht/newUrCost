@@ -34,7 +34,10 @@ Route::middleware('auth')->group(function () {
     Route::resource("pol-skeletons", \App\Http\Controllers\PolSkeletonController::class);
     Route::resource("pol-rates", \App\Http\Controllers\PolRateController::class);
     Route::resource("rate-cards", \App\Http\Controllers\RateCardController::class);
-    Route::get('/rate-cards/{rateCard}/labor-report', [\App\Http\Controllers\RateCardController::class, 'laborRateReport'])->name('rate-cards.labor-report');
+    Route::get('/labor-report', [\App\Http\Controllers\RateCardController::class, 'laborRateReport'])->name('rate-cards.labor-report');
+    Route::get('/labor-report/pdf', [\App\Http\Controllers\RateCardController::class, 'exportLaborPdf'])->name('rate-cards.labor-report.pdf');
+    Route::get('/machine-report', [\App\Http\Controllers\RateCardController::class, 'machineRateReport'])->name('rate-cards.machine-report');
+    Route::get('/machine-report/pdf', [\App\Http\Controllers\RateCardController::class, 'exportMachinePdf'])->name('rate-cards.machine-report.pdf');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

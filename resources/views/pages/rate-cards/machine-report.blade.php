@@ -1,6 +1,6 @@
 @extends('layouts.layout001.app')
 
-@section('title', 'Labor Resource Rates - ' . $rateCard->name)
+@section('title', 'Machine Resource Rates - ' . $rateCard->name)
 
 @section('headstyles')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -68,7 +68,7 @@
         <div class="glass rounded-2xl p-6 mb-8 shadow-lg print-border">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 class="text-3xl font-bold uppercase tracking-wide gradient-text">Labor Resource Rates</h1>
+                    <h1 class="text-3xl font-bold uppercase tracking-wide gradient-text">Machine Resource Rates</h1>
                     <h2 class="text-xl font-semibold mt-2 text-gray-700 dark:text-gray-300">{{ $rateCard->name }}</h2>
                     @if($rateCard->description)
                         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ $rateCard->description }}</p>
@@ -77,7 +77,7 @@
                 
                 <div class="flex flex-col items-end gap-3 no-print">
                     <div class="flex gap-2">
-                        <a href="{{ route('rate-cards.labor-report.pdf', ['rate_card_id' => $rateCardId, 'effective_date' => $effectiveDate]) }}" class="relative overflow-hidden rounded-lg p-px group">
+                        <a href="{{ route('rate-cards.machine-report.pdf', ['rate_card_id' => $rateCardId, 'effective_date' => $effectiveDate]) }}" class="relative overflow-hidden rounded-lg p-px group">
                             <div class="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 group-hover:from-purple-400 group-hover:to-pink-400 transition-all"></div>
                             <div class="relative bg-white dark:bg-gray-900 px-4 py-2 rounded-[7px]">
                                 <span class="text-sm font-medium bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-pink-500 group-hover:from-purple-400 group-hover:to-pink-400">
@@ -137,7 +137,7 @@
                                     <svg class="w-12 h-12 mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                     </svg>
-                                    <p>No labor rates found for this rate card on {{ \Carbon\Carbon::parse($effectiveDate)->format('d-M-Y') }}.</p>
+                                    <p>No machine rates found for this rate card on {{ \Carbon\Carbon::parse($effectiveDate)->format('d-M-Y') }}.</p>
                                 </div>
                             </td>
                         </tr>

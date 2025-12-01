@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\RateCard;
 use Illuminate\Http\Request;
 use Log;
+use App\Helpers\FilterHelper;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class RateCardController extends Controller
 {
@@ -95,28 +97,103 @@ class RateCardController extends Controller
     /**
      * Generate Labor Resource Rate Report.
      */
-    public function laborRateReport(RateCard $rateCard)
+    /**
+     * Generate Labor Resource Rate Report.
+     */
+    /**
+     * Generate Labor Resource Rate Report.
+     */
+    public function laborRateReport(Request $request)
     {
-        // ID 1 is "Labour Group"
-        $labourGroupId = 1;
-        $date = now()->format('Y-m-d');
+        $sor = (object)['id' => 'general']; // Dummy SOR for helper
+        $filters = FilterHelper::getRateFilters($request, $sor);
+        
+        $rateCardId = $filters['rate_card_id'];
+        $effectiveDate = $filters['effective_date'];
 
+        $rateCard = RateCard::findOrFail($rateCardId);
 
-        $resources = \App\Models\Resource::where('resource_group_id', $labourGroupId)
+        $reportData = $this->generateResourceReport($request, $rateCard, 1, $effectiveDate); // 1 = Labour Group
+        $rateCards = RateCard::all();
+
+        return view('pages.rate-cards.labor-report', compact('rateCard', 'reportData', 'rateCards', 'rateCardId', 'effectiveDate'));
+    }
+
+    /**
+     * Generate Machine Resource Rate Report.
+     */
+    public function machineRateReport(Request $request)
+    {
+        $sor = (object)['id' => 'general']; // Dummy SOR for helper
+        $filters = FilterHelper::getRateFilters($request, $sor);
+        
+        $rateCardId = $filters['rate_card_id'];
+        $effectiveDate = $filters['effective_date'];
+
+        $rateCard = RateCard::findOrFail($rateCardId);
+
+        $reportData = $this->generateResourceReport($request, $rateCard, 2, $effectiveDate); // 2 = Machine Group
+        $rateCards = RateCard::all();
+
+        return view('pages.rate-cards.machine-report', compact('rateCard', 'reportData', 'rateCards', 'rateCardId', 'effectiveDate'));
+    }
+
+    public function exportLaborPdf(Request $request)
+    {
+        $sor = (object)['id' => 'general'];
+        $filters = FilterHelper::getRateFilters($request, $sor);
+        $rateCardId = $filters['rate_card_id'];
+        $effectiveDate = $filters['effective_date'];
+        $rateCard = RateCard::findOrFail($rateCardId);
+
+        $reportData = $this->generateResourceReport($request, $rateCard, 1, $effectiveDate);
+
+        $pdf = Pdf::loadView('pages.rate-cards.pdf-report', [
+            'title' => 'Labor Resource Rates',
+            'rateCard' => $rateCard,
+            'reportData' => $reportData,
+            'effectiveDate' => $effectiveDate
+        ]);
+
+        return $pdf->download('labor-rates-' . $rateCard->name . '-' . $effectiveDate . '.pdf');
+    }
+
+    public function exportMachinePdf(Request $request)
+    {
+        $sor = (object)['id' => 'general'];
+        $filters = FilterHelper::getRateFilters($request, $sor);
+        $rateCardId = $filters['rate_card_id'];
+        $effectiveDate = $filters['effective_date'];
+        $rateCard = RateCard::findOrFail($rateCardId);
+
+        $reportData = $this->generateResourceReport($request, $rateCard, 2, $effectiveDate);
+
+        $pdf = Pdf::loadView('pages.rate-cards.pdf-report', [
+            'title' => 'Machine Resource Rates',
+            'rateCard' => $rateCard,
+            'reportData' => $reportData,
+            'effectiveDate' => $effectiveDate
+        ]);
+
+        return $pdf->download('machine-rates-' . $rateCard->name . '-' . $effectiveDate . '.pdf');
+    }
+
+    /**
+     * Helper to generate resource report data.
+     */
+    private function generateResourceReport(Request $request, RateCard $rateCard, int $groupId, string $date)
+    {
+        $resources = \App\Models\Resource::where('resource_group_id', $groupId)
             ->with('unit')
             ->orderBy('secondary_code')
             ->get();
 
         $reportData = [];
 
-        //Log::info("this = ".print_r($resources->toArray(),true));
-
         foreach ($resources as $resource) {
             $details = $this->rateAnalysisService->getResourceRateDetails($resource, $rateCard, $date);
 
             $components = $details['components'] ?? [];
-            // remove null/empty
-            // join with space or '' , as PHP_EOL required
             $remark = collect($components)->pluck('description')->filter()->implode(' ,');
 
             $reportData[] = [
@@ -129,6 +206,6 @@ class RateCardController extends Controller
             ];
         }
 
-        return view('pages.rate-cards.labor-report', compact('rateCard', 'reportData'));
+        return $reportData;
     }
 }
