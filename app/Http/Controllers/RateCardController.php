@@ -4,12 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\RateCard;
 use Illuminate\Http\Request;
+use Log;
 
 class RateCardController extends Controller
 {
-    public function __construct()
+    protected $rateAnalysisService;
+
+    public function __construct(\App\Services\RateAnalysisService $rateAnalysisService)
     {
         $this->authorizeResource(RateCard::class, 'ratecard');
+        $this->rateAnalysisService = $rateAnalysisService;
     }
 
     /**
@@ -86,5 +90,45 @@ class RateCardController extends Controller
 
         return redirect()->route('rate-cards.index')
             ->with('success', 'Rate card deleted successfully');
+    }
+
+    /**
+     * Generate Labor Resource Rate Report.
+     */
+    public function laborRateReport(RateCard $rateCard)
+    {
+        // ID 1 is "Labour Group"
+        $labourGroupId = 1;
+        $date = now()->format('Y-m-d');
+
+
+        $resources = \App\Models\Resource::where('resource_group_id', $labourGroupId)
+            ->with('unit')
+            ->orderBy('secondary_code')
+            ->get();
+
+        $reportData = [];
+
+        //Log::info("this = ".print_r($resources->toArray(),true));
+
+        foreach ($resources as $resource) {
+            $details = $this->rateAnalysisService->getResourceRateDetails($resource, $rateCard, $date);
+
+            $components = $details['components'] ?? [];
+            // remove null/empty
+            // join with space or '' , as PHP_EOL required
+            $remark = collect($components)->pluck('description')->filter()->implode(' ,');
+
+            $reportData[] = [
+                'resource' => $resource,
+                'unit' => $resource->unit->name ?? '-',
+                'base_rate' => $details['base_rate'],
+                'index_cost' => $details['index_cost'],
+                'total_rate' => $details['total_rate'],
+                'remarks' =>  $remark,
+            ];
+        }
+
+        return view('pages.rate-cards.labor-report', compact('rateCard', 'reportData'));
     }
 }

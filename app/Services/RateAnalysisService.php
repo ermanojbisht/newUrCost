@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\Helper;
 use App\Models\Item;
 use App\Models\LaborIndex;
 use App\Models\LeadDistance;
@@ -68,7 +69,12 @@ class RateAnalysisService
      */
     public function getResourceRateDetails(Resource $resource, RateCard $ratecard, $date): array
     {
+        //Log::info("resource = ".print_r($resource->toArray(),true));
+        //Log::info("ratecard = ".print_r($ratecard->toArray(),true));
+        //Log::info("date = ".print_r($date,true));
         $baseRateWithUnit = $this->getBaseRateWithUnit($resource, $ratecard, $date);
+        //Log::info("baseRateWithUnit = ".print_r($baseRateWithUnit,true));
+
         $details = [
             'base_rate' => $baseRateWithUnit['rate'],
             'unit_id' => $baseRateWithUnit['unit_id'],
@@ -141,7 +147,9 @@ class RateAnalysisService
 
         // Labor or Machine Resources
         if (in_array($resource->resource_group_id, [1, 2])) {
+            //Log::info("in labor/machine index = ".print_r($resource->resource_group_id,true));
             list($indexCost,$percentIndex) = $this->calculateIndexCost($resource, $ratecard, $baseRateWithUnit['rate'], $date);
+            //Log::info("indexCost,percentIndex = ".print_r([$indexCost,$percentIndex],true));
             if ($indexCost != 0) {
                 $details['index_cost'] = $indexCost;
                 $details['total_rate'] += $indexCost;
@@ -280,6 +288,9 @@ class RateAnalysisService
      */
     public function calculateIndexCost(Resource $resource, RateCard $ratecard, float $baseRate, $date)
     {
+        //Log::info("calculateIndexCost resource = ".print_r($resource->toArray(),true));
+        //Log::info("calculateIndexCost ratecard = ".print_r($ratecard->toArray(),true));
+        //Log::info("calculateIndexCost  baseRate, date = ".print_r([$baseRate,$date],true));
         $indexModel = $resource->resource_group_id == 1 ? new LaborIndex() : new MachineIndex();
 
         // Helper closure to add date constraints
@@ -300,9 +311,12 @@ class RateAnalysisService
 
         // 2. Fallback to general rule for the rate card
         if (!$index) {
+            //Log::info("calculateIndexCost resource rate_card_id index not found ");
             $query = $indexModel->where('resource_id', 1) // General rule
                 ->where('rate_card_id', $ratecard->id);
             $addDateConstraints($query);
+            //Log::info("Final SQL: " . Helper::interpolateQuery($query->toSql(), $query->getBindings()));
+
             $index = $query->orderBy('valid_from', 'desc')->first();
         }
 
@@ -323,6 +337,7 @@ class RateAnalysisService
         }
 
         $percentIndex = $index ? $index->index_value : 0.0;
+        //Log::info("calculateIndexCost percentIndex = ".print_r($percentIndex,true));
 
         return [(round($baseRate * $percentIndex,2)),$percentIndex];
     }
