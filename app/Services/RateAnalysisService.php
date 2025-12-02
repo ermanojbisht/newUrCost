@@ -242,7 +242,10 @@ class RateAnalysisService
             switch ($lead->type) {
                 case 1: // Mechanical
                     $tripcost = $this->mechanicalCartageDetail( $lead->distance, $date )['costPerTrip'];
-                    $mechLeadCost = round( $tripcost / $resourceCapacityRule->net_mechanical_capacity, 2 );
+                    $capacity = $resourceCapacityRule->net_mechanical_capacity;
+                    $mechLeadCost = ($capacity && $capacity > 0)
+                        ? round($tripcost / $capacity, 2)
+                        : 0;
                     $totalLeadCost += $mechLeadCost;
                     $leadDetail[ 'mechLeadCost' ] = $mechLeadCost;
                     $leadDetail[ 'mechDistance' ] = $lead->distance;
