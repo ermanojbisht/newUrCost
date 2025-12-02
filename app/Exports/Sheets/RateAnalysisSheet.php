@@ -120,7 +120,7 @@ class RateAnalysisSheet implements FromView, WithTitle, WithEvents
                     
                     // Footer row (Rate per Unit)
                     // This is where the rate is.
-                    $rateCell = 'F' . $currentRow; 
+                    $rateCell = '$F$' . $currentRow;
                     
                     // Create Named Range
                     // Sanitize item code for named range (remove spaces, special chars)

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Skeleton;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -56,5 +57,13 @@ class Resource extends Model
     public function updatedBy()
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function updateItemsUsingCount()
+    {
+        $count = Skeleton::where('resource_id', $this->id)->count();
+
+        $this->forceFill(['items_using_count' => $count])
+            ->saveQuietly();
     }
 }

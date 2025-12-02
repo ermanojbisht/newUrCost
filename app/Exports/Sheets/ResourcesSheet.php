@@ -64,7 +64,7 @@ class ResourcesSheet implements FromView, WithTitle, WithEvents
                 foreach ($this->resources as $index => $resource) {
                     $rowNum = $index + 2; // Assuming headers in row 1
                     // Rate is in Column E (5th column) - Adjust based on View
-                    $rateCell = 'E' . $rowNum; 
+                    $rateCell = '$E$' . $rowNum;
                     
                     // Sanitize resource code
                     // Assuming secondary_code is the unique identifier used in formulas

@@ -14,6 +14,7 @@ use App\Services\RateAnalysisService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\DataTables;
+use DB;
 
 class ResourceController extends Controller
 {
@@ -100,7 +101,8 @@ class ResourceController extends Controller
         $resourceGroups = ResourceGroup::all();
         $unitGroups = UnitGroup::all();
         $units = Unit::all();
-        return view('resources.create', compact('resourceGroups', 'unitGroups', 'units'));
+        $resourceCreatedInfo= $this->resourceCreatedInfo();
+        return view('resources.create', compact('resourceGroups', 'unitGroups', 'units','resourceCreatedInfo'));
     }
 
     public function store(Request $request)
@@ -249,4 +251,48 @@ class ResourceController extends Controller
 
         return response()->json($resources);
     }
+
+    public function resourceCreatedInfo()
+    {
+
+        $groups =ResourceGroup::select('id','name')->get()->pluck('name','id');
+        /*$groups = [
+            1 => 'Labour Group',
+            2 => 'Machine Group',
+            3 => 'Material Group',
+            4 => 'Carriage Group',
+            5 => 'Miscellaneous Group',
+        ];*/
+
+        $queries = [];
+
+        // Build a query for each group
+        foreach ($groups as $groupId => $groupName) {
+
+            $queries[] = Resource::selectRaw("'{$groupName}' AS resGrp")
+                ->selectRaw('MAX(CAST(SUBSTR(secondary_code, 3) AS SIGNED)) AS maxval')
+                ->selectRaw('SUBSTR(secondary_code, 1, 2) AS label')
+                ->where('resource_group_id', $groupId)
+                ->groupBy(DB::raw('SUBSTR(secondary_code, 1, 2)'));
+
+            if($groupId==2){ // as it has pmc prefix
+
+                $queries[] = Resource::selectRaw("'{$groupName}' AS resGrp")
+                    ->selectRaw('MAX(CAST(SUBSTR(secondary_code, 4) AS SIGNED)) AS maxval')
+                    ->selectRaw('SUBSTR(secondary_code, 1, 3) AS label')
+                    ->where('resource_group_id', $groupId)
+                    ->groupBy(DB::raw('SUBSTR(secondary_code, 1, 3)'));
+                }
+        }
+
+        // UNION all queries
+        $final = array_shift($queries);
+
+        foreach ($queries as $q) {
+            $final->union($q);
+        }
+
+        return $final->get();
+    }
+
 }
