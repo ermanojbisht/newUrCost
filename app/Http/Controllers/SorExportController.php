@@ -40,7 +40,14 @@ class SorExportController extends Controller
     public function export(Request $request, Sor $sor, RateCard $rateCard, $format = 'xlsx')
     {
         $extension = strtolower($format);
-        $fileName = "reports/SOR_{$sor->id}_{$rateCard->id}_" . date('Y-m-d_H-i-s') . ".{$extension}";
+        $type = $request->query('type', 'standard');
+        $isDetailed = $type === 'detailed';
+        
+        $fileName = "reports/SOR_{$sor->id}_{$rateCard->id}_" . date('Y-m-d_H-i-s');
+        if ($isDetailed) {
+            $fileName .= "_detailed";
+        }
+        $fileName .= ".{$extension}";
         
         // Determine writer type
         $writerType = match($extension) {
@@ -50,11 +57,16 @@ class SorExportController extends Controller
         };
 
         // Store to S3
-        Excel::store(new SorExport($sor, $rateCard), $fileName, 's3', $writerType);
+        Excel::store(new SorExport($sor, $rateCard, $isDetailed), $fileName, 's3', $writerType);
 
         // Log the file generation
+        $title = "SOR - {$sor->name} - {$rateCard->name}";
+        if ($isDetailed) {
+            $title .= " (Detailed)";
+        }
+
         $file = File::create([
-            'title' => "SOR - {$sor->name} - {$rateCard->name}",
+            'title' => $title,
             'filename' => $fileName,
             'status' => 'active',
             'document_type' => 'SOR Report',

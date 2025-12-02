@@ -18,11 +18,13 @@ class SorExport implements FromCollection, WithHeadings, WithMapping, WithStyles
 {
     protected $sor;
     protected $rateCard;
+    protected $isDetailed;
 
-    public function __construct(Sor $sor, RateCard $rateCard)
+    public function __construct(Sor $sor, RateCard $rateCard, $isDetailed = false)
     {
         $this->sor = $sor;
         $this->rateCard = $rateCard;
+        $this->isDetailed = $isDetailed;
     }
 
     /**
@@ -42,7 +44,13 @@ class SorExport implements FromCollection, WithHeadings, WithMapping, WithStyles
 
     public function headings(): array
     {
-        return ['S.No', 'Chapter/Item No', 'Particulars of Item', 'Rate', 'Unit'];
+        $headings = ['S.No', 'Chapter/Item No', 'Particulars of Item'];
+        
+        if ($this->isDetailed) {
+            $headings = array_merge($headings, ['Labor Cost', 'Material Cost', 'Machine Cost', 'Overhead Cost']);
+        }
+
+        return array_merge($headings, ['Rate', 'Unit']);
     }
 
     public function map($item): array
@@ -53,6 +61,10 @@ class SorExport implements FromCollection, WithHeadings, WithMapping, WithStyles
 
         $rate = '';
         $unit = '';
+        $laborCost = '';
+        $materialCost = '';
+        $machineCost = '';
+        $overheadCost = '';
 
         // Item type 3 = measurable item
         if ($item->item_type == 3) {
@@ -65,7 +77,15 @@ class SorExport implements FromCollection, WithHeadings, WithMapping, WithStyles
                 $unit = ''; // Unit suppressed for reference items
             } else {
                 // Get first rate (itemRates already eager loaded & filtered)
-                $rate = optional($item->itemRates->first())->rate ?? '';
+                $rateRecord = $item->itemRates->first();
+                $rate = optional($rateRecord)->rate ?? '';
+                
+                if ($this->isDetailed && $rateRecord) {
+                    $laborCost = $rateRecord->labor_cost;
+                    $materialCost = $rateRecord->material_cost;
+                    $machineCost = $rateRecord->machine_cost;
+                    $overheadCost = $rateRecord->overhead_cost;
+                }
             }
         }
 
@@ -73,9 +93,17 @@ class SorExport implements FromCollection, WithHeadings, WithMapping, WithStyles
             $sno,
             $item->item_number,
             $item->description,
-            $rate,
-            $unit,
         ];
+
+        if ($this->isDetailed) {
+            $data[] = $laborCost;
+            $data[] = $materialCost;
+            $data[] = $machineCost;
+            $data[] = $overheadCost;
+        }
+
+        $data[] = $rate;
+        $data[] = $unit;
 
         //Log::info('data = ' . print_r($data, true));
 
@@ -85,21 +113,35 @@ class SorExport implements FromCollection, WithHeadings, WithMapping, WithStyles
 
     public function columnWidths(): array
     {
-        return [
+        $widths = [
             'A' => 8,   // S.No
             'B' => 15,  // Item No
             'C' => 60,  // Description
-            'D' => 15,  // Rate
-            'E' => 10,  // Unit
         ];
+
+        if ($this->isDetailed) {
+            $widths['D'] = 12; // Labor
+            $widths['E'] = 12; // Material
+            $widths['F'] = 12; // Machine
+            $widths['G'] = 12; // Overhead
+            $widths['H'] = 15; // Rate
+            $widths['I'] = 10; // Unit
+        } else {
+            $widths['D'] = 15; // Rate
+            $widths['E'] = 10; // Unit
+        }
+
+        return $widths;
     }
 
     public function styles(Worksheet $sheet)
     {
+        $lastCol = $this->isDetailed ? 'I' : 'E';
+
         // Header Style
-        $sheet->getStyle('A1:E1')->getFont()->setBold(true);
-        $sheet->getStyle('A1:E1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle('A1:E1')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFE0E0E0');
+        $sheet->getStyle("A1:{$lastCol}1")->getFont()->setBold(true);
+        $sheet->getStyle("A1:{$lastCol}1")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle("A1:{$lastCol}1")->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFE0E0E0');
 
         // Iterate through rows to apply depth-based styling
         // Row 1 is header, data starts at Row 2
@@ -120,16 +162,16 @@ class SorExport implements FromCollection, WithHeadings, WithMapping, WithStyles
             // Or using depth from nested set
             
             if ($item->item_type == 1) { // Chapter
-                $sheet->getStyle("A$rowIndex:E$rowIndex")->getFont()->setBold(true)->setSize(14)->getColor()->setARGB('FF0000FF'); // Blue
+                $sheet->getStyle("A$rowIndex:{$lastCol}$rowIndex")->getFont()->setBold(true)->setSize(14)->getColor()->setARGB('FF0000FF'); // Blue
             } elseif ($item->item_type == 2) { // Sub-chapter
-                $sheet->getStyle("A$rowIndex:E$rowIndex")->getFont()->setBold(true)->setSize(12)->getColor()->setARGB('FF008000'); // Green
+                $sheet->getStyle("A$rowIndex:{$lastCol}$rowIndex")->getFont()->setBold(true)->setSize(12)->getColor()->setARGB('FF008000'); // Green
             }
             
             // Wrap text for description
             $sheet->getStyle("C$rowIndex")->getAlignment()->setWrapText(true);
             
             // Vertical alignment center
-            $sheet->getStyle("A$rowIndex:E$rowIndex")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle("A$rowIndex:{$lastCol}$rowIndex")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
 
             $rowIndex++;
         }
