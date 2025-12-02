@@ -12,6 +12,7 @@ use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use Log;
 
 class SorExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithColumnWidths
 {
@@ -48,30 +49,39 @@ class SorExport implements FromCollection, WithHeadings, WithMapping, WithStyles
     {
         static $sno = 0;
         $sno++;
+        //Log::info('item = ' . print_r($item->toArray(), true));
 
-        // Get the rate for the specific rate card
-        // Since we eager loaded 'itemRates' with a filter, we can grab the first one
-        $rateRecord = $item->itemRates->first();
-        
-        $rate = $rateRecord ? $rateRecord->rate : '';
-        $unit = $item->unit ? $item->unit->unit_name : '';
+        $rate = '';
+        $unit = '';
 
-        // Handle reference items
-        if ($item->reference_from > 0) {
-            $referencedItem = Item::find($item->reference_from);
-            $referencedItemNo = $referencedItem ? $referencedItem->item_number : 'Unknown';
-            $rate = "As per item no " . $referencedItemNo;
-            $unit = ''; // Unit is usually empty for reference items in the report
+        // Item type 3 = measurable item
+        if ($item->item_type == 3) {
+            $unit = optional($item->unit)->name;
+
+            // If referenced item
+            if ($item->reference_from > 0) {
+                $referencedItemNo = Item::where('id', $item->reference_from)->value('item_number') ?? 'Unknown';
+                $rate = "As per item no {$referencedItemNo}";
+                $unit = ''; // Unit suppressed for reference items
+            } else {
+                // Get first rate (itemRates already eager loaded & filtered)
+                $rate = optional($item->itemRates->first())->rate ?? '';
+            }
         }
 
-        return [
+        $data = [
             $sno,
             $item->item_number,
             $item->description,
             $rate,
             $unit,
         ];
+
+        //Log::info('data = ' . print_r($data, true));
+
+        return $data;
     }
+
 
     public function columnWidths(): array
     {

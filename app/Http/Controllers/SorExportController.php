@@ -54,9 +54,9 @@ class SorExportController extends Controller
 
         // Log the file generation
         $file = File::create([
-            'title' => "SOR Export - {$sor->name} - {$rateCard->reference_desc}",
+            'title' => "SOR - {$sor->name} - {$rateCard->name}",
             'filename' => $fileName,
-            'status' => 'Generated',
+            'status' => 'active',
             'document_type' => 'SOR Report',
             'rate_card_id' => $rateCard->id,
             'sor_id' => $sor->id,

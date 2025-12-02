@@ -38,6 +38,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/labor-report/pdf', [\App\Http\Controllers\RateCardController::class, 'exportLaborPdf'])->name('rate-cards.labor-report.pdf');
     Route::get('/machine-report', [\App\Http\Controllers\RateCardController::class, 'machineRateReport'])->name('rate-cards.machine-report');
     Route::get('/machine-report/pdf', [\App\Http\Controllers\RateCardController::class, 'exportMachinePdf'])->name('rate-cards.machine-report.pdf');
+    Route::get('/material-report', [\App\Http\Controllers\RateCardController::class, 'materialRateReport'])->name('rate-cards.material-report');
+    Route::get('/material-report/pdf', [\App\Http\Controllers\RateCardController::class, 'exportMaterialPdf'])->name('rate-cards.material-report.pdf');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

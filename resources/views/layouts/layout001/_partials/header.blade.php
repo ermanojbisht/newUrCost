@@ -39,6 +39,9 @@
                             <x-dropdown-link :href="route('rate-cards.machine-report')">
                                 {{ __('Machine Resource Rates') }}
                             </x-dropdown-link>
+                            <x-dropdown-link :href="route('rate-cards.material-report')">
+                                {{ __('Material Resource Rates') }}
+                            </x-dropdown-link>
                         </x-slot>
                     </x-dropdown>
                 </div>
@@ -247,6 +250,10 @@
                     <a href="{{ route('rate-cards.machine-report') }}"
                        class="block px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors {{ request()->routeIs('rate-cards.machine-report') ? 'bg-blue-50 dark:bg-blue-900 text-blue-500 dark:text-blue-400 font-bold' : '' }}">
                         Machine Resource Rates
+                    </a>
+                    <a href="{{ route('rate-cards.material-report') }}"
+                       class="block px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors {{ request()->routeIs('rate-cards.material-report') ? 'bg-blue-50 dark:bg-blue-900 text-blue-500 dark:text-blue-400 font-bold' : '' }}">
+                        Material Resource Rates
                     </a>
                 </div>
                 

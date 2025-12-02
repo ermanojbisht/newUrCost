@@ -179,6 +179,45 @@ class RateCardController extends Controller
     }
 
     /**
+     * Generate Material Resource Rate Report.
+     */
+    public function materialRateReport(Request $request)
+    {
+        $sor = (object)['id' => 'general']; // Dummy SOR for helper
+        $filters = FilterHelper::getRateFilters($request, $sor);
+        
+        $rateCardId = $filters['rate_card_id'];
+        $effectiveDate = $filters['effective_date'];
+
+        $rateCard = RateCard::findOrFail($rateCardId);
+
+        $reportData = $this->generateResourceReport($request, $rateCard, 3, $effectiveDate); // 3 = Material Group
+        $rateCards = RateCard::all();
+
+        return view('pages.rate-cards.material-report', compact('rateCard', 'reportData', 'rateCards', 'rateCardId', 'effectiveDate'));
+    }
+
+    public function exportMaterialPdf(Request $request)
+    {
+        $sor = (object)['id' => 'general'];
+        $filters = FilterHelper::getRateFilters($request, $sor);
+        $rateCardId = $filters['rate_card_id'];
+        $effectiveDate = $filters['effective_date'];
+        $rateCard = RateCard::findOrFail($rateCardId);
+
+        $reportData = $this->generateResourceReport($request, $rateCard, 3, $effectiveDate);
+
+        $pdf = Pdf::loadView('pages.rate-cards.pdf-report', [
+            'title' => 'Material Resource Rates',
+            'rateCard' => $rateCard,
+            'reportData' => $reportData,
+            'effectiveDate' => $effectiveDate
+        ]);
+
+        return $pdf->download('material-rates-' . $rateCard->name . '-' . $effectiveDate . '.pdf');
+    }
+
+    /**
      * Helper to generate resource report data.
      */
     private function generateResourceReport(Request $request, RateCard $rateCard, int $groupId, string $date)
@@ -200,7 +239,8 @@ class RateCardController extends Controller
                 'resource' => $resource,
                 'unit' => $resource->unit->name ?? '-',
                 'base_rate' => $details['base_rate'],
-                'index_cost' => $details['index_cost'],
+                'index_cost' => $details['index_cost'] ?? 0,
+                'lead_cost' => $details['lead_cost'] ?? 0,
                 'total_rate' => $details['total_rate'],
                 'remarks' =>  $remark,
             ];
