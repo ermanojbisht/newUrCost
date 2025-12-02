@@ -64,6 +64,9 @@
                                 <x-dropdown-link :href="route('admin.rate-calculation.index')">
                                     {{ __('Rate Calculation') }}
                                 </x-dropdown-link>
+                                <x-dropdown-link :href="route('sor.export.index')">
+                                    {{ __('SOR Reports') }}
+                                </x-dropdown-link>
                             @endcan
                             <x-dropdown-link :href="url('/demo')">
                                 {{ __('demo') }}
