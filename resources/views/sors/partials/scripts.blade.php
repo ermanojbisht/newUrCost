@@ -586,10 +586,14 @@
                             </button>
                         </td>`;
                     
+                    const skeletonUrl = sub.sub_item_id 
+                        ? `{{ route('sors.items.skeleton', ['sor' => $sor->id, 'item' => 'ITEM_ID']) }}`.replace('ITEM_ID', sub.sub_item_id) + `?rate_card_id=${rateCardId}&effective_date=${effectiveDate}`
+                        : '#';
+                    
                     return `
                         <tr class="bg-white dark:bg-gray-800 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150" data-id="${sub.id}">
                             <td class="px-4 py-3 text-sm">
-                                ${sub.item_number} - ${sub.name}
+                                ${sub.sub_item_id ? `<a href="${skeletonUrl}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline font-medium">${sub.item_number} - ${sub.name}</a>` : `${sub.item_number} - ${sub.name}`}
                                 <div class="mt-1 text-xs text-gray-500 space-y-0.5">
                                     <div class="${sub.is_oh_applicable ? 'text-green-600' : 'text-red-500'}">
                                         Further Overhead: ${sub.is_oh_applicable ? 'Yes' : 'No'}

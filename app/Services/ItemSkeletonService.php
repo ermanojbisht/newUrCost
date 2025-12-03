@@ -140,6 +140,7 @@ class ItemSkeletonService
             $subitemData[] = [
                 'id' => $sub->id,
                 'sub_item_code' => $sub->sub_item_code,
+                'sub_item_id' => $sub->subItem->id ?? null, // Add item ID for navigation
                 'name' => $sub->subItem->description ?? 'Unknown Item', // Fallback
                 'item_number' => $sub->subItem->item_number ?? '',
                 'quantity' => $sub->quantity,
