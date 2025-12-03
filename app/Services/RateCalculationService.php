@@ -2,21 +2,41 @@
 
 namespace App\Services;
 
+use App\Helpers\Helper;
 use App\Models\Item;
 use App\Models\ItemRate;
-use App\Models\SubitemDependency;
 use App\Models\RateCard;
+use App\Models\Resource;
+use App\Models\Skeleton;
+use App\Models\Sor;
+use App\Models\SubitemDependency;
+use App\Services\ItemSkeletonService;
+use App\Services\ItemSubitemService;
+use App\Services\OverheadService;
+use App\Services\RateAnalysisService;
+use App\Services\UnitService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class RateCalculationService
 {
     protected $itemSkeletonService;
 
-    public function __construct(ItemSkeletonService $itemSkeletonService)
+    protected $rateAnalysisService;
+    protected $overheadService;
+    protected $unitService;
+    protected $itemSubitemService;
+
+    public function __construct(ItemSkeletonService $itemSkeletonService,RateAnalysisService $rateAnalysisService,
+        OverheadService $overheadService,
+        UnitService $unitService, ItemSubitemService $itemSubitemService)
     {
         $this->itemSkeletonService = $itemSkeletonService;
+        $this->rateAnalysisService = $rateAnalysisService;
+        $this->overheadService = $overheadService;
+        $this->unitService = $unitService;
+        $this->itemSubitemService = $itemSubitemService;
     }
 
     /**
@@ -37,25 +57,12 @@ class RateCalculationService
 
         // 1. Get all items sorted by dependency depth (deepest first)
         // Items that are sub-items at deeper levels must be calculated first.
-        $query = Item::leftJoinSub(
-            SubitemDependency::select('sub_item_code', DB::raw('MAX(level) as depth'))
-                ->groupBy('sub_item_code'),
-            'deps',
-            'items.item_code',
-            '=',
-            'deps.sub_item_code'
-        )
-        ->select('items.*', DB::raw('COALESCE(deps.depth, 0) as depth'))
-        ->when($sorId, function ($query, $sorId) {
-            return $query->where('items.sor_id', $sorId);
-        });
-
-        if ($subitemsOnly) {
-            // Filter only items that are used as sub-items (exist in dependency table)
-            $query->whereNotNull('deps.sub_item_code');
-        }
-
-        $items = $query->orderBy('depth', 'desc')->get();
+        $items = Item::query()
+                ->withDepth() //must call subitemsOnly() after withDepth()
+                ->forSor($sorId)
+                ->subitemsOnly($subitemsOnly)// Filter only items that are used as sub-items (exist in dependency table)
+                ->orderByDesc('depth')
+                ->get();
 
         Log::info("Starting rate calculation for {$items->count()} items. Rate Card ID: {$rateCardId}, SOR ID: " . ($sorId ?? 'All') . ", Subitems Only: " . ($subitemsOnly ? 'Yes' : 'No') . ", Valid From: {$validFrom}");
 
@@ -86,6 +93,16 @@ class RateCalculationService
      * @param Item $item
      * @param int $rateCardId
      * @param string $validFrom
+     * This method is the core worker that gets called for every single item in the calculateAll loop.
+
+        1. Delegate the Calculation: It doesn't do the complex math itself. It calls our expert chef, the itemSkeletonService, and says, "Calculate the rate for this item."
+        2. Handle the Price Tag (`ItemRate`): This is its most important job. After getting the final rate from the chef, it needs to put a price tag on the item in the database. It's very careful about this:
+       * Check for Existing Price: It first looks to see if there's already an active price tag for this item.
+           * Case A: Updating Today's Price: If a price tag for today already exists, it just updates it with the new rate.
+           * Case B: A New Price for the Future: If the old price is from yesterday and we're creating a new price for today, it puts an "end date" on the old price tag and creates a brand new,
+             active price tag. This way, you have a perfect history of price changes.
+           * Case C: No Price Exists: If it's a brand new item, it simply creates a new price tag.
+        3. Save to Database: It uses updateOrCreate to safely save this new or updated price tag information to the item_rates table.
      */
     public function calculateAndSaveItemRate(Item $item, int $rateCardId, string $validFrom)
     {
@@ -97,17 +114,10 @@ class RateCalculationService
         $calculationDate = now()->toDateString();
 
         // Check for existing active rate
-        $activeRate = ItemRate::where('item_code', $item->item_code)
-            ->where('rate_card_id', $rateCardId)
-            ->where(function ($q) {
-                $q->whereNull('valid_to')
-                  ->orWhere('valid_to', '2038-01-19');
-            })
-            ->first();
+        $activeRate =ItemRate::fetchActiveFor($item->item_code,$rateCardId,$calculationDate,false);//may be null or ItemRate
 
 
         if ($activeRate) {
-
             // If active rate exists
             if ($activeRate->valid_from == $validFrom) {
                 // Same valid_from, update existing record
@@ -141,19 +151,6 @@ class RateCalculationService
             'valid_to'      => '2038-01-19', // Default indefinite
         ];
 
-        // We use create here because we've handled the "update" case above manually
-        // But to be safe against race conditions or composite key issues, we can use updateOrCreate 
-        // if the primary key allows it. 
-        // The primary key is ['item_id', 'rate_card_id', 'calculation_date']. 
-        // Wait, if we use item_code, we might have issues if item_id is the PK column.
-        // Assuming item_code maps to item_id or is the intended column.
-        
-        // Since we are creating a NEW record for a NEW date/validity, create is appropriate.
-        // However, if we run this multiple times on the same day, we might hit PK violation if PK includes calculation_date.
-        // If valid_from is different but calculation_date is same as an existing closed record?
-        // The PK is (item_id, rate_card_id, calculation_date). 
-        // If we calculate twice today, we might clash.
-        // Ideally we should update if (item_code, rate_card_id, calculation_date) exists.
         $itemCode = (int) $item->item_code;
         ItemRate::updateOrCreate(
             [
@@ -173,9 +170,11 @@ class RateCalculationService
      */
     public function getAnalysisOrder(Item $item): array
     {
-        $orderedList = [];
+        /*$orderedList = [];
         $this->buildAnalysisOrder($item, $orderedList);
-        return $orderedList;
+        Log::info("orderedList = ".print_r($orderedList,true));
+        return $orderedList;*/
+        return $this->itemSubitemService->getSubitems($item->item_code,true);
     }
 
     /**
@@ -209,18 +208,268 @@ class RateCalculationService
      */
     public function getUniqueResourcesForItems(array $items): array
     {
-        $resources = [];
-        $resourceIds = [];
+        $itemCodes = collect($items)->pluck('item_code')->unique()->values()->all();
 
-        foreach ($items as $item) {
-            foreach ($item->skeletons as $skeleton) {
-                if (!in_array($skeleton->resource_id, $resourceIds)) {
-                    $resourceIds[] = $skeleton->resource_id;
-                    $resources[] = $skeleton->resource;
-                }
+        // one query to skeletons to get unique resource_ids
+        $resourceIds = Skeleton::whereIn('item_code', $itemCodes)
+            ->distinct()
+            ->pluck('resource_id')
+            ->filter() // in case of nulls
+            ->values()
+            ->all();
+
+        // one query to resources to fetch them
+        $resources = Resource::whereIn('id', $resourceIds)->get()->all();
+
+        return $resources;
+    }
+
+
+    private function getUniqueResourcesForItemsWithRates(array $items, RateCard $rateCard, $date)
+    {
+        $resourcesMap = [];
+        $resources=$this->getUniqueResourcesForItems($items);
+        foreach ($resources as $resource) {
+            $rateDetails = $this->rateAnalysisService->getResourceRateDetails($resource, $rateCard, $date);
+            $resourcesMap[$resource->id] = [
+                'id' => $resource->id,
+                'resCode' => $resource->secondary_code ?? $resource->id, // Use secondary_code if available
+                'name' => $resource->name,
+                'unit' => $resource->unit ? $resource->unit->name : '',
+                'rate' => $rateDetails['total_rate'],
+                'resource' => $resource
+            ];
+        }
+
+        return array_values($resourcesMap);
+    }
+
+
+
+
+
+
+
+
+    /**
+     * The main public method to orchestrate data preparation for the export.
+     */
+    public function getFullSorAnalysisData(Sor $sor, RateCard $rateCard, $date, $items = null): array
+    {
+        // Fetch all items for the SOR that are measurable (item_type = 3) if not provided
+        // Eager load relationships to optimize performance
+        $allItems = $items ?? Item::where('sor_id', $sor->id)
+            ->where('item_type', 3)
+            ->with([
+                'skeletons.resource.group',
+                'skeletons.unit',
+                'subitems.subItem',
+                'subitems.unit',
+                'overheads.overhead'
+            ])
+            ->get();
+
+        $allItemsOrdered = [];
+        $processedIds = [];
+
+        foreach ($allItems as $item) {
+            $this->buildAnalysisOrder1($item, $allItemsOrdered, $processedIds);
+        }
+
+        // Get a unique list of all resources used across all items
+        $allResources = $this->getUniqueResourcesForItemsWithRates($allItemsOrdered, $rateCard, $date);
+
+        // Calculate the detailed analysis for each item needed for the view
+        $itemAnalyses = [];
+        foreach ($allItemsOrdered as $item) {
+            $itemAnalyses[] = $this->getDetailedAnalysisForExport($item, $rateCard, $date);
+        }
+
+        return [
+            'sor' => $sor,
+            'rateCard' => $rateCard,
+            'date' => $date,
+            'ordered_items_analysis' => $itemAnalyses,
+            'unique_resources' => $allResources,
+        ];
+    }
+
+    /**
+     * Recursively builds a bottom-up (post-order) list of items.
+     */
+    private function buildAnalysisOrder1(Item $item, array &$list, array &$processedIds)
+    {
+        // \Log::info("Processing item: {$item->id}");
+        if (in_array($item->id, $processedIds)) {
+            return;
+        }
+
+        // 1. Recurse through sub-items (dependencies)
+        // Use eager loaded subitems if available
+        $subItems = $item->subitems;
+
+        foreach ($subItems as $subItemRelation) {
+            $childItem = $subItemRelation->subItem;
+            if ($childItem) {
+                $this->buildAnalysisOrder($childItem, $list, $processedIds);
             }
         }
-        
-        return $resources;
+
+        // 2. Add the parent after all its children have been added
+        if (!in_array($item->id, $processedIds)) {
+            $list[] = $item;
+            $processedIds[] = $item->id;
+            // \Log::info("Added item: {$item->id}");
+        }
+    }
+
+
+
+    private function getDetailedAnalysisForExport(Item $item, RateCard $rateCard, $date)
+    {
+        // Optimized calculation using eager loaded data
+
+        // 1. Resources
+        // Use the collection directly. Sort by sort_order manually if needed, but usually DB returns them in order if not specified?
+        // Actually, we should ensure they are sorted. Collection sortBy is fast.
+        $resources = $item->skeletons->sortBy('sort_order');
+
+        $resourceData = [];
+        $totalLabor = 0;
+        $totalMaterial = 0;
+        $totalMachine = 0;
+        $totalCartage = 0;
+        $totalMiscellaneous = 0;
+
+        foreach ($resources as $res) {
+            $rateDetails = $this->rateAnalysisService->getResourceRateDetails($res->resource, $rateCard, $date);
+            $rate = $rateDetails['total_rate'];
+            $unit_id = $rateDetails['unit_id'];
+
+            $rateUnit = \App\Models\Unit::find($unit_id);
+            $qtyUnit = $res->unit;
+
+            $conversionFactor = $this->unitService->getConversionFactor($qtyUnit, $rateUnit);
+            $amount = $res->quantity * $conversionFactor * $rate;
+
+            $resource_group_id = $res->resource->resource_group_id;
+
+            switch ($resource_group_id) {
+                case 1: $totalLabor += $amount; break;
+                case 2: $totalMachine += $amount; break;
+                case 3: $totalMaterial += $amount; break;
+                case 4: $totalCartage += $amount; break;
+                default: $totalMiscellaneous += $amount; break;
+            }
+
+            $resourceData[] = [
+                'id' => $res->id,
+                'resource_id' => $res->resource_id,
+                'secondary_code' => $res->resource->secondary_code,
+                'name' => $res->resource->name,
+                'quantity' => $res->quantity,
+                'unit' => $res->unit ? $res->unit->name : '',
+                'rate' => $rate,
+                'amount' => $amount,
+            ];
+        }
+
+        // 2. Sub-items
+        $subitems = $item->subitems->sortBy('sort_order');
+        $subitemData = [];
+        $totalSubitems = 0;
+
+        foreach ($subitems as $sub) {
+            // We need the rate of the sub-item.
+            // Since we are building bottom-up, we *could* use the already calculated rate from $itemAnalyses if we passed it.
+            // But for now, let's stick to fetching from ItemRate table as per original logic,
+            // assuming the rates are already in DB or we don't need to recalculate recursively here.
+            // Wait, if we are exporting, we want the *current* calculation.
+            // But `ItemRate` stores the *saved* rate.
+            // If the user hasn't saved the rate, this might be stale.
+            // However, the requirement is to export the analysis.
+            // If we want dynamic linking in Excel, we just need the structure.
+            // The values in Excel will be recalculated by Excel formulas!
+            // So the exact rate value here is just for the "static" view if formulas fail.
+
+            // Let's use ItemRate for now to be consistent with existing service.
+            // Optimizing: We can eager load ItemRates? No, complex query.
+            // Just query it. It's indexed.
+            $subRateEntry = \App\Models\ItemRate::where('item_code', $sub->sub_item_code)
+                ->where('rate_card_id', $rateCard->id)
+                ->where('valid_from', '<=', $date)
+                ->orderBy('valid_from', 'desc')
+                ->first();
+
+            $rate = $subRateEntry ? $subRateEntry->rate : 0;
+            $amount = $sub->quantity * $rate;
+            $totalSubitems += $amount;
+
+            $subitemData[] = [
+                'sub_item_code' => $sub->sub_item_code,
+                'name' => $sub->subItem->description ?? 'Unknown Item',
+                'quantity' => $sub->quantity,
+                'unit' => $sub->unit ? $sub->unit->name : '',
+                'rate' => $rate,
+                'amount' => $amount,
+            ];
+        }
+
+        // 3. Overheads
+        $overHeadRules = $item->overheads->sortBy('sort_order');
+        $overheadData = [];
+        $totalOverheads = 0;
+        $runningTotal = array_sum(array_column($resourceData, 'amount')) + $totalSubitems;
+        $costMapOfResources = collect($resourceData)->pluck('amount', 'resource_id');
+
+        foreach ($overHeadRules as $rule) {
+            $calculationResult = $this->overheadService->calculateOverheadAmount($rule, [
+                'totalLabor' => $totalLabor,
+                'totalMachine' => $totalMachine,
+                'totalMaterial' => $totalMaterial,
+                'totalCartage' => $totalCartage,
+                'subItemsWithOh' => $totalSubitems,
+                'resourceCosts' => $costMapOfResources ?? [],
+                'runningTotal' => $runningTotal,
+                'totalOverhead' => $totalOverheads
+            ]);
+
+            $overheadAmount = $calculationResult['amount'];
+            $baseAmount = $calculationResult['base'];
+
+            if ($rule->allow_further_overhead) {
+                $totalOverheads += $overheadAmount;
+            }
+
+            $overheadData[] = [
+                'description' => $this->overheadService->formatOverheadDescription($rule, $baseAmount),
+                'parameter' => round($rule->parameter * 100, 2),
+                'amount' => $overheadAmount,
+            ];
+        }
+
+        $totalOverheads = array_sum(array_column($overheadData, 'amount'));
+        $grandTotal = array_sum(array_column($resourceData, 'amount')) + $totalSubitems + $totalOverheads;
+        $turnout = $item->turnout_quantity > 0 ? $item->turnout_quantity : 1;
+        $finalRate = $grandTotal / $turnout;
+
+        return [
+            'item' => $item,
+            'name' => $item->description,
+            'item_number' => $item->item_number,
+            'item_code' => $item->item_code,
+            'unit' => $item->unit ? $item->unit->name : '',
+            'resources' => $resourceData,
+            'sub_items' => $subitemData,
+            'overheads' => $overheadData,
+            'totals' => [
+                'resource_cost' => array_sum(array_column($resourceData, 'amount')),
+                'subitem_cost' => $totalSubitems,
+                'overhead_cost' => $totalOverheads,
+                'grand_total' => $grandTotal,
+                'turnout' => $turnout,
+                'final_rate' => $finalRate,
+            ],
+        ];
     }
 }

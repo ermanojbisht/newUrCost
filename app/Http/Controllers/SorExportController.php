@@ -11,9 +11,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 use Illuminate\Support\Facades\Storage;
+use App\Services\RateCalculationService;
+use App\Exports\SorRateAnalysisExport;
 
 class SorExportController extends Controller
 {
+    protected $rateCalculator;
+
+    public function __construct(RateCalculationService $rateCalculator)
+    {
+        $this->rateCalculator = $rateCalculator;
+    }
+
     public function index()
     {
         $sors = Sor::all();
@@ -102,5 +111,35 @@ class SorExportController extends Controller
             \Log::error('SOR Export Delete Error: ' . $e->getMessage());
             return response()->json(['message' => 'Failed to delete file: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function exportSorRateAnalysis(Sor $sor, RateCard $rateCard)
+    {
+        $date = now()->toDateString();
+
+        // 1. Let the service do all the heavy lifting of data preparation
+        $exportData = $this->rateCalculator->getFullSorAnalysisData($sor, $rateCard, $date);
+
+        $fileName = "reports/Rate_Analysis_{$sor->id}_{$rateCard->id}_" . date('Y-m-d_H-i-s') . ".xlsx";
+
+        // 2. Pass the prepared data array to the main export class and store to S3
+        Excel::store(new SorRateAnalysisExport($exportData), $fileName, 's3');
+
+        // Log the file generation
+        $file = File::create([
+            'title' => "Rate Analysis - {$sor->name} - {$rateCard->name}",
+            'filename' => $fileName,
+            'status' => 'active',
+            'document_type' => 'SOR Report',
+            'rate_card_id' => $rateCard->id,
+            'sor_id' => $sor->id,
+            'created_by' => Auth::id(),
+        ]);
+
+        return response()->json([
+            'message' => 'Rate Analysis generated successfully',
+            'file' => $file,
+            'url' => Storage::disk('s3')->url($fileName)
+        ]);
     }
 }

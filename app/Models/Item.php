@@ -3,14 +3,15 @@
 namespace App\Models;
 
 use App\Models\Subitem;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Kalnoy\Nestedset\NodeTrait;
 use Log;
+use DB;
 
 class Item extends Model
 {
-    use HasFactory, NodeTrait;
+    use NodeTrait;
 
     protected $table = 'items';
 
@@ -110,6 +111,11 @@ class Item extends Model
         return $this->belongsTo(Unit::class);
     }
 
+    public function technicalSpec()
+    {
+        return $this->hasOne(ItemTechnicalSpec::class);
+    }
+
     /*public function refFrom()
     {
         return $this->belongsTo(Item::class, 'ref_from');
@@ -124,6 +130,19 @@ class Item extends Model
     {
         return $this->ref_from ? $this->refFrom->unit_id : $this->unit_id;
     }
+
+
+    public function rateInRateCardOnDate($rateCardId = null, $date = null, $fallback = true)
+    {
+        return \App\Models\ItemRate::fetchActiveFor(
+            $this->item_code,
+            $rateCardId,   // must be passed; fallback to 1 handled in fetchActiveFor()
+            $date,
+            $fallback
+        );
+    }
+    //may be getRateFor replaced with rateInRateCardOnDate
+
 
     public function getRateFor($ratecard, $date)
     {
@@ -181,9 +200,32 @@ class Item extends Model
         Subitem::generateSubitemDependency($this->item_code);
     }
 
-    public function technicalSpec()
+
+
+    public function scopeWithDepth($query)
     {
-        return $this->hasOne(ItemTechnicalSpec::class);
+        $subquery = SubitemDependency::selectRaw('sub_item_code, MAX(level) AS depth')
+            ->groupBy('sub_item_code');
+
+        return $query->leftJoinSub($subquery, 'deps', 'items.item_code', '=', 'deps.sub_item_code')
+                     ->select('items.*', DB::raw('COALESCE(deps.depth, 0) AS depth'));
+    }
+
+    public function scopeForSor($query, $sorId)
+    {
+        return $query->when($sorId, fn($q) => $q->where('items.sor_id', $sorId));
+    }
+
+    /**
+     * [scopeSubitemsOnly description]
+     * @param  [type] $query [description]
+     * @param  [type] $flag  [description]
+     * @return [type]        [description]
+     * must call subitemsOnly() after withDepth()
+     */
+    public function scopeSubitemsOnly($query, $flag)
+    {
+        return $query->when($flag, fn($q) => $q->whereNotNull('deps.sub_item_code'));
     }
 
 }

@@ -157,6 +157,8 @@ Route::get('/sors/{sor}/items-datatable-view', [SorController::class, 'dataTable
 
 // SOR Export
 Route::get('/export/sor', [App\Http\Controllers\SorExportController::class, 'index'])->name('sor.export.index');
+Route::get('/export/sor/{sor}/rate-card/{rate_card}/format/{format}', [App\Http\Controllers\SorExportController::class, 'export'])->name('sor.export.generate');
+Route::get('/export/sor/{sor}/rate-card/{rate_card}/analysis', [App\Http\Controllers\SorExportController::class, 'exportSorRateAnalysis'])->name('sor.export.analysis');
 Route::get('/export/list', [App\Http\Controllers\SorExportController::class, 'list'])->name('sor.export.list');
 Route::get('/export/sor/{sor}/rate-card/{rateCard}/format/{format?}', [App\Http\Controllers\SorExportController::class, 'export'])->name('sor.export');
 Route::delete('/export/delete/{file}', [App\Http\Controllers\SorExportController::class, 'delete'])->name('sor.export.delete');
