@@ -115,8 +115,10 @@ class RateCardController extends Controller
 
         $reportData = $this->generateResourceReport($request, $rateCard, 1, $effectiveDate); // 1 = Labour Group
         $rateCards = RateCard::all();
+        $sors = \App\Models\Sor::orderBy('name')->get();
+        $sorId = $request->input('sor');
 
-        return view('pages.rate-cards.labor-report', compact('rateCard', 'reportData', 'rateCards', 'rateCardId', 'effectiveDate'));
+        return view('pages.rate-cards.labor-report', compact('rateCard', 'reportData', 'rateCards', 'rateCardId', 'effectiveDate', 'sors', 'sorId'));
     }
 
     /**
@@ -134,8 +136,10 @@ class RateCardController extends Controller
 
         $reportData = $this->generateResourceReport($request, $rateCard, 2, $effectiveDate); // 2 = Machine Group
         $rateCards = RateCard::all();
+        $sors = \App\Models\Sor::orderBy('name')->get();
+        $sorId = $request->input('sor');
 
-        return view('pages.rate-cards.machine-report', compact('rateCard', 'reportData', 'rateCards', 'rateCardId', 'effectiveDate'));
+        return view('pages.rate-cards.machine-report', compact('rateCard', 'reportData', 'rateCards', 'rateCardId', 'effectiveDate', 'sors', 'sorId'));
     }
 
     public function exportLaborPdf(Request $request)
@@ -193,8 +197,10 @@ class RateCardController extends Controller
 
         $reportData = $this->generateResourceReport($request, $rateCard, 3, $effectiveDate); // 3 = Material Group
         $rateCards = RateCard::all();
+        $sors = \App\Models\Sor::orderBy('name')->get();
+        $sorId = $request->input('sor');
 
-        return view('pages.rate-cards.material-report', compact('rateCard', 'reportData', 'rateCards', 'rateCardId', 'effectiveDate'));
+        return view('pages.rate-cards.material-report', compact('rateCard', 'reportData', 'rateCards', 'rateCardId', 'effectiveDate', 'sors', 'sorId'));
     }
 
     public function exportMaterialPdf(Request $request)
@@ -222,10 +228,26 @@ class RateCardController extends Controller
      */
     private function generateResourceReport(Request $request, RateCard $rateCard, int $groupId, string $date)
     {
-        $resources = \App\Models\Resource::where('resource_group_id', $groupId)
+        $query = \App\Models\Resource::where('resource_group_id', $groupId)
             ->with('unit')
-            ->orderBy('secondary_code')
-            ->get();
+            ->orderBy('secondary_code');
+        
+        // Filter by SOR if parameter is provided
+        if ($request->has('sor')) {
+            $sorId = $request->input('sor');
+            
+            // Get distinct resource IDs used in this SOR for this resource group
+            // Join through resources table to filter by resource_group_id
+            $usedResourceIds = \App\Models\Skeleton::where('skeletons.sor_id', $sorId)
+                ->join('resources', 'skeletons.resource_id', '=', 'resources.id')
+                ->where('resources.resource_group_id', $groupId)
+                ->distinct()
+                ->pluck('skeletons.resource_id');
+            
+            $query->whereIn('id', $usedResourceIds);
+        }
+        
+        $resources = $query->get();
 
         $reportData = [];
 

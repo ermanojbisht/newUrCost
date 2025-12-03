@@ -60,7 +60,44 @@
     <!-- Rate Card & Date Selection -->
     <div class="no-print">
         @include('sors._filters', ['rateCards' => $rateCards, 'rateCardId' => $rateCardId, 'effectiveDate' => $effectiveDate])
+        
+        <!-- SOR Filter -->
+        <div class="mt-4 glass rounded-xl p-4 shadow-lg">
+            <div class="flex items-center gap-4">
+                <label for="sor-filter" class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                    Filter by SOR:
+                </label>
+                <select id="sor-filter" 
+                        class="flex-1 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        onchange="window.location.href = updateUrlParameter(window.location.href, 'sor', this.value)">
+                    <option value="">All Resources</option>
+                    @foreach($sors as $sor)
+                        <option value="{{ $sor->id }}" {{ $sorId == $sor->id ? 'selected' : '' }}>
+                            {{ $sor->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @if($sorId)
+                    <a href="{{ route('rate-cards.material-report', ['rate_card_id' => $rateCardId, 'effective_date' => $effectiveDate]) }}" 
+                       class="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors">
+                        Clear Filter
+                    </a>
+                @endif
+            </div>
+        </div>
     </div>
+
+    <script>
+        function updateUrlParameter(url, param, value) {
+            const urlObj = new URL(url);
+            if (value) {
+                urlObj.searchParams.set(param, value);
+            } else {
+                urlObj.searchParams.delete(param);
+            }
+            return urlObj.toString();
+        }
+    </script>
 
     <div class="w-full">
         
