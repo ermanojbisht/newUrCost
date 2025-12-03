@@ -140,45 +140,35 @@
             </div>
         </div>
 
+
         <!-- Table Section -->
         <div class="glass rounded-2xl overflow-hidden shadow-lg print-border">
-            <table class="w-full text-left border-collapse">
+            <table id="material-rates-table" class="w-full text-left border-collapse display compact">
                 <thead>
                     <tr class="bg-gray-100/50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
-                        <th class="py-4 px-6 font-semibold w-16 text-center">S.No.</th>
-                        <th class="py-4 px-6 font-semibold w-32">Code</th>
-                        <th class="py-4 px-6 font-semibold">Description</th>
-                        <th class="py-4 px-6 font-semibold w-24 text-center">Unit</th>
-                        <th class="py-4 px-6 font-semibold w-32 text-right">Base Rate</th>
-                        <th class="py-4 px-6 font-semibold w-32 text-right">Lead Cost</th>
-                        <th class="py-4 px-6 font-semibold w-32 text-right">Total Rate</th>
-                        <th class="py-4 px-6 font-semibold w-48">Remarks</th>
+                        <th class="py-2 px-3 font-semibold text-center">S.No.</th>
+                        <th class="py-2 px-3 font-semibold">Code</th>
+                        <th class="py-2 px-3 font-semibold">Description</th>
+                        <th class="py-2 px-3 font-semibold text-center">Unit</th>
+                        <th class="py-2 px-3 font-semibold text-right">Base Rate</th>
+                        <th class="py-2 px-3 font-semibold text-right">Lead Cost</th>
+                        <th class="py-2 px-3 font-semibold text-right">Total Rate</th>
+                        <th class="py-2 px-3 font-semibold">Remarks</th>
                     </tr>
                 </thead>
                 <tbody class="text-sm divide-y divide-gray-200 dark:divide-gray-700">
-                    @forelse($reportData as $index => $data)
+                    @foreach($reportData as $index => $data)
                         <tr class="hover:bg-white/50 dark:hover:bg-gray-800/50 transition-colors">
-                            <td class="py-3 px-6 text-center text-gray-500 dark:text-gray-400">{{ $index + 1 }}</td>
-                            <td class="py-3 px-6 font-mono text-xs text-gray-600 dark:text-gray-300">{{ $data['resource']->secondary_code ?? $data['resource']->id }}</td>
-                            <td class="py-3 px-6 font-medium text-gray-800 dark:text-gray-200">{{ $data['resource']->name }}</td>
-                            <td class="py-3 px-6 text-center text-gray-600 dark:text-gray-400 bg-gray-50/50 dark:bg-gray-800/30 rounded-lg mx-2">{{ $data['unit'] }}</td>
-                            <td class="py-3 px-6 text-right font-mono text-gray-600 dark:text-gray-400">{{ number_format($data['base_rate'], 2) }}</td>
-                            <td class="py-3 px-6 text-right font-mono text-gray-500 dark:text-gray-500">{{ number_format($data['lead_cost'], 2) }}</td>
-                            <td class="py-3 px-6 text-right font-bold font-mono text-gray-900 dark:text-white">{{ number_format($data['total_rate'], 2) }}</td>
-                            <td class="py-3 px-6 text-xs text-gray-500 dark:text-gray-500 italic">{{ $data['remarks'] }}</td>
+                            <td class="py-2 px-3 text-center text-gray-500 dark:text-gray-400">{{ $index + 1 }}</td>
+                            <td class="py-2 px-3 font-mono text-xs text-gray-600 dark:text-gray-300">{{ $data['resource']->secondary_code ?? $data['resource']->id }}</td>
+                            <td class="py-2 px-3 font-medium text-gray-800 dark:text-gray-200">{{ $data['resource']->name }}</td>
+                            <td class="py-2 px-3 text-center text-gray-600 dark:text-gray-400">{{ $data['unit'] }}</td>
+                            <td class="py-2 px-3 text-right font-mono text-gray-600 dark:text-gray-400">{{ number_format($data['base_rate'], 2) }}</td>
+                            <td class="py-2 px-3 text-right font-mono text-gray-500 dark:text-gray-500">{{ number_format($data['lead_cost'], 2) }}</td>
+                            <td class="py-2 px-3 text-right font-bold font-mono text-gray-900 dark:text-white">{{ number_format($data['total_rate'], 2) }}</td>
+                            <td class="py-2 px-3 text-xs text-gray-500 dark:text-gray-500 italic">{{ $data['remarks'] }}</td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="8" class="py-12 text-center text-gray-500 dark:text-gray-400">
-                                <div class="flex flex-col items-center justify-center">
-                                    <svg class="w-12 h-12 mb-3 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                    </svg>
-                                    <p>No material rates found for this rate card on {{ \Carbon\Carbon::parse($effectiveDate)->format('d-M-Y') }}.</p>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
+                    @endforeach
                 </tbody>
             </table>
         </div>
@@ -187,4 +177,35 @@
             <p>End of Report</p>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('#material-rates-table').DataTable({
+                pageLength: 25,
+                lengthMenu: [[25, 50, 100, 250, -1], [25, 50, 100, 250, "All"]],
+                order: [[1, 'asc']], // Sort by Code column
+                responsive: true,
+                dom: '<"flex flex-col md:flex-row justify-between items-center mb-4 no-print"lf>rt<"flex flex-col md:flex-row justify-between items-center mt-4 no-print"ip>',
+                language: {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search resources...",
+                    lengthMenu: "Show _MENU_ entries",
+                    info: "Showing _START_ to _END_ of _TOTAL_ resources",
+                    infoEmpty: "No resources found",
+                    infoFiltered: "(filtered from _MAX_ total resources)",
+                    paginate: {
+                        first: "First",
+                        last: "Last",
+                        next: "Next",
+                        previous: "Previous"
+                    }
+                },
+                columnDefs: [
+                    { orderable: false, targets: 0 } // Disable sorting on S.No. column
+                ]
+            });
+        });
+    </script>
+    @endpush
 @endsection
