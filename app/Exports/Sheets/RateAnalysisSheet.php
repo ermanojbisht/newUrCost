@@ -2,6 +2,7 @@
 
 namespace App\Exports\Sheets;
 
+use App\Services\ItemSkeletonService;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\WithTitle;
@@ -14,18 +15,36 @@ class RateAnalysisSheet implements FromView, WithTitle, WithEvents
     protected $items;
     protected $rateCard;
     protected $date;
+    protected $itemSkeletonService;
 
     public function __construct($items, $rateCard, $date)
     {
         $this->items = $items;
         $this->rateCard = $rateCard;
         $this->date = $date;
+        $this->itemSkeletonService = app(ItemSkeletonService::class);
     }
 
     public function view(): View
     {
+        // Calculate rate analysis data for each item using ItemSkeletonService
+        $itemsWithAnalysis = [];
+
+        foreach ($this->items as $item) {
+            $analysis = $this->itemSkeletonService->calculateRate(
+                $item,
+                $this->rateCard->id,
+                $this->date
+            );
+
+            $itemsWithAnalysis[] = [
+                'item' => $item,
+                'analysis' => $analysis
+            ];
+        }
+
         return view('exports.rate_analysis', [
-            'items' => $this->items,
+            'itemsWithAnalysis' => $itemsWithAnalysis,
             'rateCard' => $this->rateCard,
             'date' => $this->date
         ]);
@@ -40,99 +59,62 @@ class RateAnalysisSheet implements FromView, WithTitle, WithEvents
     {
         return [
             AfterSheet::class => function(AfterSheet $event) {
-                // We need to calculate where each item's final rate cell ends up.
-                // Since the blade view renders them sequentially, we can estimate or 
-                // we might need a more robust way to know the exact cell.
-                // For now, let's assume a fixed structure per item in the view 
-                // or use a counter if the view structure is predictable.
-                
-                // A better approach with Blade is to add a hidden column or metadata 
-                // but Excel export doesn't easily support that.
-                
-                // Alternatively, we can search for the Item Code in the sheet 
-                // and find the rate cell relative to it.
-                
-                // Given the complexity of dynamic height (variable resources/subitems),
-                // we might need to rely on the view to output a "map" or 
-                // we can iterate the rows in PHP if we knew the exact count of rows per item.
-                
-                // Let's try a simpler approach: 
-                // The view will render a table for each item.
-                // We can't easily know the row number here without pre-calculating it.
-                
-                // Strategy:
-                // We will calculate the row positions here in PHP before rendering?
-                // No, that duplicates view logic.
-                
-                // Alternative Strategy:
-                // In the view, we can output the Item Code in a specific column (e.g., A)
-                // and the Rate in another (e.g., F).
-                // Then we can iterate the rows to find them.
-                
                 $sheet = $event->sheet->getDelegate();
-                $highestRow = $sheet->getHighestRow();
-                
-                // Iterate rows to find Item Headers or specific markers
-                // This is a bit "hacky" but works for dynamic content.
-                for ($row = 1; $row <= $highestRow; $row++) {
-                    $cellValue = $sheet->getCell('A' . $row)->getValue();
-                    
-                    // Assuming we put "Item Code: {code}" in Column A
-                    if (strpos($cellValue, 'Item Code:') !== false) {
-                        $itemCode = trim(str_replace('Item Code:', '', $cellValue));
-                        
-                        // Assuming the Rate is in the same row, Column F (6th column)
-                        // Or maybe in a "Total" row below?
-                        // Let's look at the view structure we will build.
-                        // If we put the Final Rate in a specific relative position to the header.
-                        
-                        // Let's refine the View first to make this easier.
-                        // We can put a hidden "marker" or just use the Item Code.
-                        
-                        // Let's assume the Final Rate is in the row where Column E says "Rate per Unit"
-                        // and the value is in Column F.
-                        // And we need to know WHICH item this belongs to.
-                        // We can track the "current item" as we scan down.
-                    }
-                }
-                
-                // Actually, the helper doc suggested:
-                // "$finalRateCell = $item['analysis_data']['final_rate_cell'];"
-                // This implies pre-calculation.
-                
-                // Let's implement a pre-calculation helper in the Service or here.
-                // We can calculate the number of rows each item will take.
-                // Header (1) + Skeletons (count) + Subitems (count) + Overheads (count) + Footer (1) + Spacing (1).
-                
-                $currentRow = 1;
+
+                // Calculate row positions for named ranges
+                $currentRow = 1; // Start from row 1
+
                 foreach ($this->items as $item) {
-                    // Header row
-                    $currentRow++; 
-                    
-                    // Resources
-                    $currentRow += $item->skeletons->count();
-                    
-                    // Subitems
-                    $currentRow += $item->subitems->count();
-                    
-                    // Overheads
-                    $currentRow += $item->overheads->count();
-                    
-                    // Footer row (Rate per Unit)
-                    // This is where the rate is.
-                    $rateCell = '$F$' . $currentRow;
-                    
-                    // Create Named Range
-                    // Sanitize item code for named range (remove spaces, special chars)
+                    // Get analysis data for this item
+                    $analysis = $this->itemSkeletonService->calculateRate(
+                        $item,
+                        $this->rateCard->id,
+                        $this->date
+                    );
+
+                    // Header rows (Item header + blank line)
+                    $currentRow += 2;
+
+                    // Resources section header
+                    $currentRow++;
+
+                    // Resources data rows
+                    $resourceCount = count($analysis['resources']);
+                    $currentRow += $resourceCount;
+
+                    // Subitems section header (if any subitems)
+                    if (count($analysis['subitems']) > 0) {
+                        $currentRow++;
+                        $currentRow += count($analysis['subitems']);
+                    }
+
+                    // Overheads section header (if any overheads)
+                    if (count($analysis['overheads']) > 0) {
+                        $currentRow++;
+                        $currentRow += count($analysis['overheads']);
+                    }
+
+                    // Summary section (8 rows: Material, Labor, Machine, Resources, Subitems, Overheads, Total, Final Rate)
+                    $currentRow += 8;
+
+                    // The final rate is in the last row of the summary
+                    $finalRateRow = $currentRow;
+                    $rateCell = '$B$' . $finalRateRow; // Assuming final rate is in column B
+
+                    // Create Named Range for final rate
                     $safeCode = preg_replace('/[^a-zA-Z0-9_]/', '_', $item->item_code);
                     $namedRangeName = 'ra_' . $safeCode;
-                    
-                    $event->sheet->getParent()->addNamedRange(
-                        new NamedRange($namedRangeName, $event->sheet->getDelegate(), $rateCell)
-                    );
-                    
-                    $currentRow++; // For the footer row itself
-                    $currentRow++; // Spacing
+
+                    try {
+                        $event->sheet->getParent()->addNamedRange(
+                            new NamedRange($namedRangeName, $event->sheet->getDelegate(), $rateCell)
+                        );
+                    } catch (\Exception $e) {
+                        // If named range already exists or other error, continue
+                    }
+
+                    // Blank line between items
+                    $currentRow += 2;
                 }
             }
         ];
